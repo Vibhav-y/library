@@ -445,8 +445,8 @@ const LandingPage = () => {
                   <MapPin className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-gray-800">Address</p>
-                    <p>123 Education Street, Knowledge District</p>
-                    <p>Gurugram, Haryana 122001</p>
+                    <p>Gulalpur bazar, patti-chanda road</p>
+                    <p>Chanda, Sultanpur, Uttar Pradesh</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -454,7 +454,7 @@ const LandingPage = () => {
                     <span className="text-white text-xs">📞</span>
                   </div>
                   <div>
-                    <span className="font-semibold text-gray-800">Phone:</span> +91 98765 43210
+                    <span className="font-semibold text-gray-800">Phone:</span> +918896963484
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -462,7 +462,7 @@ const LandingPage = () => {
                     <span className="text-white text-xs">✉️</span>
                   </div>
                   <div>
-                    <span className="font-semibold text-gray-800">Email:</span> info@shreesundaramlibrary.com
+                    <span className="font-semibold text-gray-800">Email:</span> info@shreesundaram.org
                   </div>
                 </div>
               </div>
@@ -676,8 +676,8 @@ const LandingPage = () => {
                   </div>
                   <div>
                     <p className="text-gray-300 text-sm leading-relaxed">
-                      123 Education Street, Knowledge District<br />
-                      Gurugram, Haryana 122001
+                      Gulalpur bazar, patti-chanda road<br />
+                      Chanda, Sultanpur, Uttar Pradesh
                     </p>
                   </div>
                 </div>
@@ -685,13 +685,13 @@ const LandingPage = () => {
                   <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs">📞</span>
                   </div>
-                  <p className="text-gray-300 text-sm">+91 98765 43210</p>
+                  <p className="text-gray-300 text-sm">+91 88969 63484</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs">✉️</span>
                   </div>
-                  <p className="text-gray-300 text-sm">info@shreesundaramlibrary.com</p>
+                  <p className="text-gray-300 text-sm">info@shreesundaraml.org</p>
                 </div>
               </div>
             </div>
