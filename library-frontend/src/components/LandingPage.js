@@ -426,7 +426,7 @@ const LandingPage = () => {
               
               <div className="relative rounded-2xl overflow-hidden shadow-lg mb-6 group-hover:shadow-xl transition-shadow duration-300">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.5877824966436!2d77.0915047!3d28.4594965!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d1777176b8f25%3A0x9ab1b6f8b7b4f8c9!2sGurugram%2C%20Haryana!5e0!3m2!1sen!2sin!4v1234567890"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3586.030390374811!2d82.24246407475427!3d25.999818398726084!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399a9e0b2ca9f227%3A0xf96db54cf37afd2c!2sPatti%20-%20Chanda%20Rd%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1753917297012!5m2!1sen!2sin"
                   width="100%"
                   height="300"
                   style={{ border: 0 }}
