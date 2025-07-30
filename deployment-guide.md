@@ -42,7 +42,7 @@
 4. Copy the connection string
 5. Replace `<password>` with your database user password
 
-Example: `mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/library?retryWrites=true&w=majority`
+
 
 ---
 
