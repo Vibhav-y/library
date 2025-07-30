@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/environment';
 
-const API_URL = 'http://localhost:5000/api/notice';
+const API_URL = `${API_BASE_URL}/api/notice`;
 
 // Create axios instance with auth token
 const getAuthHeaders = () => {
