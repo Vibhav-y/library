@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { documentAPI, categoryAPI } from '../services/api';
-import { FileText, Search, ChevronDown, ChevronRight, Folder, FolderOpen, Eye, X, Star, Trash2 } from 'lucide-react';
+import { FileText, Search, ChevronDown, ChevronRight, Folder, FolderOpen, Eye, X, Star, Trash2, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Documents = () => {
@@ -15,8 +15,25 @@ const Documents = () => {
   const [viewerLoading, setViewerLoading] = useState(false);
   const [userFavorites, setUserFavorites] = useState(new Set());
   const [deleteLoading, setDeleteLoading] = useState(null);
+  const [mobileViewerError, setMobileViewerError] = useState(false);
   
   const { user } = useAuth();
+
+  // Utility function to detect mobile devices
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.innerWidth <= 768;
+  };
+
+  // Utility function to detect if device supports PDF viewing
+  const supportsPDFViewing = () => {
+    // Check if browser supports PDF viewing in iframe
+    if (isMobileDevice()) {
+      // Most mobile browsers don't support PDF viewing in iframe
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     loadData();
@@ -205,6 +222,7 @@ const Documents = () => {
   const handleViewDocument = async (document) => {
     setSelectedDocument(document);
     setViewerLoading(true);
+    setMobileViewerError(false); // Reset error state
     
     try {
       // For Supabase, we can use the stored public URL directly
@@ -279,6 +297,7 @@ const Documents = () => {
 
   const closeViewer = () => {
     setSelectedDocument(null);
+    setMobileViewerError(false); // Reset error state
   };
 
   const getDocumentUrl = (document) => {
@@ -323,13 +342,17 @@ const Documents = () => {
 
     return (
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
         onKeyDown={handleKeyDown}
         tabIndex={-1}
         style={{ outline: 'none' }}
       >
         <div 
-          className="bg-white rounded-lg shadow-xl w-full h-full max-w-6xl max-h-full flex flex-col"
+          className={`bg-white rounded-lg shadow-xl w-full h-full flex flex-col ${
+            isMobileDevice() 
+              ? 'max-w-full max-h-full rounded-none sm:rounded-lg sm:max-w-4xl sm:max-h-[95vh]' 
+              : 'max-w-6xl max-h-full'
+          }`}
           style={{
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
@@ -338,18 +361,18 @@ const Documents = () => {
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center space-x-3">
-              <FileText className="h-6 w-6 text-blue-600" />
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-lg font-medium text-gray-900 truncate">
                   {selectedDocument.title}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
                   Uploaded on {new Date(selectedDocument.createdAt).toLocaleDateString()}
                   {selectedDocument.fileSize && (
-                    <span className="ml-2">
-                      • {(selectedDocument.fileSize / 1024 / 1024).toFixed(2)} MB
+                    <span className="ml-1 sm:ml-2">
+                      • {(selectedDocument.fileSize / 1024 / 1024).toFixed(1)} MB
                     </span>
                   )}
                 </p>
@@ -357,9 +380,10 @@ const Documents = () => {
             </div>
             <button
               onClick={closeViewer}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 ml-2"
+              title="Close viewer"
             >
-              <X className="h-6 w-6 text-gray-500" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
             </button>
           </div>
 
@@ -385,29 +409,115 @@ const Documents = () => {
             ) : (
               <div className="h-full w-full">
                 {['pdf'].includes(fileExtension) ? (
-                  <iframe
-                    src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                    className="w-full h-full border-0"
-                    title={selectedDocument.title}
-                    style={{ 
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      MozUserSelect: 'none',
-                      msUserSelect: 'none'
-                    }}
-                    onLoad={(e) => {
-                      // Disable right-click context menu
-                      e.target.contentDocument?.addEventListener('contextmenu', (event) => {
-                        event.preventDefault();
-                      });
-                      // Disable keyboard shortcuts
-                      e.target.contentDocument?.addEventListener('keydown', (event) => {
-                        if (event.ctrlKey && (event.key === 's' || event.key === 'p')) {
+                  isMobileDevice() ? (
+                    // Mobile-optimized PDF viewer using Google Drive Viewer
+                    <div className="h-full flex flex-col">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center space-x-3">
+                          <FileText className="h-6 w-6 text-blue-600" />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-blue-900">PDF Document</h4>
+                            <p className="text-sm text-blue-700 mt-1">
+                              For the best viewing experience on mobile, you can open this document in a new tab or download it.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                          <a
+                            href={documentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Open in New Tab
+                          </a>
+                          <a
+                            href={documentUrl}
+                            download={selectedDocument.fileName || selectedDocument.title}
+                            className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                      {/* Try to embed PDF using Google Drive Viewer for mobile */}
+                      <div className="flex-1 overflow-hidden">
+                        {!mobileViewerError ? (
+                          <iframe
+                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true&chrome=false&dov=1`}
+                            className="w-full h-full border-0 rounded-lg"
+                            title={selectedDocument.title}
+                            style={{ 
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none'
+                            }}
+                            onError={() => setMobileViewerError(true)}
+                            onLoad={(e) => {
+                              // Check if iframe loaded successfully or shows error
+                              setTimeout(() => {
+                                try {
+                                  const iframe = e.target;
+                                  if (iframe && iframe.contentDocument) {
+                                    const body = iframe.contentDocument.body;
+                                    if (body && body.innerHTML.includes('error') || body.innerHTML.includes('not available')) {
+                                      setMobileViewerError(true);
+                                    }
+                                  }
+                                } catch (error) {
+                                  // Cross-origin error is expected, iframe loaded fine
+                                }
+                              }, 2000);
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
+                            <div className="text-center p-6">
+                              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                              <h3 className="text-sm font-medium text-gray-900 mb-2">PDF Preview Unavailable</h3>
+                              <p className="text-sm text-gray-500 mb-4">
+                                Unable to preview this document on mobile. Please use the buttons above to view or download.
+                              </p>
+                              <button
+                                onClick={() => setMobileViewerError(false)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Try Again
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    // Desktop PDF viewer
+                    <iframe
+                      src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                      className="w-full h-full border-0"
+                      title={selectedDocument.title}
+                      style={{ 
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none'
+                      }}
+                      onLoad={(e) => {
+                        // Disable right-click context menu
+                        e.target.contentDocument?.addEventListener('contextmenu', (event) => {
                           event.preventDefault();
-                        }
-                      });
-                    }}
-                  />
+                        });
+                        // Disable keyboard shortcuts
+                        e.target.contentDocument?.addEventListener('keydown', (event) => {
+                          if (event.ctrlKey && (event.key === 's' || event.key === 'p')) {
+                            event.preventDefault();
+                          }
+                        });
+                      }}
+                    />
+                  )
                 ) : ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension) ? (
                   <div className="h-full flex items-center justify-center bg-gray-50 overflow-auto">
                     <img
