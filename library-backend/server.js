@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://your-frontend-app.vercel.app'  // Replace with your Vercel frontend URL
+    'https://library-ql5n6afcu-vibhavs-projects-74b5772f.vercel.app/'  // Replace with your Vercel frontend URL
   ],
   credentials: true
 }));
