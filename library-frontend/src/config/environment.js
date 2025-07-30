@@ -23,8 +23,7 @@ if (!currentConfig) {
   throw new Error(`Invalid environment: ${ENVIRONMENT}. Must be 'development' or 'production'`);
 }
 
-console.log(`🌍 Environment: ${currentConfig.name}`);
-console.log(`📡 API URL: ${currentConfig.API_BASE_URL}`);
+
 
 export const API_BASE_URL = currentConfig.API_BASE_URL;
 export const ENVIRONMENT_NAME = currentConfig.name;

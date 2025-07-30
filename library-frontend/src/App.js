@@ -19,6 +19,9 @@ import Accessibility from './components/Accessibility';
 import StudentProfile from './components/StudentProfile';
 import FeeManagement from './components/FeeManagement';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
+import LandingPage from './components/LandingPage';
+import ManageAnnouncements from './components/ManageAnnouncements';
+import ManageGallery from './components/ManageGallery';
 import './App.css';
 
 function App() {
@@ -30,6 +33,7 @@ function App() {
             <div className="App">
           <Routes>
             {/* Public Routes */}
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             
             {/* Protected Routes */}
@@ -134,6 +138,28 @@ function App() {
             />
             
             <Route
+              path="/announcements"
+              element={
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <ManageAnnouncements />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/gallery"
+              element={
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <ManageGallery />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="/accessibility"
               element={
                 <ProtectedRoute>
@@ -170,7 +196,7 @@ function App() {
             <Route path="/students" element={<Navigate to="/users" replace />} />
             
             {/* Default redirect */}
-            <Route path="/" element={<RoleBasedRedirect />} />
+            <Route path="/" element={<LandingPage />} />
             
             {/* 404 Route */}
             <Route

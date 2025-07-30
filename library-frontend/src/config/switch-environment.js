@@ -37,7 +37,7 @@ try {
   };
   
   console.log(`✅ Successfully switched to: ${envNames[targetEnv]}`);
-  console.log(`📡 API URL: ${targetEnv === 'development' ? 'http://localhost:5000' : 'https://library-hpen.onrender.com'}`);
+  console.log(`📡 API URL: ${targetEnv === 'development' ? 'localhost:5000' : 'https://library-hpen.onrender.com'}`);
   console.log('');
   console.log('🔄 Please restart your development server for changes to take effect.');
   

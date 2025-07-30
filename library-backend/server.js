@@ -44,6 +44,8 @@ app.use('/api/category', require('./routes/category'));
 app.use('/api/students', require('./routes/student'));
 app.use('/api/notice', require('./routes/notice'));
 app.use('/api/customization', require('./routes/customization'));
+app.use('/api/announcement', require('./routes/announcement'));
+app.use('/api/gallery', require('./routes/gallery'));
 
 // Simple migration function for existing users without names
 const migrateExistingUsers = async () => {
@@ -58,7 +60,7 @@ const migrateExistingUsers = async () => {
     });
     
     if (usersWithoutNames.length > 0) {
-      console.log(`Found ${usersWithoutNames.length} users without names. Adding default names...`);
+
       
       for (const user of usersWithoutNames) {
         const emailName = user.email.split('@')[0];
@@ -67,10 +69,10 @@ const migrateExistingUsers = async () => {
         await user.save();
       }
       
-      console.log('Migration completed: Added default names to existing users');
+
     }
   } catch (error) {
-    console.log('Migration skipped:', error.message);
+
   }
 };
 

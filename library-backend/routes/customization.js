@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
       await customization.save();
       await customization.populate('activeTheme');
       
-      console.log('✅ Created default customization settings');
+
     }
     
     res.json(customization);
@@ -75,14 +75,38 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       return res.status(400).json({ message: 'Logo file is required' });
     }
 
-    // Generate unique filename for logo
-    const uniqueFilename = `logos/${generateUniqueFilename(req.file.originalname)}`;
+    // Check if Supabase is configured
+    const useSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
     
-    // Upload to Supabase
-    const uploadResult = await uploadToSupabase(req.file, uniqueFilename);
+    let logoUrl, logoKey;
+
+    if (useSupabase) {
+      try {
+        // Generate unique filename for logo
+        const uniqueFilename = `logos/${generateUniqueFilename(req.file.originalname)}`;
+        
+        // Upload to Supabase
+        const uploadResult = await uploadToSupabase(req.file, uniqueFilename);
+        
+        // Get public URL
+        logoUrl = getPublicUrl(uniqueFilename);
+        logoKey = uniqueFilename;
+        
+
+      } catch (supabaseError) {
+
+        useSupabase = false;
+      }
+    }
     
-    // Get public URL
-    const publicUrl = getPublicUrl(uniqueFilename);
+    if (!useSupabase) {
+      // Fallback: Convert to base64 data URL for local storage
+      const base64 = req.file.buffer.toString('base64');
+      logoUrl = `data:${req.file.mimetype};base64,${base64}`;
+      logoKey = `local_${Date.now()}_${req.file.originalname}`;
+      
+      
+    }
 
     // Update customization settings
     let customization = await Customization.findOne();
@@ -90,8 +114,8 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       customization = new Customization();
     }
 
-    // Delete old logo if exists
-    if (customization.logoKey) {
+    // Delete old logo if exists and using Supabase
+    if (customization.logoKey && useSupabase && customization.logoKey.startsWith('logos/')) {
       try {
         await deleteFromSupabase(customization.logoKey);
       } catch (deleteError) {
@@ -100,8 +124,8 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       }
     }
 
-    customization.logoUrl = publicUrl;
-    customization.logoKey = uniqueFilename;
+    customization.logoUrl = logoUrl;
+    customization.logoKey = logoKey;
     customization.logoName = req.file.originalname;
     customization.showLogo = true;
     customization.lastUpdatedBy = req.user.id;
@@ -110,8 +134,9 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
 
     res.json({ 
       message: 'Logo uploaded successfully', 
-      logoUrl: publicUrl,
-      logoName: req.file.originalname
+      logoUrl: logoUrl,
+      logoName: req.file.originalname,
+      storage: useSupabase ? 'supabase' : 'local'
     });
   } catch (error) {
     console.error('Logo upload error:', error);
@@ -127,8 +152,18 @@ router.delete('/logo', auth.verifyToken, auth.adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'No logo found to delete' });
     }
 
-    // Delete from Supabase
-    await deleteFromSupabase(customization.logoKey);
+    // Delete from Supabase only if it's stored there
+    if (customization.logoKey.startsWith('logos/') && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+      try {
+        await deleteFromSupabase(customization.logoKey);
+
+      } catch (deleteError) {
+        console.error('Error deleting from Supabase:', deleteError);
+        // Continue with local deletion
+      }
+    } else {
+
+    }
 
     // Update customization settings
     customization.logoUrl = null;

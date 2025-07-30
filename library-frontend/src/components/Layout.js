@@ -17,7 +17,9 @@ import {
   Settings,
   Accessibility,
   User,
-  DollarSign
+  DollarSign,
+  Volume2,
+  Camera
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -61,6 +63,8 @@ const Layout = ({ children }) => {
       { name: 'Categories', href: '/categories', icon: FolderOpen },
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
+      { name: 'Announcements', href: '/announcements', icon: Volume2 },
+      { name: 'Gallery', href: '/gallery', icon: Camera },
       { name: 'Customization', href: '/customization', icon: Settings },
       { name: 'Accessibility', href: '/accessibility', icon: Accessibility },
     ] : []),
@@ -68,21 +72,19 @@ const Layout = ({ children }) => {
 
   const isActive = (path) => location.pathname === path;
   
-  const getLogoSizeStyle = (logoSize, isMobile = false) => {
-    // Convert numeric size to pixels, with mobile scaling
+  const getLogoSizeStyle = (logoSize) => {
+    // Use fixed size from customization, no mobile scaling
     const size = Number(logoSize) || 40;
-    const mobileScale = isMobile ? 0.7 : 1; // Make logos 70% smaller on mobile
-    const actualSize = Math.round(size * mobileScale);
     
     return {
-      height: `${actualSize}px`,
-      maxHeight: isMobile ? '32px' : '64px' // Set reasonable max heights
+      height: `${size}px`,
+      width: 'auto'
     };
   };
   
   const renderSystemBranding = (isMobile = false) => {
     if (logo) {
-      const logoSizeStyle = getLogoSizeStyle(logo.size, isMobile);
+      const logoSizeStyle = getLogoSizeStyle(logo.size);
       return (
         <div className="flex items-center">
           <img

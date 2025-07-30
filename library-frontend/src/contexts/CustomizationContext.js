@@ -52,7 +52,7 @@ export const CustomizationProvider = ({ children }) => {
       
       // If it's a 404 error (no customization exists), that's normal for first time
       if (err.response?.status === 404) {
-        console.log('No customization found, using defaults');
+
       } else {
         setError(err.message);
       }

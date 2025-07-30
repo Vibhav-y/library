@@ -308,4 +308,78 @@ export const customizationAPI = {
   },
 };
 
+// Announcement API
+export const announcementAPI = {
+  // Public endpoints
+  getPublicAnnouncements: async () => {
+    const response = await api.get('/announcement/public');
+    return response.data;
+  },
+
+  // Admin endpoints
+  getAllAnnouncements: async () => {
+    const response = await api.get('/announcement/admin');
+    return response.data;
+  },
+
+  createAnnouncement: async (announcementData) => {
+    const response = await api.post('/announcement', announcementData);
+    return response.data;
+  },
+
+  updateAnnouncement: async (id, announcementData) => {
+    const response = await api.put(`/announcement/${id}`, announcementData);
+    return response.data;
+  },
+
+  deleteAnnouncement: async (id) => {
+    const response = await api.delete(`/announcement/${id}`);
+    return response.data;
+  },
+
+  toggleAnnouncement: async (id) => {
+    const response = await api.patch(`/announcement/${id}/toggle`);
+    return response.data;
+  }
+};
+
+// Gallery API
+export const galleryAPI = {
+  // Public endpoints
+  getPublicImages: async () => {
+    const response = await api.get('/gallery/public');
+    return response.data;
+  },
+
+  // Admin endpoints
+  getAllImages: async () => {
+    const response = await api.get('/gallery/admin');
+    return response.data;
+  },
+
+  uploadImage: async (formData) => {
+    const response = await api.post('/gallery', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  updateImage: async (id, imageData) => {
+    const response = await api.put(`/gallery/${id}`, imageData);
+    return response.data;
+  },
+
+  deleteImage: async (id) => {
+    const response = await api.delete(`/gallery/${id}`);
+    return response.data;
+  },
+
+  reorderImages: async (images) => {
+    const response = await api.put('/gallery/reorder/bulk', { images });
+    return response.data;
+  }
+};
+
 export default api; 
