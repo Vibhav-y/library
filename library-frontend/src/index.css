@@ -816,4 +816,66 @@ html {
 .parallax-layer {
   will-change: transform;
   transition: transform 0.1s ease-out;
+}
+
+/* ===== PDF VIEWER CLEAN INTERFACE ===== */
+/* Hide PDF viewer toolbars and interface elements */
+.pdf-viewer-container object,
+.pdf-viewer-container embed,
+.pdf-viewer-container iframe {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  border: none;
+}
+
+/* Hide PDF.js toolbar and UI elements */
+.toolbar,
+.toolbarViewer,
+.secondaryToolbar,
+.doorHanger,
+.overlayContainer,
+.loadingBar,
+.findbar,
+.secondaryToolbarToggle,
+.toolbarButton {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide browser PDF controls and toolbars */
+embed[type="application/pdf"],
+object[type="application/pdf"] {
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Clean PDF viewer container */
+.pdf-viewer-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.pdf-viewer-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: transparent;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Hide any remaining PDF interface elements */
+[class*="toolbar"],
+[class*="menu"],
+[class*="button"]:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-success):not(.btn-sm),
+[id*="toolbar"],
+[id*="menu"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 } 
