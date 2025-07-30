@@ -26,13 +26,19 @@ router.get('/user', auth.verifyToken, async (req, res) => {
     // Get notices where user is target or targetAllUsers is true
     const notices = await Notice.find({
       isActive: true,
-      $or: [
-        { targetAllUsers: true },
-        { targetUsers: userId }
-      ],
-      $or: [
-        { expiresAt: null },
-        { expiresAt: { $gt: new Date() } }
+      $and: [
+        {
+          $or: [
+            { targetAllUsers: true },
+            { targetUsers: userId }
+          ]
+        },
+        {
+          $or: [
+            { expiresAt: null },
+            { expiresAt: { $gt: new Date() } }
+          ]
+        }
       ]
     })
     .populate('createdBy', 'email name')
@@ -52,13 +58,19 @@ router.get('/banner-marquee', auth.verifyToken, async (req, res) => {
     const notices = await Notice.find({
       isActive: true,
       type: { $in: ['banner', 'marquee'] },
-      $or: [
-        { targetAllUsers: true },
-        { targetUsers: userId }
-      ],
-      $or: [
-        { expiresAt: null },
-        { expiresAt: { $gt: new Date() } }
+      $and: [
+        {
+          $or: [
+            { targetAllUsers: true },
+            { targetUsers: userId }
+          ]
+        },
+        {
+          $or: [
+            { expiresAt: null },
+            { expiresAt: { $gt: new Date() } }
+          ]
+        }
       ]
     })
     .populate('createdBy', 'email name')
@@ -78,13 +90,19 @@ router.get('/tab', auth.verifyToken, async (req, res) => {
     const notices = await Notice.find({
       isActive: true,
       type: 'tab',
-      $or: [
-        { targetAllUsers: true },
-        { targetUsers: userId }
-      ],
-      $or: [
-        { expiresAt: null },
-        { expiresAt: { $gt: new Date() } }
+      $and: [
+        {
+          $or: [
+            { targetAllUsers: true },
+            { targetUsers: userId }
+          ]
+        },
+        {
+          $or: [
+            { expiresAt: null },
+            { expiresAt: { $gt: new Date() } }
+          ]
+        }
       ]
     })
     .populate('createdBy', 'email name')

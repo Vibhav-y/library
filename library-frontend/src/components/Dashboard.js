@@ -10,6 +10,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalDocuments: 0,
+    totalCategories: 0,
+    totalUsers: 0,
     recentDocuments: [],
     favoritesCount: 0,
   });
@@ -20,7 +22,10 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      const promises = [documentAPI.getAll()];
+      const promises = [
+        userAPI.getDashboard(),
+        documentAPI.getAll()
+      ];
       
       // Add favorites count for students
       if (user?.role === 'student') {
@@ -28,12 +33,15 @@ const Dashboard = () => {
       }
       
       const responses = await Promise.all(promises);
-      const docsResponse = responses[0];
-      const favoritesResponse = responses[1];
+      const dashboardData = responses[0];
+      const docsResponse = responses[1];
+      const favoritesResponse = responses[2];
       
       setDocuments(docsResponse);
       setStats({
-        totalDocuments: docsResponse.length,
+        totalDocuments: dashboardData.totalDocuments,
+        totalCategories: dashboardData.totalCategories,
+        totalUsers: dashboardData.totalUsers,
         recentDocuments: docsResponse.slice(0, 5),
         favoritesCount: favoritesResponse ? favoritesResponse.count : 0,
       });
@@ -96,13 +104,13 @@ const Dashboard = () => {
       },
       {
         name: 'Categories',
-        value: '—',
+        value: stats.totalCategories,
         icon: FolderOpen,
         color: 'bg-green-500',
       },
       {
         name: 'Students',
-        value: '—',
+        value: stats.totalUsers,
         icon: Users,
         color: 'bg-purple-500',
       },

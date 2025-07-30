@@ -29,8 +29,17 @@ const profileUpload = multer({
 router.get('/dashboard', auth.verifyToken, async (req, res) => {
   try {
     const totalDocuments = await Document.countDocuments();
-    const totalCategories = await Category.countDocuments();
-    const totalUsers = await User.countDocuments();
+    
+    // Count only root categories (categories without parent)
+    const totalCategories = await Category.countDocuments({
+      $or: [
+        { parentCategory: null },
+        { parentCategory: { $exists: false } }
+      ]
+    });
+    
+    // Count only students, not all users
+    const totalUsers = await User.countDocuments({ role: 'student' });
     
     let userDocuments = 0;
     if (req.user.role === 'student') {
