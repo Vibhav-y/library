@@ -1010,34 +1010,6 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative bg-white/70 backdrop-blur-md shadow-xl rounded-2xl border border-white/30">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl"></div>
-        <div className="relative px-6 py-6 sm:p-8">
-          <div>
-            <label htmlFor="search" className="block text-lg font-semibold text-gray-700 mb-4">
-              Search Documents & Categories
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
-                placeholder="Search documents & categories..."
-              />
-            </div>
-            <p className="mt-3 text-sm text-gray-600">
-              Search will find documents by title and categories by name, showing all documents within matching categories.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Results Summary */}
       <div className="relative bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/30">
         <div className="absolute inset-0 bg-gradient-to-r from-white/70 to-white/50 rounded-2xl"></div>
