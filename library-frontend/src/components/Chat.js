@@ -55,6 +55,9 @@ const Chat = () => {
   const [lastMessageTimestamp, setLastMessageTimestamp] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
   
+  // Message sending state
+  const [isSending, setIsSending] = useState(false);
+  
   // Refs
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
@@ -118,9 +121,38 @@ const Chat = () => {
     } finally {
       setIsPolling(false);
     }
-  }, [activeConversation, lastMessageTimestamp, isPolling]);
+  }, [activeConversation?._id, lastMessageTimestamp, isPolling]);
 
-  // Set up polling interval
+  // Polling for new conversations
+  const pollForNewConversations = useCallback(async () => {
+    try {
+      console.log('🔄 Polling for new conversations');
+      const data = await chatAPI.getConversations();
+      
+      setConversations(prev => {
+        // Only update if there are changes to prevent unnecessary re-renders
+        if (JSON.stringify(prev) !== JSON.stringify(data)) {
+          console.log('📨 Conversations updated');
+          return data;
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error('❌ Error polling for conversations:', error);
+    }
+  }, []);
+
+  // Set up polling intervals
+  useEffect(() => {
+    // Set up conversation polling (every 5 seconds)
+    const conversationPollingInterval = setInterval(pollForNewConversations, 5000);
+    
+    return () => {
+      clearInterval(conversationPollingInterval);
+    };
+  }, [pollForNewConversations]);
+
+  // Set up message polling for active conversation
   useEffect(() => {
     if (activeConversation && lastMessageTimestamp) {
       console.log('⏰ Starting message polling for conversation:', activeConversation._id);
@@ -141,7 +173,7 @@ const Chat = () => {
         }
       };
     }
-  }, [activeConversation, lastMessageTimestamp, pollForNewMessages]);
+  }, [activeConversation?._id, lastMessageTimestamp, pollForNewMessages]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -376,22 +408,25 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation) return;
+  const sendMessage = useCallback(async () => {
+    if (!newMessage.trim() || !activeConversation || isSending) return;
 
+    const messageContent = newMessage.trim();
     console.log('📤 Sending message:', {
-      content: newMessage.trim(),
+      content: messageContent,
       conversationId: activeConversation._id
     });
 
     try {
+      setIsSending(true);
+      setNewMessage(''); // Clear immediately to prevent double-sends
+      
       const message = await chatAPI.sendMessage(
         activeConversation._id,
-        newMessage.trim()
+        messageContent
       );
       
       console.log('📤 Message sent successfully:', message);
-      setNewMessage('');
       
       // Add message to current messages immediately
       setMessages(prev => [...prev, message]);
@@ -409,15 +444,19 @@ const Chat = () => {
       scrollToBottom();
     } catch (error) {
       console.error('❌ Error sending message:', error);
+      // Restore message if sending failed
+      setNewMessage(messageContent);
+    } finally {
+      setIsSending(false);
     }
-  };
+  }, [newMessage, activeConversation, isSending]);
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isSending) {
       e.preventDefault();
       sendMessage();
     }
-  };
+  }, [sendMessage, isSending]);
 
   // Simplified typing handler (no real-time typing indicators with polling)
   const handleTyping = useCallback(() => {
@@ -793,10 +832,14 @@ const Chat = () => {
                       </div>
                       <button
                         onClick={sendMessage}
-                        disabled={!newMessage.trim()}
+                        disabled={!newMessage.trim() || isSending}
                         className="p-2 sm:p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
-                        <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                        {isSending ? (
+                          <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                        ) : (
+                          <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                        )}
                       </button>
                     </div>
                   </div>
