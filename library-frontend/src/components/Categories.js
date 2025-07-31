@@ -311,18 +311,18 @@ const Categories = () => {
         <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-green-400/10 rounded-full blur-3xl"></div>
-          <div className="relative px-6 py-8 sm:p-10">
-            <div className="flex items-center mb-8">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-600 to-green-600 flex items-center justify-center shadow-lg mr-4">
-                <Plus className="h-5 w-5 text-white" />
+          <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+            <div className="flex items-center mb-5">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-600 to-green-600 flex items-center justify-center shadow-lg mr-3">
+                <Plus className="h-4 w-4 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900">
                 {formData.parentCategory ? 'Add Subcategory' : 'Add New Category'}
               </h3>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="categoryName" className="block text-base font-semibold text-gray-700">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label htmlFor="categoryName" className="block text-sm font-semibold text-gray-700">
                   Category Name
                 </label>
                 <input
@@ -332,13 +332,13 @@ const Categories = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-green-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                   placeholder="Enter category name"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="parentCategory" className="block text-base font-semibold text-gray-700">
+              <div className="space-y-1">
+                <label htmlFor="parentCategory" className="block text-sm font-semibold text-gray-700">
                   Parent Category (Optional)
                 </label>
                 <select
@@ -346,7 +346,7 @@ const Categories = () => {
                   name="parentCategory"
                   value={formData.parentCategory}
                   onChange={handleInputChange}
-                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-green-500/20 focus:bg-white transition-all duration-300"
+                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all duration-300"
                 >
                   <option value="">-- Root Category --</option>
                   {categories
@@ -358,59 +358,59 @@ const Categories = () => {
                       </option>
                     ))}
                 </select>
-                <p className="text-sm text-gray-600 bg-amber-50/80 px-3 py-2 rounded-xl">
+                <p className="text-xs text-gray-600 bg-amber-50/80 px-2 py-1 rounded-lg">
                   Maximum 3 levels of nesting allowed
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <label htmlFor="categoryImage" className="block text-base font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label htmlFor="categoryImage" className="block text-sm font-semibold text-gray-700">
                   Category Image (Optional)
                 </label>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <input
                     type="file"
                     id="categoryImage"
                     name="image"
                     accept="image/*"
                     onChange={handleInputChange}
-                    className="block w-full text-base text-gray-700 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 border-0 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all duration-300"
+                    className="block w-full text-sm text-gray-700 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 border-0 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all duration-300"
                   />
                   {imagePreview && (
                     <div className="relative inline-block">
                       <img
                         src={imagePreview}
                         alt="Preview"
-                        className="h-20 w-20 rounded-2xl object-cover border-2 border-white shadow-lg"
+                        className="h-16 w-16 rounded-xl object-cover border-2 border-white shadow-lg"
                       />
                       <button
                         type="button"
                         onClick={clearImage}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 hover:scale-110 transition-all duration-300 shadow-lg"
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 hover:scale-110 transition-all duration-300 shadow-lg"
                       >
-                        <X size={14} />
+                        <X size={12} />
                       </button>
                     </div>
                   )}
-                  <p className="text-sm text-gray-600 bg-blue-50/80 px-3 py-2 rounded-xl">
+                  <p className="text-xs text-gray-600 bg-blue-50/80 px-2 py-1 rounded-lg">
                     PNG, JPG, GIF up to 5MB. Images will be displayed next to category names in the tree view.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
+                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="group px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
+                  className="group px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-300"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-green-700 to-blue-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-700 to-blue-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <span className="relative">{formData.parentCategory ? 'Add Subcategory' : 'Add Category'}</span>
                 </button>
               </div>

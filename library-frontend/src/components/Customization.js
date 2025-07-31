@@ -372,32 +372,32 @@ const Customization = () => {
       <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-green-400/10 rounded-full blur-3xl"></div>
-        <div className="relative px-6 py-8 sm:p-10">
-          <div className="flex items-center mb-6">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center shadow-lg mr-4">
-              <Edit3 className="h-5 w-5 text-white" />
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex items-center mb-4">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center shadow-lg mr-3">
+              <Edit3 className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900">
               System Name
             </h3>
           </div>
-          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <input
               type="text"
               value={systemName}
               onChange={(e) => setSystemName(e.target.value)}
-              className="flex-1 block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+              className="flex-1 block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
               placeholder="Enter system name"
             />
             <button
               onClick={handleSystemNameUpdate}
               disabled={systemNameLoading || systemName === customization?.systemName}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-green-600 text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {systemNameLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               ) : (
-                <Save className="h-5 w-5 mr-2" />
+                <Save className="h-4 w-4 mr-2" />
               )}
               Update
             </button>
@@ -409,13 +409,13 @@ const Customization = () => {
       <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
-        <div className="relative px-6 py-8 sm:p-10">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-5 space-y-3 sm:space-y-0">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
-                <Image className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-green-600 to-purple-600 flex items-center justify-center shadow-lg mr-3">
+                <Image className="h-4 w-4 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900">
                 Logo Management
               </h3>
             </div>

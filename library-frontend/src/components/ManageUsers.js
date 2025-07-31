@@ -339,18 +339,18 @@ const ManageUsers = () => {
         <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="relative px-6 py-8 sm:p-10">
-            <div className="flex items-center mb-8">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg mr-4">
-                {editingUser ? <Edit className="h-5 w-5 text-white" /> : <UserPlus className="h-5 w-5 text-white" />}
+          <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+            <div className="flex items-center mb-5">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg mr-3">
+                {editingUser ? <Edit className="h-4 w-4 text-white" /> : <UserPlus className="h-4 w-4 text-white" />}
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900">
                 {editingUser ? 'Edit User' : 'Add New User'}
               </h3>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-base font-semibold text-gray-700">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
                   Name
                 </label>
                 <input
@@ -360,12 +360,12 @@ const ManageUsers = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                   placeholder="John Doe"
                 />
               </div>
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-base font-semibold text-gray-700">
+              <div className="space-y-1">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
                   Email Address
                 </label>
                 <input
@@ -376,15 +376,15 @@ const ManageUsers = () => {
                   onChange={handleInputChange}
                   disabled={editingUser && currentUser.role !== 'superadmin'}
                   required
-                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400 disabled:bg-gray-100/80 disabled:cursor-not-allowed"
+                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400 disabled:bg-gray-100/80 disabled:cursor-not-allowed"
                   placeholder="user@example.com"
                 />
               </div>
 
               {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && (
                 <>
-                  <div className="space-y-2">
-                    <label htmlFor="password" className="block text-base font-semibold text-gray-700">
+                  <div className="space-y-1">
+                    <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
                       Password
                     </label>
                     <input
@@ -394,18 +394,18 @@ const ManageUsers = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required={!editingUser}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                       placeholder={editingUser ? "Leave blank to keep current password" : "Enter password"}
                     />
                     {editingUser && currentUser.role === 'superadmin' && (
-                      <p className="text-sm text-gray-600 bg-blue-50/80 px-3 py-2 rounded-xl">
+                      <p className="text-xs text-gray-600 bg-blue-50/80 px-2 py-1 rounded-lg">
                         Leave blank to keep the current password, or enter a new password to change it.
                       </p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="role" className="block text-base font-semibold text-gray-700">
+                  <div className="space-y-1">
+                    <label htmlFor="role" className="block text-sm font-semibold text-gray-700">
                       Role
                     </label>
                     <select
@@ -413,7 +413,7 @@ const ManageUsers = () => {
                       name="role"
                       value={formData.role}
                       onChange={handleInputChange}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
+                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                     >
                       <option value="student">Student</option>
                       {currentUser.role === 'superadmin' && (
@@ -425,14 +425,14 @@ const ManageUsers = () => {
                       )}
                     </select>
                     {currentUser.role !== 'superadmin' && (
-                      <p className="text-sm text-gray-600 bg-amber-50/80 px-3 py-2 rounded-xl">
+                      <p className="text-xs text-gray-600 bg-amber-50/80 px-2 py-1 rounded-lg">
                         Only superadmins can create admin accounts
                       </p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="phone" className="block text-base font-semibold text-gray-700">
+                  <div className="space-y-1">
+                    <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">
                       Phone Number
                     </label>
                     <input
@@ -441,7 +441,7 @@ const ManageUsers = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                       placeholder="Enter phone number"
                     />
                   </div>
@@ -452,8 +452,8 @@ const ManageUsers = () => {
               {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && formData.role === 'student' && (
                 <>
                   <div className="col-span-2">
-                    <div className="border-t border-gray-200/50 pt-6 mb-6">
-                      <h4 className="text-xl font-bold text-gray-900 flex items-center">
+                    <div className="border-t border-gray-200/50 pt-3 mb-3">
+                      <h4 className="text-lg font-bold text-gray-900 flex items-center">
                         <div className="h-2 w-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-3"></div>
                         Student Information
                       </h4>
@@ -461,8 +461,8 @@ const ManageUsers = () => {
                   </div>
 
                   {/* Profile Picture */}
-                  <div className="col-span-2 space-y-4">
-                    <label className="block text-base font-semibold text-gray-700">
+                  <div className="col-span-2 space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
                       Profile Picture (Optional)
                     </label>
                     <div className="flex items-center space-x-6">
@@ -585,8 +585,8 @@ const ManageUsers = () => {
                  </>
                )}
 
-              <div className="space-y-2">
-                <label htmlFor="terminationDate" className="block text-base font-semibold text-gray-700">
+              <div className="space-y-1">
+                <label htmlFor="terminationDate" className="block text-sm font-semibold text-gray-700">
                   Termination Date (Optional)
                 </label>
                 <input
@@ -595,26 +595,26 @@ const ManageUsers = () => {
                   name="terminationDate"
                   value={formData.terminationDate}
                   onChange={handleInputChange}
-                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
+                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                 />
-                <p className="text-sm text-gray-600 bg-gray-50/80 px-3 py-2 rounded-xl">
+                <p className="text-xs text-gray-600 bg-gray-50/80 px-2 py-1 rounded-lg">
                   Leave empty for no expiration date
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
+                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="group px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+                  className="group px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <span className="relative">{editingUser ? 'Update User' : 'Add User'}</span>
                 </button>
               </div>

@@ -304,40 +304,40 @@ const FeeManagement = () => {
       <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
-        <div className="relative px-6 py-8 sm:p-10">
-          <div className="flex items-center mb-8">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
-              <Filter className="h-5 w-5 text-white" />
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex items-center mb-5">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-3">
+              <Filter className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900">
               Filters & Search
             </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <label className="block text-base font-semibold text-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Search Student
               </label>
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                  className="pl-10 block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-base font-semibold text-gray-700">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Payment Status
               </label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
+                className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
               >
                 <option value="all">All Status</option>
                 <option value="paid">Paid</option>
@@ -345,14 +345,14 @@ const FeeManagement = () => {
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-base font-semibold text-gray-700">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Student
               </label>
               <select
                 value={selectedStudent}
                 onChange={(e) => setSelectedStudent(e.target.value)}
-                className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
+                className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
               >
                 <option value="all">All Students</option>
                 {students.map(student => (
@@ -363,8 +363,8 @@ const FeeManagement = () => {
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-base font-semibold text-gray-700">
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-gray-700">
                 Actions
               </label>
               <button
@@ -373,9 +373,9 @@ const FeeManagement = () => {
                   setFilterStatus('all');
                   setSelectedStudent('all');
                 }}
-                className="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300"
+                className="w-full inline-flex items-center justify-center px-3 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-all duration-300"
               >
-                <X className="h-5 w-5 mr-2" />
+                <X className="h-4 w-4 mr-2" />
                 Clear Filters
               </button>
             </div>
@@ -387,12 +387,12 @@ const FeeManagement = () => {
       <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-green-400/10 rounded-full blur-3xl"></div>
-        <div className="relative px-6 py-8 sm:p-10">
-          <div className="flex items-center mb-8">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-600 to-green-600 flex items-center justify-center shadow-lg mr-4">
-              <DollarSign className="h-5 w-5 text-white" />
+        <div className="relative px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex items-center mb-5">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-600 to-green-600 flex items-center justify-center shadow-lg mr-3">
+              <DollarSign className="h-4 w-4 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900">
               Fee Records ({filteredFees.length})
             </h3>
           </div>

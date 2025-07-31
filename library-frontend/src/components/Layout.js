@@ -150,15 +150,15 @@ const Layout = ({ children }) => {
               </button>
             </div>
             <div className="relative flex-1 h-0 pt-6 pb-4 overflow-y-auto">
-              <div className="flex-shrink-0 flex items-center px-6 mb-8">
+              <div className="flex-shrink-0 flex items-center px-6 mb-6">
                 {renderSystemBranding(true)}
               </div>
-              <nav className="px-4 space-y-2">
+              <nav className="px-4 space-y-1">
                 {navigation.map((item, index) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                    className={`group flex items-center px-3 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
                       isActive(item.href)
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
                         : 'text-gray-700 hover:bg-white/60 hover:shadow-md hover:scale-105'
@@ -166,7 +166,7 @@ const Layout = ({ children }) => {
                     onClick={() => setSidebarOpen(false)}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                    <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{item.name}</span>
                   </Link>
                 ))}
@@ -183,27 +183,27 @@ const Layout = ({ children }) => {
           <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/70"></div>
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 blur-3xl"></div>
           <div className="relative flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-6 mb-10">
+            <div className="flex items-center flex-shrink-0 px-6 mb-8">
               {renderSystemBranding(false)}
             </div>
-            <nav className="flex-1 px-4 space-y-3">
+            <nav className="flex-1 px-4 space-y-1.5">
               {navigation.map((item, index) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 ${
+                  className={`group flex items-center px-3 py-2.5 text-sm font-semibold rounded-2xl transition-all duration-300 ${
                     isActive(item.href)
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl scale-105 border border-blue-400/20'
                       : 'text-gray-700 hover:bg-white/70 hover:shadow-lg hover:scale-105 hover:border-white/40 border border-transparent'
                   }`}
                   style={{ animationDelay: `${index * 75}ms` }}
                 >
-                  <div className={`mr-4 p-2 rounded-xl transition-all duration-300 ${
+                  <div className={`mr-3 p-1.5 rounded-xl transition-all duration-300 ${
                     isActive(item.href) 
                       ? 'bg-white/20' 
                       : 'bg-gray-100 group-hover:bg-white group-hover:shadow-md'
                   }`}>
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
                   </div>
                   <span className="truncate font-medium">{item.name}</span>
                   {isActive(item.href) && (
