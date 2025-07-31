@@ -72,6 +72,14 @@ const Layout = ({ children }) => {
     ] : []),
   ];
 
+  // Debug: Log navigation and user info
+  console.log('Layout Debug:', { 
+    user: user, 
+    isAdmin: isAdmin, 
+    navigationCount: navigation.length,
+    systemName: systemName 
+  });
+
   const isActive = (path) => location.pathname === path;
   
   const getLogoSizeStyle = (logoSize) => {
@@ -109,8 +117,19 @@ const Layout = ({ children }) => {
     );
   };
 
+  // Early return if user is not loaded yet
+  if (!user) {
+    console.log('Layout: User not loaded yet');
+    return <div className="p-4 bg-red-100">Loading user...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      {/* Debug info for mobile */}
+      <div className="lg:hidden bg-yellow-100 p-2 text-xs">
+        Debug: User: {user?.email}, Role: {user?.role}, Nav items: {navigation.length}
+      </div>
+      
       {/* SVG Filters for Color Blindness Support */}
       <svg className="accessibility-filters" aria-hidden="true">
         <defs>
@@ -139,43 +158,39 @@ const Layout = ({ children }) => {
       <NoticeDisplay />
       
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 flex z-50 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-        <div className="relative flex-1 flex flex-col max-w-xs w-full">
-          <div className="relative bg-white shadow-2xl h-full">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black opacity-50" onClick={() => setSidebarOpen(false)} />
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <span className="font-bold">Menu</span>
               <button
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full bg-white/90 text-gray-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200"
                 onClick={() => setSidebarOpen(false)}
+                className="p-1 text-gray-600"
               >
-                <X className="h-5 w-5" />
+                ✕
               </button>
             </div>
-            <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-              <div className="flex-shrink-0 flex items-center px-4 mb-5">
-                {renderSystemBranding(true)}
-              </div>
-              <nav className="px-3 space-y-1">
-                {navigation.map((item, index) => (
+            <div className="flex-1 overflow-y-auto p-4">
+              <nav className="space-y-2">
+                {navigation && navigation.length > 0 ? navigation.map((item, index) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{item.name}</span>
+                    <item.icon className="mr-3 h-4 w-4" />
+                    {item.name}
                   </Link>
-                ))}
+                )) : (
+                  <div className="text-gray-500">No navigation items</div>
+                )}
               </nav>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-40">
@@ -220,22 +235,22 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="lg:pl-72 flex flex-col flex-1">
         {/* Mobile header with menu button */}
-        <div className="sticky top-0 z-40 lg:hidden bg-white shadow-xl border-b border-gray-200">
-          <div className="flex items-center justify-between px-4 py-3">
+        <div className="block lg:hidden bg-red-200 border-4 border-red-500 p-4 min-h-16">
+          <div className="flex items-center justify-between">
             <button
-              className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
               onClick={() => setSidebarOpen(true)}
+              className="p-3 bg-blue-600 text-white rounded font-bold text-lg"
             >
-              <Menu className="h-5 w-5" />
+              MENU
             </button>
-            <h1 className="text-lg font-bold text-gray-900 truncate px-4">
-              {systemName || 'Library Management System'}
-            </h1>
+            <span className="font-bold text-black text-lg">
+              MOBILE HEADER TEST
+            </span>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all duration-200"
+              className="p-3 bg-red-600 text-white rounded font-bold"
             >
-              <LogOut className="h-4 w-4" />
+              LOGOUT
             </button>
           </div>
         </div>
