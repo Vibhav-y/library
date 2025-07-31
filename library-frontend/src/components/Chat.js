@@ -104,7 +104,19 @@ const Chat = () => {
       
       if (result.hasNew && result.messages.length > 0) {
         console.log('📨 Found new messages:', result.messages.length);
-        setMessages(prev => [...prev, ...result.messages]);
+        
+        // Deduplicate messages to prevent showing the same message twice
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(msg => msg._id));
+          const newMessages = result.messages.filter(msg => !existingIds.has(msg._id));
+          
+          if (newMessages.length > 0) {
+            console.log('📨 Adding new unique messages:', newMessages.length);
+            return [...prev, ...newMessages];
+          }
+          return prev;
+        });
+        
         setLastMessageTimestamp(result.latestTimestamp);
         scrollToBottom();
         
@@ -428,8 +440,16 @@ const Chat = () => {
       
       console.log('📤 Message sent successfully:', message);
       
-      // Add message to current messages immediately
-      setMessages(prev => [...prev, message]);
+      // Add message to current messages immediately (with deduplication)
+      setMessages(prev => {
+        // Check if message already exists to prevent duplicates
+        const exists = prev.some(msg => msg._id === message._id);
+        if (exists) {
+          console.log('📨 Message already exists, skipping duplicate');
+          return prev;
+        }
+        return [...prev, message];
+      });
       
       // Update timestamp for polling
       setLastMessageTimestamp(message.createdAt);
