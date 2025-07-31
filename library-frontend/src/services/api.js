@@ -422,4 +422,147 @@ export const thoughtAPI = {
   }
 };
 
+// Chat API
+export const chatAPI = {
+  // Get user's conversations
+  getConversations: async () => {
+    const response = await api.get('/chat/conversations');
+    return response.data;
+  },
+
+  // Create or get private conversation
+  createPrivateConversation: async (userId) => {
+    const response = await api.post('/chat/conversations/private', { userId });
+    return response.data;
+  },
+
+  // Join main group chat
+  joinGroupChat: async () => {
+    const response = await api.post('/chat/conversations/group/join');
+    return response.data;
+  },
+
+  // Get conversation messages
+  getMessages: async (conversationId, page = 1, limit = 50) => {
+    const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Get new messages after a specific timestamp (for polling)
+  getNewMessages: async (conversationId, afterTimestamp) => {
+    const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
+      params: { after: afterTimestamp }
+    });
+    return response.data;
+  },
+
+  // Send message
+  sendMessage: async (conversationId, content, type = 'text', replyTo = null) => {
+    const response = await api.post(`/chat/conversations/${conversationId}/messages`, {
+      content,
+      type,
+      replyTo
+    });
+    return response.data;
+  },
+
+  // Mark messages as read
+  markAsRead: async (conversationId) => {
+    const response = await api.put(`/chat/conversations/${conversationId}/read`);
+    return response.data;
+  },
+
+  // Get online users
+  getOnlineUsers: async () => {
+    const response = await api.get('/chat/users/online');
+    return response.data;
+  },
+
+  // Delete message
+  deleteMessage: async (messageId) => {
+    const response = await api.delete(`/chat/messages/${messageId}`);
+    return response.data;
+  },
+
+  // Admin APIs
+  admin: {
+    // Get all conversations (admin monitoring)
+    getAllConversations: async () => {
+      const response = await api.get('/chat/admin/conversations');
+      return response.data;
+    },
+
+    // Get messages from any conversation
+    getConversationMessages: async (conversationId, page = 1, limit = 50) => {
+      const response = await api.get(`/chat/admin/conversations/${conversationId}/messages`, {
+        params: { page, limit }
+      });
+      return response.data;
+    },
+
+    // Get flagged messages
+    getFlaggedMessages: async () => {
+      const response = await api.get('/chat/admin/messages/flagged');
+      return response.data;
+    },
+
+    // Flag/unflag message
+    flagMessage: async (messageId, flag, reason = '') => {
+      const response = await api.put(`/chat/messages/${messageId}/flag`, {
+        flag,
+        reason
+      });
+      return response.data;
+    },
+
+    // Group Management APIs
+    // Create custom group
+    createGroup: async (name, description, participants = []) => {
+      const response = await api.post('/chat/admin/groups', {
+        name,
+        description,
+        participants
+      });
+      return response.data;
+    },
+
+    // Update group details
+    updateGroup: async (groupId, name, description) => {
+      const response = await api.put(`/chat/admin/groups/${groupId}`, {
+        name,
+        description
+      });
+      return response.data;
+    },
+
+    // Add members to group
+    addGroupMembers: async (groupId, userIds) => {
+      const response = await api.post(`/chat/admin/groups/${groupId}/members`, {
+        userIds
+      });
+      return response.data;
+    },
+
+    // Remove member from group
+    removeGroupMember: async (groupId, userId) => {
+      const response = await api.delete(`/chat/admin/groups/${groupId}/members/${userId}`);
+      return response.data;
+    },
+
+    // Delete group
+    deleteGroup: async (groupId) => {
+      const response = await api.delete(`/chat/admin/groups/${groupId}`);
+      return response.data;
+    },
+
+    // Get all users for group management
+    getAllUsers: async () => {
+      const response = await api.get('/chat/admin/users');
+      return response.data;
+    }
+  }
+};
+
 export default api; 

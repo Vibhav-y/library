@@ -23,6 +23,8 @@ import LandingPage from './components/LandingPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
 import ManageGallery from './components/ManageGallery';
 import ManageThoughts from './components/ManageThoughts';
+import Chat from './components/Chat';
+import ChatMonitoring from './components/ChatMonitoring';
 import './App.css';
 
 function App() {
@@ -144,6 +146,26 @@ function App() {
                 <ProtectedRoute adminOrManagerOnly>
                   <Layout>
                     <ManageThoughts />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Chat />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat-monitoring"
+              element={
+                <ProtectedRoute adminOnly>
+                  <Layout>
+                    <ChatMonitoring />
                   </Layout>
                 </ProtectedRoute>
               }

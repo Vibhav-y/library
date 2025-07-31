@@ -20,7 +20,9 @@ import {
   DollarSign,
   Volume2,
   Camera,
-  Lightbulb
+  Lightbulb,
+  MessageCircle,
+  Eye
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -47,6 +49,8 @@ const Layout = ({ children }) => {
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Documents', href: '/documents', icon: FileText },
     ] : []),
+    // Chat is available to all users
+    { name: 'Chat', href: '/chat', icon: MessageCircle },
     ...(user?.role === 'student' ? [
       { name: 'Favorites', href: '/favorites', icon: Star },
       { name: 'Notices', href: '/notices-tab', icon: Bell },
@@ -65,6 +69,7 @@ const Layout = ({ children }) => {
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
       { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
+      { name: 'Chat Monitoring', href: '/chat-monitoring', icon: Eye },
       { name: 'Announcements', href: '/announcements', icon: Volume2 },
       { name: 'Gallery', href: '/gallery', icon: Camera },
       { name: 'Customization', href: '/customization', icon: Settings },
