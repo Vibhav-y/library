@@ -36,6 +36,10 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Mobile responsiveness
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  
   // Admin group management
   const [showGroupManagement, setShowGroupManagement] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -55,6 +59,20 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   
+  // Mobile detection
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setShowSidebar(false); // Hide mobile sidebar on desktop
+      }
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
   // Load initial data
   useEffect(() => {
     loadConversations();
@@ -473,11 +491,114 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white/80 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden h-[calc(100vh-8rem)]">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-6">
+        <div className="bg-white/80 backdrop-blur-md shadow-2xl rounded-2xl sm:rounded-3xl border border-white/30 overflow-hidden h-[calc(100vh-1rem)] sm:h-[calc(100vh-8rem)]">
+          
+          {/* Mobile Header */}
+          {isMobile && (
+            <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
+              <button
+                onClick={() => setShowSidebar(true)}
+                className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+              >
+                <MessageCircle className="h-5 w-5 text-white" />
+              </button>
+              <h1 className="text-lg font-bold text-white">
+                {activeConversation ? getConversationName(activeConversation) : 'Chat'}
+              </h1>
+              <div className="w-9" /> {/* Spacer for centering */}
+            </div>
+          )}
+
           <div className="flex h-full">
-            {/* Sidebar - Conversations List */}
-            <div className="w-1/3 border-r border-gray-200/50 flex flex-col">
+            {/* Mobile Sidebar Overlay */}
+            {isMobile && showSidebar && (
+              <div className="fixed inset-0 z-50 md:hidden">
+                <div className="fixed inset-0 bg-black/50" onClick={() => setShowSidebar(false)} />
+                <div className="relative flex flex-col max-w-xs w-full bg-white h-full shadow-xl">
+                  {/* Mobile Sidebar Content */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
+                    <h2 className="text-lg font-bold text-white flex items-center">
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Conversations
+                    </h2>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setShowUserList(true);
+                          setShowSidebar(false);
+                        }}
+                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        title="Start new conversation"
+                      >
+                        <Plus className="h-4 w-4 text-white" />
+                      </button>
+                      {(user.role === 'admin' || user.role === 'superadmin') && (
+                        <button
+                          onClick={() => {
+                            setShowCreateGroup(true);
+                            setShowSidebar(false);
+                          }}
+                          className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                          title="Create new group"
+                        >
+                          <Users className="h-4 w-4 text-white" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowSidebar(false)}
+                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                      >
+                        <X className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mobile Conversations List */}
+                  <div className="flex-1 overflow-y-auto">
+                    {conversations.map((conversation, index) => (
+                      <div
+                        key={conversation._id}
+                        onClick={() => {
+                          setActiveConversation(conversation);
+                          loadMessages(conversation._id);
+                          setShowSidebar(false);
+                        }}
+                        className={`p-4 border-b border-gray-200/30 cursor-pointer transition-colors hover:bg-gray-50/50 ${
+                          activeConversation?._id === conversation._id ? 'bg-blue-50/50' : ''
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            {getConversationAvatar(conversation)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-gray-900 truncate">
+                                {getConversationName(conversation)}
+                              </p>
+                              {conversation.unreadCount > 0 && (
+                                <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                  {conversation.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                            {conversation.lastMessage && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {conversation.lastMessage.content}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Desktop Sidebar - Conversations List */}
+            <div className={`${isMobile ? 'hidden' : 'w-1/3'} border-r border-gray-200/50 flex flex-col`}>
               {/* Header */}
               <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
                 <div className="flex items-center justify-between">
@@ -551,23 +672,24 @@ const Chat = () => {
             <div className="flex-1 flex flex-col">
               {activeConversation ? (
                 <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-white/90 to-white/70">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        {getConversationAvatar(activeConversation)}
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {getConversationName(activeConversation)}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {activeConversation.type === 'group' 
-                              ? `${activeConversation.participants.length} members`
-                              : 'Private conversation'
-                            }
-                          </p>
+                  {/* Desktop Chat Header */}
+                  {!isMobile && (
+                    <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-white/90 to-white/70">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          {getConversationAvatar(activeConversation)}
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {getConversationName(activeConversation)}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {activeConversation.type === 'group' 
+                                ? `${activeConversation.participants.length} members`
+                                : 'Private conversation'
+                              }
+                            </p>
+                          </div>
                         </div>
-                      </div>
                       {(user.role === 'admin' || user.role === 'superadmin') && activeConversation.type === 'group' && (
                         <div className="flex space-x-2">
                           <button
@@ -588,14 +710,15 @@ const Chat = () => {
                           )}
                         </div>
                       )}
-                      <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors">
-                        <MoreVertical className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
+                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors">
+                          <MoreVertical className="h-5 w-5" />
+                        </button>
+                      </div>
+                    )}
+                  )}
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
                     {messagesLoading && (
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -608,7 +731,7 @@ const Chat = () => {
                         className={`flex ${message.sender._id === user.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                          className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${
                             message.sender._id === user.id
                               ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                               : 'bg-white/80 text-gray-900 border border-gray-200/50'
@@ -619,7 +742,7 @@ const Chat = () => {
                               {message.sender.name}
                             </p>
                           )}
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm break-words">{message.content}</p>
                           <div className="flex items-center justify-between mt-1">
                             <p className={`text-xs ${
                               message.sender._id === user.id ? 'text-white/70' : 'text-gray-500'
@@ -629,7 +752,7 @@ const Chat = () => {
                             {message.sender._id === user.id && (
                               <button
                                 onClick={() => deleteMessage(message._id)}
-                                className="ml-2 text-white/70 hover:text-white"
+                                className="ml-2 text-white/70 hover:text-white p-1 -m-1 touch-manipulation"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
@@ -652,8 +775,8 @@ const Chat = () => {
                   </div>
 
                   {/* Message Input */}
-                  <div className="p-4 border-t border-gray-200/50 bg-white/50">
-                    <div className="flex items-center space-x-3">
+                  <div className="p-3 sm:p-4 border-t border-gray-200/50 bg-white/50">
+                    <div className="flex items-end space-x-2 sm:space-x-3">
                       <div className="flex-1 relative">
                         <textarea
                           value={newMessage}
@@ -663,34 +786,39 @@ const Chat = () => {
                           }}
                           onKeyPress={handleKeyPress}
                           placeholder="Type a message..."
-                          rows={1}
-                          className="w-full px-4 py-3 bg-white/80 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all duration-200"
+                          rows={isMobile ? 2 : 1}
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/80 border border-gray-200/50 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all duration-200 text-base"
+                          style={{ minHeight: isMobile ? '44px' : 'auto' }}
                         />
                       </div>
                       <button
                         onClick={sendMessage}
                         disabled={!newMessage.trim()}
-                        className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                        className="p-2 sm:p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
-                        <Send className="h-5 w-5" />
+                        <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                     </div>
                   </div>
                 </>
               ) : (
                 /* No conversation selected */
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Chat</h3>
-                    <p className="text-gray-600 mb-4">Select a conversation to start chatting</p>
-                    <button
-                      onClick={() => setShowUserList(true)}
-                      className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-colors"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Start New Conversation
-                    </button>
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center max-w-sm">
+                    <MessageCircle className="h-12 sm:h-16 w-12 sm:w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Welcome to Chat</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">
+                      {isMobile ? 'Tap the chat icon to view conversations' : 'Select a conversation to start chatting'}
+                    </p>
+                    {!isMobile && (
+                      <button
+                        onClick={() => setShowUserList(true)}
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Start New Conversation
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -701,9 +829,9 @@ const Chat = () => {
 
       {/* User List Modal */}
       {showUserList && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Start New Conversation</h3>
                 <button
@@ -722,7 +850,7 @@ const Chat = () => {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
                 />
               </div>
 
@@ -732,7 +860,7 @@ const Chat = () => {
                   <button
                     key={onlineUser._id}
                     onClick={() => startPrivateConversation(onlineUser._id)}
-                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-colors touch-manipulation"
                   >
                     <div className="relative">
                       {onlineUser.profilePicture ? (
@@ -762,9 +890,9 @@ const Chat = () => {
 
       {/* Create Group Modal */}
       {showCreateGroup && (user.role === 'admin' || user.role === 'superadmin') && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Create New Group</h3>
                 <button
@@ -783,13 +911,13 @@ const Chat = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Group Name *
                   </label>
-                  <input
-                    type="text"
-                    value={groupForm.name}
-                    onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter group name..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
+                                      <input
+                      type="text"
+                      value={groupForm.name}
+                      onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter group name..."
+                      className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
+                    />
                 </div>
 
                 <div>
@@ -801,7 +929,7 @@ const Chat = () => {
                     onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter group description..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
                   />
                 </div>
 
@@ -857,14 +985,14 @@ const Chat = () => {
                     setShowCreateGroup(false);
                     setGroupForm({ name: '', description: '', participants: [] });
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={createGroup}
                   disabled={!groupForm.name.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
                 >
                   Create Group
                 </button>
@@ -876,9 +1004,9 @@ const Chat = () => {
 
       {/* Group Management Modal */}
       {showGroupManagement && editingGroup && (user.role === 'admin' || user.role === 'superadmin') && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <Crown className="h-5 w-5 mr-2 text-yellow-500" />
@@ -1002,13 +1130,13 @@ const Chat = () => {
                     setEditingGroup(null);
                     setGroupForm({ name: '', description: '', participants: [] });
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={updateGroup}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
                 >
                   Save Changes
                 </button>
