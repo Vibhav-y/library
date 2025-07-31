@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, Edit, Trash2, Calendar, AlertCircle, CheckCircle, Shield, User as UserIcon, Camera, Clock, MapPin, X } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Calendar, AlertCircle, CheckCircle, Shield, User as UserIcon, Users, Camera, Clock, MapPin, X } from 'lucide-react';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
