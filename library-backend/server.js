@@ -46,6 +46,7 @@ app.use('/api/notice', require('./routes/notice'));
 app.use('/api/customization', require('./routes/customization'));
 app.use('/api/announcement', require('./routes/announcement'));
 app.use('/api/gallery', require('./routes/gallery'));
+app.use('/api/thought', require('./routes/thoughtOfTheDay'));
 
 // Simple migration function for existing users without names
 const migrateExistingUsers = async () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { documentAPI, userAPI } from '../services/api';
-import { FileText, Users, FolderOpen, Upload, Calendar, Activity, Star } from 'lucide-react';
+import { documentAPI, userAPI, thoughtAPI } from '../services/api';
+import { FileText, Users, FolderOpen, Upload, Calendar, Activity, Star, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -15,6 +15,7 @@ const Dashboard = () => {
     recentDocuments: [],
     favoritesCount: 0,
   });
+  const [thoughtOfTheDay, setThoughtOfTheDay] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -24,7 +25,8 @@ const Dashboard = () => {
     try {
       const promises = [
         userAPI.getDashboard(),
-        documentAPI.getAll()
+        documentAPI.getAll(),
+        thoughtAPI.getTodaysThought()
       ];
       
       // Add favorites count for students
@@ -35,9 +37,11 @@ const Dashboard = () => {
       const responses = await Promise.all(promises);
       const dashboardData = responses[0];
       const docsResponse = responses[1];
-      const favoritesResponse = responses[2];
+      const thoughtResponse = responses[2];
+      const favoritesResponse = user?.role === 'student' ? responses[3] : null;
       
       setDocuments(docsResponse);
+      setThoughtOfTheDay(thoughtResponse);
       setStats({
         totalDocuments: dashboardData.totalDocuments,
         totalCategories: dashboardData.totalCategories,
@@ -146,16 +150,44 @@ const Dashboard = () => {
             <div className="flex items-start sm:items-center">
               <div className="flex-shrink-0">
                 <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/30">
-                  <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-md" />
+                  {user?.role === 'student' ? (
+                    <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-md" />
+                  ) : (
+                    <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-md" />
+                  )}
                 </div>
               </div>
               <div className="ml-4 sm:ml-6 min-w-0 flex-1">
                 <h3 className="text-xl sm:text-3xl font-bold text-white drop-shadow-md">
                   Welcome back, {user?.name || user?.email}!
                 </h3>
-                <p className="mt-2 text-base sm:text-lg text-white/90 drop-shadow-sm">
-                  You are logged in as <span className="font-semibold capitalize">{user?.role}</span>. Here's what's happening in your library today.
-                </p>
+                {user?.role === 'student' ? (
+                  <div className="mt-2">
+                    <div className="flex items-center mb-2">
+                      <span className="text-sm font-medium text-white/70 uppercase tracking-wider">Thought of the Day</span>
+                    </div>
+                    {thoughtOfTheDay ? (
+                      <div className="space-y-1">
+                        <p className="text-base sm:text-lg text-white/95 drop-shadow-sm italic">
+                          "{thoughtOfTheDay.thought}"
+                        </p>
+                        {thoughtOfTheDay.author && (
+                          <p className="text-sm text-white/80 drop-shadow-sm">
+                            — {thoughtOfTheDay.author}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-base sm:text-lg text-white/90 drop-shadow-sm italic">
+                        "Every day is a new opportunity to learn something amazing!"
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-base sm:text-lg text-white/90 drop-shadow-sm">
+                    You are logged in as <span className="font-semibold capitalize">{user?.role}</span>. Here's what's happening in your library today.
+                  </p>
+                )}
               </div>
             </div>
           </div>

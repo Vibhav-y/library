@@ -382,4 +382,44 @@ export const galleryAPI = {
   }
 };
 
+// Thought of the Day API
+export const thoughtAPI = {
+  // Public endpoint for students
+  getTodaysThought: async () => {
+    const response = await api.get('/thought/today');
+    return response.data;
+  },
+
+  // Admin endpoints
+  getAllThoughts: async () => {
+    const response = await api.get('/thought');
+    return response.data;
+  },
+
+  createThought: async (thoughtData) => {
+    const response = await api.post('/thought', thoughtData);
+    return response.data;
+  },
+
+  updateThought: async (id, thoughtData) => {
+    const response = await api.put(`/thought/${id}`, thoughtData);
+    return response.data;
+  },
+
+  deleteThought: async (id) => {
+    const response = await api.delete(`/thought/${id}`);
+    return response.data;
+  },
+
+  reorderThoughts: async (thoughts) => {
+    const response = await api.put('/thought/reorder/bulk', { thoughts });
+    return response.data;
+  },
+
+  bulkImportThoughts: async (thoughts) => {
+    const response = await api.post('/thought/bulk-import', { thoughts });
+    return response.data;
+  }
+};
+
 export default api; 

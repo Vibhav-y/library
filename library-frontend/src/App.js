@@ -22,6 +22,7 @@ import RoleBasedRedirect from './components/RoleBasedRedirect';
 import LandingPage from './components/LandingPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
 import ManageGallery from './components/ManageGallery';
+import ManageThoughts from './components/ManageThoughts';
 import './App.css';
 
 function App() {
@@ -132,6 +133,17 @@ function App() {
                 <ProtectedRoute adminOnly>
                   <Layout>
                     <Customization />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/thoughts"
+              element={
+                <ProtectedRoute adminOrManagerOnly>
+                  <Layout>
+                    <ManageThoughts />
                   </Layout>
                 </ProtectedRoute>
               }

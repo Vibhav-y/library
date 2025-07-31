@@ -19,7 +19,8 @@ import {
   User,
   DollarSign,
   Volume2,
-  Camera
+  Camera,
+  Lightbulb
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -55,6 +56,7 @@ const Layout = ({ children }) => {
       { name: 'Manage Users', href: '/users', icon: Users },
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
+      { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
     ] : []),
     ...(isAdmin ? [
       { name: 'Upload Document', href: '/upload', icon: Upload },
@@ -62,6 +64,7 @@ const Layout = ({ children }) => {
       { name: 'Categories', href: '/categories', icon: FolderOpen },
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
+      { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
       { name: 'Announcements', href: '/announcements', icon: Volume2 },
       { name: 'Gallery', href: '/gallery', icon: Camera },
       { name: 'Customization', href: '/customization', icon: Settings },
