@@ -829,27 +829,44 @@ html {
   border: none;
 }
 
-/* Hide PDF.js toolbar and UI elements */
-.toolbar,
-.toolbarViewer,
-.secondaryToolbar,
-.doorHanger,
-.overlayContainer,
-.loadingBar,
-.findbar,
-.secondaryToolbarToggle,
-.toolbarButton,
-#toolbar,
-#toolbarViewer,
-#secondaryToolbar,
-#mainContainer .toolbar,
-#outerContainer .toolbar {
+/* Hide PDF.js toolbar and UI elements - Comprehensive approach */
+.toolbar, #toolbar,
+.toolbarViewer, #toolbarViewer,
+.secondaryToolbar, #secondaryToolbar,
+.doorHanger, .overlayContainer, .loadingBar, .findbar,
+.secondaryToolbarToggle, .toolbarButton, .toolbarLabel, .toolbarField,
+.splitToolbarButton, .dropdownToolbarButton,
+.verticalToolbarSeparator, .horizontalToolbarSeparator,
+.toolbarButtonSpacer,
+#print, #download, #openFile, #secondaryOpenFile,
+#viewFind, #previous, #next, #pageNumber, #numPages,
+#zoomOut, #zoomIn, #presentationMode, #viewBookmark,
+#secondaryPrint, #secondaryDownload, #firstPage, #lastPage,
+#mainContainer .toolbar, #outerContainer .toolbar,
+button[title*="Print"], button[title*="Download"], button[title*="Save"],
+button[aria-label*="Print"], button[aria-label*="Download"], button[aria-label*="Save"],
+button[data-l10n-id*="print"], button[data-l10n-id*="download"],
+[class*="toolbar"], [id*="toolbar"]:not(#viewer),
+[class*="button"]:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-success):not(.btn-sm),
+[class*="menu"], [id*="menu"],
+[class*="dropdown"], [id*="dropdown"] {
   display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
   height: 0 !important;
+  width: 0 !important;
   min-height: 0 !important;
   max-height: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 /* Hide browser PDF controls and toolbars */
@@ -870,12 +887,45 @@ object[type="application/pdf"] {
 iframe[src*="pdf.js"] {
   border: none !important;
   outline: none !important;
+  background: white !important;
 }
 
 /* Force PDF.js container to use full space */
 iframe[src*="pdf.js"] {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* PDF.js iframe content styling - this will apply when possible */
+iframe[src*="pdf.js"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: white;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Additional PDF.js specific hiding - targeting known class/id patterns */
+iframe[src*="mozilla.github.io"] .toolbar,
+iframe[src*="mozilla.github.io"] #toolbar,
+iframe[src*="mozilla.github.io"] .toolbarViewer,
+iframe[src*="mozilla.github.io"] #toolbarViewer,
+iframe[src*="mozilla.github.io"] button,
+iframe[src*="mozilla.github.io"] .dropdownToolbarButton,
+iframe[src*="mozilla.github.io"] .splitToolbarButton {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
 }
 
 /* Hide any remaining PDF interface elements */
