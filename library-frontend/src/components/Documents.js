@@ -990,7 +990,7 @@ const Documents = () => {
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+      {/* <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
         <div className="relative px-6 py-8 sm:p-10">
@@ -998,17 +998,17 @@ const Documents = () => {
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
               <FileText className="h-6 w-6 text-white" />
             </div>
-            {/* <div>
+            <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Document Library
               </h3>
               <p className="mt-2 text-base sm:text-lg text-gray-600">
                 Browse and view documents organized by categories. Click on categories to expand and view documents.
               </p>
-            </div> */}
+            </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Results Summary */}
       <div className="relative bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/30">
