@@ -122,6 +122,9 @@ const Documents = () => {
 
       setCategorizedDocuments(docsByCategory);
       setCategoryTree(categories);
+      
+      // Reset expanded categories when search is cleared (keep only previously manually expanded ones)
+      // For simplicity, we'll just keep the current expanded state when clearing search
       return;
     }
 
@@ -202,6 +205,51 @@ const Documents = () => {
 
     setCategorizedDocuments(docsByCategory);
     setCategoryTree(filteredCategoryTree);
+
+    // Auto-expand categories that contain matching documents
+    if (searchTerm) {
+      const categoriesToExpand = new Set();
+      
+      // Add categories that have matching documents
+      Object.keys(docsByCategory).forEach(categoryId => {
+        if (docsByCategory[categoryId].length > 0) {
+          categoriesToExpand.add(categoryId);
+          
+          // Add parent categories to show hierarchy
+          const addParentCategories = (catId) => {
+            const category = categories.find(cat => cat._id === catId) || 
+                           categories.flatMap(cat => cat.subcategories || []).find(cat => cat._id === catId);
+            if (category && category.parentCategory) {
+              categoriesToExpand.add(category.parentCategory);
+              addParentCategories(category.parentCategory);
+            }
+          };
+          
+          if (categoryId !== 'uncategorized') {
+            addParentCategories(categoryId);
+          }
+        }
+      });
+      
+      // Also expand categories that match the search term
+      const addMatchingCategories = (cats) => {
+        cats.forEach(cat => {
+          if (cat.name.toLowerCase().includes(searchLower)) {
+            categoriesToExpand.add(cat._id);
+            // Add parent categories
+            if (cat.parentCategory) {
+              categoriesToExpand.add(cat.parentCategory);
+            }
+          }
+          if (cat.subcategories) {
+            addMatchingCategories(cat.subcategories);
+          }
+        });
+      };
+      addMatchingCategories(filteredCategoryTree);
+      
+      setExpandedCategories(categoriesToExpand);
+    }
   };
 
   const toggleCategory = (categoryId) => {
