@@ -549,20 +549,20 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-6">
-        <div className="bg-white/80 backdrop-blur-md shadow-2xl rounded-2xl sm:rounded-3xl border border-white/30 overflow-hidden h-[calc(100vh-1rem)] sm:h-[calc(100vh-8rem)]">
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden h-[calc(100vh-1rem)] sm:h-[calc(100vh-8rem)]">
           
           {/* Mobile Header */}
           {isMobile && (
-            <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white">
               <button
                 onClick={() => setShowSidebar(true)}
-                className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <MessageCircle className="h-5 w-5 text-white" />
+                <MessageCircle className="h-5 w-5" />
               </button>
-              <h1 className="text-lg font-bold text-white">
+              <h1 className="text-lg font-semibold text-gray-900">
                 {activeConversation ? getConversationName(activeConversation) : 'Chat'}
               </h1>
               <div className="w-9" /> {/* Spacer for centering */}
@@ -573,24 +573,24 @@ const Chat = () => {
             {/* Mobile Sidebar Overlay */}
             {isMobile && showSidebar && (
               <div className="fixed inset-0 z-50 md:hidden">
-                <div className="fixed inset-0 bg-black/50" onClick={() => setShowSidebar(false)} />
-                <div className="relative flex flex-col max-w-xs w-full bg-white h-full shadow-xl">
+                <div className="fixed inset-0 bg-black/40" onClick={() => setShowSidebar(false)} />
+                <div className="relative flex flex-col max-w-sm w-full bg-white h-full shadow-lg">
                   {/* Mobile Sidebar Content */}
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
-                    <h2 className="text-lg font-bold text-white flex items-center">
-                      <MessageCircle className="h-5 w-5 mr-2" />
+                  <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white">
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <MessageCircle className="h-5 w-5 mr-2 text-gray-600" />
                       Conversations
                     </h2>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1">
                       <button
                         onClick={() => {
                           setShowUserList(true);
                           setShowSidebar(false);
                         }}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
                         title="Start new conversation"
                       >
-                        <Plus className="h-4 w-4 text-white" />
+                        <Plus className="h-4 w-4" />
                       </button>
                       {(user.role === 'admin' || user.role === 'superadmin') && (
                         <button
@@ -598,17 +598,17 @@ const Chat = () => {
                             setShowCreateGroup(true);
                             setShowSidebar(false);
                           }}
-                          className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                          className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
                           title="Create new group"
                         >
-                          <Users className="h-4 w-4 text-white" />
+                          <Users className="h-4 w-4" />
                         </button>
                       )}
                       <button
                         onClick={() => setShowSidebar(false)}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
                       >
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -623,8 +623,8 @@ const Chat = () => {
                           loadMessages(conversation._id);
                           setShowSidebar(false);
                         }}
-                        className={`p-4 border-b border-gray-200/30 cursor-pointer transition-colors hover:bg-gray-50/50 ${
-                          activeConversation?._id === conversation._id ? 'bg-blue-50/50' : ''
+                        className={`p-4 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
+                          activeConversation?._id === conversation._id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                         }`}
                       >
                         <div className="flex items-center space-x-3">
@@ -657,29 +657,29 @@ const Chat = () => {
             )}
 
             {/* Desktop Sidebar - Conversations List */}
-            <div className={`${isMobile ? 'hidden' : 'w-1/3'} border-r border-gray-200/50 flex flex-col`}>
+            <div className={`${isMobile ? 'hidden' : 'w-1/3'} border-r border-gray-100 flex flex-col bg-gray-50`}>
               {/* Header */}
-              <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-blue-600 to-purple-600">
+              <div className="p-4 border-b border-gray-100 bg-white">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white flex items-center">
-                    <MessageCircle className="h-6 w-6 mr-2" />
-                    Chat
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <MessageCircle className="h-5 w-5 mr-2 text-gray-600" />
+                    Conversations
                   </h2>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     <button
                       onClick={() => setShowUserList(true)}
-                      className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                      className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
                       title="Start new conversation"
                     >
-                      <Plus className="h-5 w-5 text-white" />
+                      <Plus className="h-4 w-4" />
                     </button>
                     {(user.role === 'admin' || user.role === 'superadmin') && (
                       <button
                         onClick={() => setShowCreateGroup(true)}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
                         title="Create new group"
                       >
-                        <Users className="h-5 w-5 text-white" />
+                        <Users className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -695,8 +695,8 @@ const Chat = () => {
                       setActiveConversation(conversation);
                       loadMessages(conversation._id);
                     }}
-                    className={`p-4 border-b border-gray-200/30 cursor-pointer transition-colors hover:bg-gray-50/50 ${
-                      activeConversation?._id === conversation._id ? 'bg-blue-50/50' : ''
+                    className={`p-4 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
+                      activeConversation?._id === conversation._id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -733,7 +733,7 @@ const Chat = () => {
                 <>
                   {/* Desktop Chat Header */}
                   {!isMobile && (
-                    <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-white/90 to-white/70">
+                    <div className="p-4 border-b border-gray-100 bg-white">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           {getConversationAvatar(activeConversation)}
@@ -750,34 +750,34 @@ const Chat = () => {
                           </div>
                         </div>
                         {(user.role === 'admin' || user.role === 'superadmin') && activeConversation.type === 'group' && (
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-1">
                             <button
                               onClick={() => openEditGroup(activeConversation)}
-                              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors"
+                              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                               title="Manage group"
                             >
-                              <Settings className="h-5 w-5" />
+                              <Settings className="h-4 w-4" />
                             </button>
                             {activeConversation.name !== 'General Discussion' && (
                               <button
                                 onClick={() => deleteGroup(activeConversation._id)}
-                                className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete group"
                               >
-                                <Trash2 className="h-5 w-5" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             )}
+                            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
                           </div>
                         )}
-                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors">
-                          <MoreVertical className="h-5 w-5" />
-                        </button>
                       </div>
                     </div>
                   )}
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
+                  <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 bg-gray-50">
                     {messagesLoading && (
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -790,28 +790,28 @@ const Chat = () => {
                         className={`flex ${message.sender._id === user.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${
+                          className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-3 sm:px-4 py-3 rounded-lg shadow-sm ${
                             message.sender._id === user.id
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                              : 'bg-white/80 text-gray-900 border border-gray-200/50'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-900 border border-gray-100'
                           }`}
                         >
                           {message.sender._id !== user.id && (
-                            <p className="text-xs font-semibold mb-1 text-gray-600">
+                            <p className="text-xs font-medium mb-2 text-gray-500">
                               {message.sender.name}
                             </p>
                           )}
-                          <p className="text-sm break-words">{message.content}</p>
-                          <div className="flex items-center justify-between mt-1">
+                          <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                          <div className="flex items-center justify-between mt-2">
                             <p className={`text-xs ${
-                              message.sender._id === user.id ? 'text-white/70' : 'text-gray-500'
+                              message.sender._id === user.id ? 'text-blue-100' : 'text-gray-400'
                             }`}>
                               {formatTime(message.createdAt)}
                             </p>
                             {message.sender._id === user.id && (
                               <button
                                 onClick={() => deleteMessage(message._id)}
-                                className="ml-2 text-white/70 hover:text-white p-1 -m-1 touch-manipulation"
+                                className="ml-2 text-blue-100 hover:text-white p-1 -m-1 touch-manipulation opacity-70 hover:opacity-100"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
@@ -824,8 +824,8 @@ const Chat = () => {
                     {/* Polling status indicator */}
                     {isPolling && (
                       <div className="flex justify-center">
-                        <div className="bg-blue-100/80 px-3 py-1 rounded-xl">
-                          <p className="text-xs text-blue-600">Checking for new messages...</p>
+                        <div className="bg-gray-100 px-3 py-1 rounded-full">
+                          <p className="text-xs text-gray-500">•••</p>
                         </div>
                       </div>
                     )}
@@ -834,8 +834,8 @@ const Chat = () => {
                   </div>
 
                   {/* Message Input */}
-                  <div className="p-3 sm:p-4 border-t border-gray-200/50 bg-white/50">
-                    <div className="flex items-end space-x-2 sm:space-x-3">
+                  <div className="p-4 border-t border-gray-100 bg-white">
+                    <div className="flex items-end space-x-3">
                       <div className="flex-1 relative">
                         <textarea
                           value={newMessage}
@@ -846,19 +846,19 @@ const Chat = () => {
                           onKeyPress={handleKeyPress}
                           placeholder="Type a message..."
                           rows={isMobile ? 2 : 1}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/80 border border-gray-200/50 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all duration-200 text-base"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 text-base focus:bg-white"
                           style={{ minHeight: isMobile ? '44px' : 'auto' }}
                         />
                       </div>
                       <button
                         onClick={sendMessage}
                         disabled={!newMessage.trim() || isSending}
-                        className="p-2 sm:p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md touch-manipulation min-h-[48px] min-w-[48px] flex items-center justify-center"
                       >
                         {isSending ? (
-                          <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         ) : (
-                          <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <Send className="h-4 w-4" />
                         )}
                       </button>
                     </div>
@@ -866,17 +866,17 @@ const Chat = () => {
                 </>
               ) : (
                 /* No conversation selected */
-                <div className="flex-1 flex items-center justify-center p-4">
+                <div className="flex-1 flex items-center justify-center p-4 bg-gray-50">
                   <div className="text-center max-w-sm">
-                    <MessageCircle className="h-12 sm:h-16 w-12 sm:w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Welcome to Chat</h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4">
+                    <MessageCircle className="h-12 sm:h-16 w-12 sm:w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Welcome to Chat</h3>
+                    <p className="text-sm sm:text-base text-gray-500 mb-6">
                       {isMobile ? 'Tap the chat icon to view conversations' : 'Select a conversation to start chatting'}
                     </p>
                     {!isMobile && (
                       <button
                         onClick={() => setShowUserList(true)}
-                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-colors"
+                        className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Start New Conversation
@@ -892,9 +892,9 @@ const Chat = () => {
 
       {/* User List Modal */}
       {showUserList && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
-            <div className="p-4 sm:p-6">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Start New Conversation</h3>
                 <button
@@ -913,7 +913,7 @@ const Chat = () => {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 
@@ -923,7 +923,7 @@ const Chat = () => {
                   <button
                     key={onlineUser._id}
                     onClick={() => startPrivateConversation(onlineUser._id)}
-                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-xl transition-colors touch-manipulation"
+                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors touch-manipulation"
                   >
                     <div className="relative">
                       {onlineUser.profilePicture ? (
@@ -953,9 +953,9 @@ const Chat = () => {
 
       {/* Create Group Modal */}
       {showCreateGroup && (user.role === 'admin' || user.role === 'superadmin') && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Create New Group</h3>
                 <button
@@ -974,12 +974,12 @@ const Chat = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Group Name *
                   </label>
-                                      <input
+                    <input
                       type="text"
                       value={groupForm.name}
                       onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter group name..."
-                      className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
+                      className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-gray-50 focus:bg-white transition-colors"
                     />
                 </div>
 
@@ -992,7 +992,7 @@ const Chat = () => {
                     onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter group description..."
                     rows={3}
-                    className="w-full px-3 py-2 sm:py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-base"
+                    className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-gray-50 focus:bg-white transition-colors resize-none"
                   />
                 </div>
 
@@ -1042,20 +1042,20 @@ const Chat = () => {
                 </div>
               </div>
 
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-3 mt-6 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => {
                     setShowCreateGroup(false);
                     setGroupForm({ name: '', description: '', participants: [] });
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
+                  className="flex-1 px-6 py-2.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={createGroup}
                   disabled={!groupForm.name.trim()}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                  className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
                 >
                   Create Group
                 </button>
@@ -1067,9 +1067,9 @@ const Chat = () => {
 
       {/* Group Management Modal */}
       {showGroupManagement && editingGroup && (user.role === 'admin' || user.role === 'superadmin') && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <Crown className="h-5 w-5 mr-2 text-yellow-500" />
@@ -1186,20 +1186,20 @@ const Chat = () => {
                 </div>
               </div>
 
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-3 mt-6 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => {
                     setShowGroupManagement(false);
                     setEditingGroup(null);
                     setGroupForm({ name: '', description: '', participants: [] });
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
+                  className="flex-1 px-6 py-2.5 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={updateGroup}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
+                  className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                 >
                   Save Changes
                 </button>
