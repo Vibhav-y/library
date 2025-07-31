@@ -278,24 +278,31 @@ const ManageUsers = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                User Management
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Add, edit, and manage user accounts.
-              </p>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  User Management
+                </h3>
+                <p className="mt-2 text-base sm:text-lg text-gray-600">
+                  Add, edit, and manage user accounts with role-based permissions.
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
             >
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
               Add User
             </button>
           </div>
@@ -304,37 +311,46 @@ const ManageUsers = () => {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <div className="flex">
-            <CheckCircle className="h-5 w-5 text-green-400" />
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{success}</p>
+        <div className="relative bg-green-50/80 backdrop-blur-sm border border-green-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-50/90 to-green-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg mr-4">
+              <CheckCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-green-800">{success}</p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+        <div className="relative bg-red-50/80 backdrop-blur-sm border border-red-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-50/90 to-red-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg mr-4">
+              <AlertCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-red-800">{error}</p>
           </div>
         </div>
       )}
 
       {/* Add/Edit Form */}
       {showAddForm && (
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              {editingUser ? 'Edit User' : 'Add New User'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <div className="flex items-center mb-8">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg mr-4">
+                {editingUser ? <Edit className="h-5 w-5 text-white" /> : <UserPlus className="h-5 w-5 text-white" />}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {editingUser ? 'Edit User' : 'Add New User'}
+              </h3>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="name" className="block text-base font-semibold text-gray-700">
                   Name
                 </label>
                 <input
@@ -344,12 +360,12 @@ const ManageUsers = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                   placeholder="John Doe"
                 />
               </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-base font-semibold text-gray-700">
                   Email Address
                 </label>
                 <input
@@ -360,15 +376,15 @@ const ManageUsers = () => {
                   onChange={handleInputChange}
                   disabled={editingUser && currentUser.role !== 'superadmin'}
                   required
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100"
+                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400 disabled:bg-gray-100/80 disabled:cursor-not-allowed"
                   placeholder="user@example.com"
                 />
               </div>
 
               {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && (
                 <>
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="block text-base font-semibold text-gray-700">
                       Password
                     </label>
                     <input
@@ -378,18 +394,18 @@ const ManageUsers = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required={!editingUser}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                       placeholder={editingUser ? "Leave blank to keep current password" : "Enter password"}
                     />
                     {editingUser && currentUser.role === 'superadmin' && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="text-sm text-gray-600 bg-blue-50/80 px-3 py-2 rounded-xl">
                         Leave blank to keep the current password, or enter a new password to change it.
                       </p>
                     )}
                   </div>
 
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="role" className="block text-base font-semibold text-gray-700">
                       Role
                     </label>
                     <select
@@ -397,7 +413,7 @@ const ManageUsers = () => {
                       name="role"
                       value={formData.role}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                     >
                       <option value="student">Student</option>
                       {currentUser.role === 'superadmin' && (
@@ -409,14 +425,14 @@ const ManageUsers = () => {
                       )}
                     </select>
                     {currentUser.role !== 'superadmin' && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="text-sm text-gray-600 bg-amber-50/80 px-3 py-2 rounded-xl">
                         Only superadmins can create admin accounts
                       </p>
                     )}
                   </div>
 
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="phone" className="block text-base font-semibold text-gray-700">
                       Phone Number
                     </label>
                     <input
@@ -425,7 +441,7 @@ const ManageUsers = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                       placeholder="Enter phone number"
                     />
                   </div>
@@ -436,18 +452,21 @@ const ManageUsers = () => {
               {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && formData.role === 'student' && (
                 <>
                   <div className="col-span-2">
-                    <h4 className="text-md font-medium text-gray-900 mb-4 border-t pt-4">
-                      Student Information
-                    </h4>
+                    <div className="border-t border-gray-200/50 pt-6 mb-6">
+                      <h4 className="text-xl font-bold text-gray-900 flex items-center">
+                        <div className="h-2 w-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-3"></div>
+                        Student Information
+                      </h4>
+                    </div>
                   </div>
 
                   {/* Profile Picture */}
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="col-span-2 space-y-4">
+                    <label className="block text-base font-semibold text-gray-700">
                       Profile Picture (Optional)
                     </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                    <div className="flex items-center space-x-6">
+                      <div className="h-20 w-20 rounded-3xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-lg border border-white/40">
                         {imagePreview ? (
                           <img
                             src={imagePreview}
@@ -455,7 +474,7 @@ const ManageUsers = () => {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <UserIcon className="h-8 w-8 text-gray-400" />
+                          <UserIcon className="h-10 w-10 text-gray-400" />
                         )}
                       </div>
                       <div className="flex-1">
@@ -470,9 +489,9 @@ const ManageUsers = () => {
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          className="inline-flex items-center px-4 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 border border-gray-200/50"
                         >
-                          <Camera className="h-4 w-4 mr-2" />
+                          <Camera className="h-5 w-5 mr-2" />
                           Choose Photo
                         </button>
                         {imagePreview && (
@@ -482,21 +501,21 @@ const ManageUsers = () => {
                               setImagePreview(null);
                               setFormData(prev => ({ ...prev, profilePicture: null }));
                             }}
-                            className="ml-2 inline-flex items-center px-2 py-1 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100"
+                            className="ml-3 inline-flex items-center px-3 py-2 bg-red-50/80 backdrop-blur-sm text-red-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-300"
                           >
-                            <X className="h-3 w-3 mr-1" />
+                            <X className="h-4 w-4 mr-1" />
                             Remove
                           </button>
                         )}
                       </div>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="text-sm text-gray-600 bg-gray-50/80 px-3 py-2 rounded-xl">
                       PNG, JPG, GIF up to 5MB
                     </p>
                   </div>
 
-                  <div>
-                    <label htmlFor="dob" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="dob" className="block text-base font-semibold text-gray-700">
                       Date of Birth
                     </label>
                     <input
@@ -505,12 +524,12 @@ const ManageUsers = () => {
                       name="dob"
                       value={formData.dob}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="dateJoinedLibrary" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="dateJoinedLibrary" className="block text-base font-semibold text-gray-700">
                       Date Joined Library
                     </label>
                     <input
@@ -519,15 +538,15 @@ const ManageUsers = () => {
                       name="dateJoinedLibrary"
                       value={formData.dateJoinedLibrary}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="text-sm text-gray-600 bg-blue-50/80 px-3 py-2 rounded-xl">
                       Used to generate monthly fee records
                     </p>
                   </div>
 
-                  <div>
-                    <label htmlFor="slot" className="block text-sm font-medium text-gray-700">
+                  <div className="space-y-2">
+                    <label htmlFor="slot" className="block text-base font-semibold text-gray-700">
                       Time Slot
                     </label>
                     <select
@@ -535,7 +554,7 @@ const ManageUsers = () => {
                       name="slot"
                       value={formData.slot}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                     >
                       <option value="">Select slot</option>
                       <option value="morning">Morning</option>
@@ -544,45 +563,30 @@ const ManageUsers = () => {
                     </select>
                   </div>
 
-                                     <div>
-                     <label htmlFor="seatNumber" className="block text-sm font-medium text-gray-700">
-                       Seat Number
-                     </label>
-                     <input
-                       type="number"
-                       id="seatNumber"
-                       name="seatNumber"
-                       value={formData.seatNumber}
-                       onChange={handleInputChange}
-                       min="1"
-                       max="38"
-                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                       placeholder="1-38"
-                     />
-                     <p className="mt-1 text-xs text-gray-500">
-                       Seat numbers range from 1 to 38
-                     </p>
-                   </div>
-
-                   <div>
-                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                       Phone Number
-                     </label>
-                     <input
-                       type="tel"
-                       id="phone"
-                       name="phone"
-                       value={formData.phone}
-                       onChange={handleInputChange}
-                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                       placeholder="Enter phone number"
-                     />
-                   </div>
+                  <div className="space-y-2">
+                    <label htmlFor="seatNumber" className="block text-base font-semibold text-gray-700">
+                      Seat Number
+                    </label>
+                    <input
+                      type="number"
+                      id="seatNumber"
+                      name="seatNumber"
+                      value={formData.seatNumber}
+                      onChange={handleInputChange}
+                      min="1"
+                      max="38"
+                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                      placeholder="1-38"
+                    />
+                    <p className="text-sm text-gray-600 bg-amber-50/80 px-3 py-2 rounded-xl">
+                      Seat numbers range from 1 to 38
+                    </p>
+                  </div>
                  </>
                )}
 
-              <div>
-                <label htmlFor="terminationDate" className="block text-sm font-medium text-gray-700">
+              <div className="space-y-2">
+                <label htmlFor="terminationDate" className="block text-base font-semibold text-gray-700">
                   Termination Date (Optional)
                 </label>
                 <input
@@ -591,26 +595,27 @@ const ManageUsers = () => {
                   name="terminationDate"
                   value={formData.terminationDate}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="text-sm text-gray-600 bg-gray-50/80 px-3 py-2 rounded-xl">
                   Leave empty for no expiration date
                 </p>
               </div>
 
-              <div className="flex justify-end space-x-3">
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="group px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
                 >
-                  {editingUser ? 'Update User' : 'Add User'}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className="relative">{editingUser ? 'Update User' : 'Add User'}</span>
                 </button>
               </div>
             </form>
@@ -619,80 +624,94 @@ const ManageUsers = () => {
       )}
 
       {/* Users List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Current Users
-          </h3>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex items-center mb-8">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center shadow-lg mr-4">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Current Users
+            </h3>
+          </div>
           {users.length > 0 ? (
-            <ul className="divide-y divide-gray-200">
-              {users.map((user) => (
-                <li key={user._id} className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
+            <div className="space-y-4">
+              {users.map((user, index) => (
+                <div 
+                  key={user._id} 
+                  className="group relative bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/50 to-transparent rounded-2xl"></div>
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">
+                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <span className="text-base font-bold text-white">
                             {(user.name || user.email).charAt(0).toUpperCase()}
                           </span>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <p className="text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors duration-300">
                             {user.name || user.email}
                           </p>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadge(user.role)}`}>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold shadow-sm ${getRoleBadge(user.role)}`}>
                             {getRoleIcon(user.role)}
-                            <span className="ml-1 capitalize">{user.role}</span>
+                            <span className="ml-2 capitalize">{user.role}</span>
                           </span>
                           {user.terminationDate && (
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            <span className={`inline-flex items-center px-3 py-1 rounded-xl text-sm font-semibold shadow-sm ${
                               isAccountExpired(user.terminationDate) 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-red-100/80 text-red-800' 
+                                : 'bg-yellow-100/80 text-yellow-800'
                             }`}>
-                              <Calendar className="mr-1 h-3 w-3" />
+                              <Calendar className="mr-2 h-4 w-4" />
                               {isAccountExpired(user.terminationDate) ? 'Expired: ' : 'Expires: '}
                               {new Date(user.terminationDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-base text-gray-600">
                           {user.email} • Created: {new Date(user.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       {canEditUser(user) && (
                         <button
                           onClick={() => handleEdit(user)}
-                          className="btn-secondary"
+                          className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 border border-gray-200/50"
                         >
-                          <Edit className="mr-1 h-4 w-4" />
+                          <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </button>
                       )}
                       {canDeleteUser(user) && (
                         <button
                           onClick={() => handleDelete(user._id)}
-                          className="btn-danger"
+                          className="inline-flex items-center px-4 py-2 bg-red-50/80 backdrop-blur-sm text-red-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-300"
                         >
-                          <Trash2 className="mr-1 h-4 w-4" />
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </button>
                       )}
                     </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
-            <div className="text-center py-12">
-              <UserPlus className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No users</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by adding a new user account.
+            <div className="text-center py-16">
+              <div className="h-20 w-20 mx-auto rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-6 shadow-lg">
+                <UserPlus className="h-10 w-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No users yet</h3>
+              <p className="text-base text-gray-600 max-w-md mx-auto">
+                Get started by adding your first user account to the system.
               </p>
             </div>
           )}

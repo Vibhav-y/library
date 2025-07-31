@@ -321,18 +321,22 @@ const Customization = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
           <div className="flex items-center">
-            <Settings className="h-6 w-6 text-gray-400 mr-3" />
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg mr-4">
+              <Settings className="h-6 w-6 text-white" />
+            </div>
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 System Customization
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Customize your library system's appearance with logos and themes.
+              <p className="mt-2 text-base sm:text-lg text-gray-600">
+                Customize your library system's appearance with logos, themes, and branding.
               </p>
             </div>
           </div>
@@ -341,50 +345,59 @@ const Customization = () => {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <div className="flex">
-            <CheckCircle className="h-5 w-5 text-green-400" />
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{success}</p>
+        <div className="relative bg-green-50/80 backdrop-blur-sm border border-green-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-50/90 to-green-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg mr-4">
+              <CheckCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-green-800">{success}</p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+        <div className="relative bg-red-50/80 backdrop-blur-sm border border-red-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-50/90 to-red-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg mr-4">
+              <AlertCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-red-800">{error}</p>
           </div>
         </div>
       )}
 
       {/* System Name Section */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            System Name
-          </h3>
-          <div className="flex space-x-3">
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-green-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex items-center mb-6">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center shadow-lg mr-4">
+              <Edit3 className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              System Name
+            </h3>
+          </div>
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
             <input
               type="text"
               value={systemName}
               onChange={(e) => setSystemName(e.target.value)}
-              className="flex-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="flex-1 block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
               placeholder="Enter system name"
             />
             <button
               onClick={handleSystemNameUpdate}
               disabled={systemNameLoading || systemName === customization?.systemName}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {systemNameLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-5 w-5 mr-2" />
               )}
               Update
             </button>
@@ -393,12 +406,19 @@ const Customization = () => {
       </div>
 
       {/* Logo Section */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Logo Management
-            </h3>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
+                <Image className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">
+                Logo Management
+              </h3>
+            </div>
             {customization?.logoUrl && (
               <button
                 onClick={handleToggleLogo}

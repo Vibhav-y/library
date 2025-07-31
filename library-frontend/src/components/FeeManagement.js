@@ -161,22 +161,29 @@ const FeeManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Fee Management</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage student fees, payments, and generate reports
-              </p>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center shadow-lg mr-4">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Fee Management</h1>
+                <p className="mt-2 text-base sm:text-lg text-gray-600">
+                  Manage student fees, payments, and generate comprehensive reports
+                </p>
+              </div>
             </div>
             <button
               onClick={loadData}
-              className="btn-secondary"
+              className="group inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 border border-gray-200/50"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-5 w-5 mr-2 group-hover:rotate-180 transition-transform duration-300" />
               Refresh
             </button>
           </div>
@@ -185,110 +192,152 @@ const FeeManagement = () => {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4">
-          <div className="flex">
-            <CheckCircle className="h-5 w-5 text-green-400" />
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{success}</p>
+        <div className="relative bg-green-50/80 backdrop-blur-sm border border-green-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-50/90 to-green-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg mr-4">
+              <CheckCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-green-800">{success}</p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+        <div className="relative bg-red-50/80 backdrop-blur-sm border border-red-200/60 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-50/90 to-red-100/60 rounded-2xl"></div>
+          <div className="relative flex items-center">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg mr-4">
+              <AlertCircle className="h-5 w-5 text-white" />
             </div>
+            <p className="text-base font-semibold text-red-800">{error}</p>
           </div>
         </div>
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="flex items-center">
-            <DollarSign className="h-8 w-8 text-blue-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-blue-600">Total Amount</p>
-              <p className="text-xl font-bold text-blue-900">₹{stats.totalAmount}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+        <div className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-blue-100/40"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-blue-500/10 rounded-full blur-2xl"></div>
+          <div className="relative p-6">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-blue-600">Total Amount</p>
+                <p className="text-2xl font-bold text-blue-900 group-hover:text-blue-600 transition-colors duration-300">₹{stats.totalAmount}</p>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-green-50 rounded-lg p-4">
-          <div className="flex items-center">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-600">Paid</p>
-              <p className="text-xl font-bold text-green-900">₹{stats.paidAmount}</p>
-              <p className="text-xs text-green-600">{stats.paidCount} records</p>
+        <div className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-50/80 to-green-100/40"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-green-400/20 to-green-500/10 rounded-full blur-2xl"></div>
+          <div className="relative p-6">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-green-600">Paid</p>
+                <p className="text-2xl font-bold text-green-900 group-hover:text-green-600 transition-colors duration-300">₹{stats.paidAmount}</p>
+                <p className="text-xs text-green-600 mt-1">{stats.paidCount} records</p>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-red-50 rounded-lg p-4">
-          <div className="flex items-center">
-            <AlertCircle className="h-8 w-8 text-red-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-600">Unpaid</p>
-              <p className="text-xl font-bold text-red-900">₹{stats.unpaidAmount}</p>
-              <p className="text-xs text-red-600">{stats.unpaidCount} records</p>
+        <div className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-50/80 to-red-100/40"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-red-400/20 to-red-500/10 rounded-full blur-2xl"></div>
+          <div className="relative p-6">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <AlertCircle className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-red-600">Unpaid</p>
+                <p className="text-2xl font-bold text-red-900 group-hover:text-red-600 transition-colors duration-300">₹{stats.unpaidAmount}</p>
+                <p className="text-xs text-red-600 mt-1">{stats.unpaidCount} records</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-purple-50 rounded-lg p-4">
-          <div className="flex items-center">
-            <User className="h-8 w-8 text-purple-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-purple-600">Students</p>
-              <p className="text-xl font-bold text-purple-900">{students.length}</p>
+        <div className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50/80 to-purple-100/40"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-purple-400/20 to-purple-500/10 rounded-full blur-2xl"></div>
+          <div className="relative p-6">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-purple-600">Students</p>
+                <p className="text-2xl font-bold text-purple-900 group-hover:text-purple-600 transition-colors duration-300">{students.length}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center">
-            <Calendar className="h-8 w-8 text-gray-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Records</p>
-              <p className="text-xl font-bold text-gray-900">{stats.totalCount}</p>
+        <div className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50/80 to-gray-100/40"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-gray-400/20 to-gray-500/10 rounded-full blur-2xl"></div>
+          <div className="relative p-6">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-semibold text-gray-600">Total Records</p>
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-gray-600 transition-colors duration-300">{stats.totalCount}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex items-center mb-8">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
+              <Filter className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Filters & Search
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-2">
+              <label className="block text-base font-semibold text-gray-700">
                 Search Student
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="pl-12 block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-base font-semibold text-gray-700">
                 Payment Status
               </label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
               >
                 <option value="all">All Status</option>
                 <option value="paid">Paid</option>
@@ -296,14 +345,14 @@ const FeeManagement = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-base font-semibold text-gray-700">
                 Student
               </label>
               <select
                 value={selectedStudent}
                 onChange={(e) => setSelectedStudent(e.target.value)}
-                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
               >
                 <option value="all">All Students</option>
                 {students.map(student => (
@@ -314,8 +363,8 @@ const FeeManagement = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2">
+              <label className="block text-base font-semibold text-gray-700">
                 Actions
               </label>
               <button
@@ -324,9 +373,9 @@ const FeeManagement = () => {
                   setFilterStatus('all');
                   setSelectedStudent('all');
                 }}
-                className="w-full btn-secondary"
+                className="w-full inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-300"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-5 w-5 mr-2" />
                 Clear Filters
               </button>
             </div>
@@ -335,40 +384,51 @@ const FeeManagement = () => {
       </div>
 
       {/* Fee Records Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Fee Records ({filteredFees.length})
-          </h3>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-green-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex items-center mb-8">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-600 to-green-600 flex items-center justify-center shadow-lg mr-4">
+              <DollarSign className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Fee Records ({filteredFees.length})
+            </h3>
+          </div>
           
           {filteredFees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
+            <div className="overflow-x-auto rounded-2xl">
+              <table className="min-w-full divide-y divide-white/40">
+                <thead className="bg-gradient-to-r from-blue-50/80 to-purple-50/80 backdrop-blur-sm">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Student
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Month/Year
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Paid Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredFees.map((fee) => (
-                    <tr key={fee._id} className="hover:bg-gray-50">
+                <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-white/40">
+                  {filteredFees.map((fee, index) => (
+                    <tr 
+                      key={fee._id} 
+                      className="hover:bg-white/80 transition-all duration-200"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
