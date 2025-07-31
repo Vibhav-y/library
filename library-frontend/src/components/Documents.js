@@ -25,6 +25,11 @@ const Documents = () => {
            window.innerWidth <= 768;
   };
 
+  // Utility function to detect Android specifically
+  const isAndroidDevice = () => {
+    return /Android/i.test(navigator.userAgent);
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -290,6 +295,36 @@ const Documents = () => {
     setMobileViewerError(false); // Reset error state
   };
 
+  // Prevent external navigation on mobile
+  useEffect(() => {
+    if (selectedDocument && isMobileDevice()) {
+      const handleBeforeUnload = (e) => {
+        if (isAndroidDevice()) {
+          e.preventDefault();
+          e.returnValue = '';
+          return '';
+        }
+      };
+
+      const handleClick = (e) => {
+        const target = e.target;
+        if (target.tagName === 'A' && target.href && target.href.startsWith('http') && !target.href.includes('javascript:')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      document.addEventListener('click', handleClick, true);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        document.removeEventListener('click', handleClick, true);
+      };
+    }
+  }, [selectedDocument]);
+
   const getDocumentUrl = (document) => {
     // For Supabase documents, prefer the download URL from API
     if (document.downloadUrl) {
@@ -400,22 +435,109 @@ const Documents = () => {
               <div className="h-full w-full">
                 {['pdf'].includes(fileExtension) ? (
                   isMobileDevice() ? (
-                    // Mobile-optimized PDF viewer - completely clean interface
-                    <div className="h-full w-full bg-gray-100 overflow-auto">
-                      <object
-                        data={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                        type="application/pdf"
-                        className="w-full h-full"
-                        style={{ 
-                          minHeight: '100%',
-                          userSelect: 'none',
-                          WebkitUserSelect: 'none',
-                          MozUserSelect: 'none',
-                          msUserSelect: 'none'
-                        }}
-                      >
-                        <embed
-                          src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                    isAndroidDevice() ? (
+                      // Android-specific PDF viewer with fallback
+                      <div className="h-full w-full">
+                        {!mobileViewerError ? (
+                          <iframe
+                            src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(documentUrl)}`}
+                            className="w-full h-full border-0"
+                            title={selectedDocument.title}
+                            style={{ 
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none'
+                            }}
+                            onLoad={(e) => {
+                              // Hide PDF.js toolbar on Android
+                              setTimeout(() => {
+                                try {
+                                  const iframe = e.target;
+                                  if (iframe.contentDocument) {
+                                    const style = iframe.contentDocument.createElement('style');
+                                    style.textContent = `
+                                      .toolbar { display: none !important; }
+                                      .toolbarViewer { display: none !important; }
+                                      .secondaryToolbar { display: none !important; }
+                                      #outerContainer { padding-top: 0 !important; }
+                                      #mainContainer { top: 0 !important; }
+                                      #viewerContainer { top: 0 !important; }
+                                      .doorHanger { display: none !important; }
+                                      .loadingBar { display: none !important; }
+                                    `;
+                                    iframe.contentDocument.head.appendChild(style);
+                                  }
+                                } catch (error) {
+                                  // Cross-origin restrictions - this is expected
+                                }
+                              }, 1000);
+                            }}
+                            onError={() => setMobileViewerError(true)}
+                            sandbox="allow-scripts allow-same-origin"
+                          />
+                        ) : (
+                          // Fallback for Android when PDF.js fails
+                          <div className="h-full w-full flex flex-col bg-gray-50">
+                            <div className="flex-1 flex items-center justify-center p-6">
+                              <div className="text-center">
+                                <FileText className="mx-auto h-16 w-16 text-blue-600 mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                  {selectedDocument.title}
+                                </h3>
+                                <p className="text-gray-500 mb-4">
+                                  PDF document is ready to view
+                                </p>
+                                <div className="w-full max-w-sm mx-auto bg-white rounded-lg border-2 border-blue-200 p-4">
+                                  <div className="text-sm text-gray-600 mb-3">
+                                    Document Size: {selectedDocument.fileSize ? 
+                                      `${(selectedDocument.fileSize / 1024 / 1024).toFixed(1)} MB` : 
+                                      'Unknown'
+                                    }
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setMobileViewerError(false);
+                                      // Try alternative viewing method
+                                      setTimeout(() => {
+                                        const container = document.querySelector('.pdf-viewer-container');
+                                        if (container) {
+                                          const fallbackIframe = document.createElement('iframe');
+                                          fallbackIframe.src = `${documentUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+                                          fallbackIframe.className = 'w-full h-full border-0';
+                                          fallbackIframe.style.cssText = `
+                                            user-select: none;
+                                            -webkit-user-select: none;
+                                            -moz-user-select: none;
+                                            -ms-user-select: none;
+                                          `;
+                                          fallbackIframe.onload = () => {
+                                            try {
+                                              fallbackIframe.contentDocument?.addEventListener('contextmenu', (e) => e.preventDefault());
+                                            } catch (e) {
+                                              // Cross-origin restrictions
+                                            }
+                                          };
+                                          container.innerHTML = '';
+                                          container.appendChild(fallbackIframe);
+                                        }
+                                      }, 100);
+                                    }}
+                                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  >
+                                    Load PDF Viewer
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // iOS and other mobile devices - use direct embedding
+                      <div className="h-full w-full bg-gray-100 overflow-auto">
+                        <object
+                          data={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                           type="application/pdf"
                           className="w-full h-full"
                           style={{ 
@@ -425,32 +547,34 @@ const Documents = () => {
                             MozUserSelect: 'none',
                             msUserSelect: 'none'
                           }}
-                        />
-                        {/* Fallback for browsers that don't support PDF viewing */}
-                        <div className="flex items-center justify-center h-full bg-gray-50 p-6">
-                          <div className="text-center">
-                            <FileText className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">
-                              PDF Viewer
-                            </h3>
-                            <p className="text-gray-500 mb-4">
-                              Your browser doesn't support embedded PDF viewing.
-                            </p>
-                            <iframe
-                              src={documentUrl}
-                              className="w-full h-96 border border-gray-300 rounded"
-                              title={selectedDocument.title}
-                              style={{ 
-                                userSelect: 'none',
-                                WebkitUserSelect: 'none',
-                                MozUserSelect: 'none',
-                                msUserSelect: 'none'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </object>
-                    </div>
+                        >
+                          <embed
+                            src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                            type="application/pdf"
+                            className="w-full h-full"
+                            style={{ 
+                              minHeight: '100%',
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none'
+                            }}
+                          />
+                          {/* Fallback iframe for iOS */}
+                          <iframe
+                            src={`${documentUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                            className="w-full h-full border-0"
+                            title={selectedDocument.title}
+                            style={{ 
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none'
+                            }}
+                          />
+                        </object>
+                      </div>
+                    )
                   ) : (
                     // Desktop PDF viewer
                     <iframe
