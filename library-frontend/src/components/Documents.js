@@ -988,40 +988,50 @@ const Documents = () => {
   const totalDocuments = getTotalMatchingDocuments();
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-4 sm:p-6">
-          <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900">
-            Document Library
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Browse and view documents organized by categories. Click on categories to expand and view documents.
-          </p>
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+        <div className="relative px-6 py-8 sm:p-10">
+          <div className="flex items-center">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
+              <FileText className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Document Library
+              </h3>
+              <p className="mt-2 text-base sm:text-lg text-gray-600">
+                Browse and view documents organized by categories. Click on categories to expand and view documents.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-4 sm:p-6">
+      <div className="relative bg-white/70 backdrop-blur-md shadow-xl rounded-2xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60 rounded-2xl"></div>
+        <div className="relative px-6 py-6 sm:p-8">
           <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 sr-only sm:not-sr-only">
+            <label htmlFor="search" className="block text-lg font-semibold text-gray-700 mb-4">
               Search Documents & Categories
             </label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 id="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 sm:pl-10 text-sm border-gray-300 rounded-md"
+                className="block w-full pl-12 pr-4 py-4 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
                 placeholder="Search documents & categories..."
               />
             </div>
-            <p className="mt-1 text-xs text-gray-500 hidden sm:block">
+            <p className="mt-3 text-sm text-gray-600">
               Search will find documents by title and categories by name, showing all documents within matching categories.
             </p>
           </div>
@@ -1029,18 +1039,22 @@ const Documents = () => {
       </div>
 
       {/* Results Summary */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-          <p className="text-sm text-gray-700">
-            {searchTerm ? 
-              `Found ${totalDocuments} documents matching "${searchTerm}"` : 
-              `${totalDocuments} documents available`
-            }
-          </p>
-          <div className="flex items-center space-x-3 sm:space-x-4">
+      <div className="relative bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/70 to-white/50 rounded-2xl"></div>
+        <div className="relative px-6 py-4 sm:px-8 sm:py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-3"></div>
+            <p className="text-base font-semibold text-gray-700">
+              {searchTerm ? 
+                `Found ${totalDocuments} documents matching "${searchTerm}"` : 
+                `${totalDocuments} documents available`
+              }
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => setExpandedCategories(new Set())}
-              className="text-xs sm:text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm font-medium text-gray-600 hover:text-blue-600 px-4 py-2 rounded-xl hover:bg-white/60 transition-all duration-200"
             >
               Collapse All
             </button>
@@ -1063,7 +1077,7 @@ const Documents = () => {
                 }
                 setExpandedCategories(allIds);
               }}
-              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 px-4 py-2 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-200"
             >
               Expand All
             </button>
@@ -1072,20 +1086,23 @@ const Documents = () => {
       </div>
 
       {/* Category Tree */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div className="relative bg-white/70 backdrop-blur-md shadow-2xl overflow-hidden rounded-3xl border border-white/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
         {categoryTree.length > 0 || categorizedDocuments['uncategorized'] ? (
-          <div className="divide-y divide-gray-200">
+          <div className="relative divide-y divide-white/40">
             {categoryTree.map(category => renderCategory(category))}
             {renderUncategorizedDocuments()}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No documents found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="relative text-center py-16">
+            <div className="h-20 w-20 mx-auto rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-6 shadow-lg">
+              <FileText className="h-10 w-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No documents found</h3>
+            <p className="text-base text-gray-600 max-w-md mx-auto">
               {searchTerm
-                ? 'Try adjusting your search criteria.'
-                : 'No documents have been uploaded yet.'}
+                ? 'Try adjusting your search criteria to find what you\'re looking for.'
+                : 'No documents have been uploaded yet. Check back later or contact your administrator.'}
             </p>
           </div>
         )}

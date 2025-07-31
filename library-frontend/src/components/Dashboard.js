@@ -132,135 +132,169 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-white overflow-hidden shadow rounded-lg">
-        <div className="px-4 py-4 sm:p-6">
-          <div className="flex items-start sm:items-center">
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="space-y-6 lg:space-y-8 p-6">
+        {/* Welcome Section */}
+        <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 overflow-hidden shadow-2xl rounded-2xl transform hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute inset-0 bg-black opacity-20"></div>
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-2xl blur-xl"></div>
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+          </div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <div className="flex items-start sm:items-center">
+              <div className="flex-shrink-0">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/30">
+                  <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-md" />
+                </div>
               </div>
-            </div>
-            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-              <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 truncate">
-                Welcome back, {user?.name || user?.email}!
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                You are logged in as {user?.role}. Here's what's happening in your library today.
-              </p>
+              <div className="ml-4 sm:ml-6 min-w-0 flex-1">
+                <h3 className="text-xl sm:text-3xl font-bold text-white drop-shadow-md">
+                  Welcome back, {user?.name || user?.email}!
+                </h3>
+                <p className="mt-2 text-base sm:text-lg text-white/90 drop-shadow-sm">
+                  You are logged in as <span className="font-semibold capitalize">{user?.role}</span>. Here's what's happening in your library today.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      {statCards.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((item) => (
-            <div key={item.name} className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-3 sm:p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className={`h-6 w-6 sm:h-8 sm:w-8 rounded-md ${item.color} flex items-center justify-center`}>
-                      <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        {/* Stats Cards */}
+        {statCards.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {statCards.map((item, index) => (
+              <div 
+                key={item.name} 
+                className="group relative bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent"></div>
+                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl"></div>
+                <div className="relative p-4 sm:p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-2xl ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white drop-shadow-sm" />
+                      </div>
+                    </div>
+                    <div className="ml-4 sm:ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm sm:text-base font-semibold text-gray-600 truncate">
+                          {item.name}
+                        </dt>
+                        <dd className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                          {item.value}
+                        </dd>
+                      </dl>
                     </div>
                   </div>
-                  <div className="ml-3 sm:ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">
-                        {item.name}
-                      </dt>
-                      <dd className="text-sm sm:text-lg font-medium text-gray-900">
-                        {item.value}
-                      </dd>
-                    </dl>
-                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-4 sm:p-6">
-          <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 mb-3 sm:mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {quickActions.map((action) => (
-              <Link
-                key={action.name}
-                to={action.href}
-                className="relative group bg-white p-4 sm:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
-              >
-                <div>
-                  <span className={`rounded-lg inline-flex p-2 sm:p-3 ${action.color} text-white`}>
-                    <action.icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </span>
-                </div>
-                <div className="mt-3 sm:mt-4">
-                  <h3 className="text-sm sm:text-lg font-medium text-gray-900">
-                    {action.name}
-                  </h3>
-                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500">
-                    {action.description}
-                  </p>
-                </div>
-              </Link>
             ))}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Recent Documents */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-4 sm:p-6">
-          <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 mb-3 sm:mb-4">
-            Recent Documents
-          </h3>
-          {stats.recentDocuments.length > 0 ? (
-            <div className="flow-root">
-              <ul className="-my-3 sm:-my-5 divide-y divide-gray-200">
-                {stats.recentDocuments.map((doc) => (
-                  <li key={doc._id} className="py-3 sm:py-4">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
+        {/* Quick Actions */}
+        <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/30"></div>
+          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 sm:mb-8 flex items-center">
+              <div className="h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-3"></div>
+              Quick Actions
+            </h3>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {quickActions.map((action, index) => (
+                <Link
+                  key={action.name}
+                  to={action.href}
+                  className="group relative bg-white/60 backdrop-blur-sm p-6 sm:p-8 focus-within:ring-4 focus-within:ring-blue-500/20 rounded-2xl border border-white/40 hover:border-white/60 hover:shadow-2xl hover:scale-105 transition-all duration-300 hover:bg-white/80"
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent rounded-2xl"></div>
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl"></div>
+                  <div className="relative">
+                    <div className="mb-4">
+                      <span className={`rounded-2xl inline-flex p-4 ${action.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <action.icon className="h-6 w-6 sm:h-7 sm:w-7" />
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                        {action.name}
+                      </h3>
+                      <p className="mt-2 text-sm sm:text-base text-gray-600">
+                        {action.description}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Documents */}
+        <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/30"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 sm:mb-8 flex items-center">
+              <div className="h-2 w-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mr-3"></div>
+              Recent Documents
+            </h3>
+            {stats.recentDocuments.length > 0 ? (
+              <div className="space-y-4">
+                {stats.recentDocuments.map((doc, index) => (
+                  <div 
+                    key={doc._id} 
+                    className="group relative bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 p-4 sm:p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/50 to-transparent rounded-2xl"></div>
+                    <div className="relative flex items-center space-x-4 sm:space-x-6">
                       <div className="flex-shrink-0">
-                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm sm:text-lg font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors duration-300">
                           {doc.title}
                         </p>
-                        <p className="text-xs sm:text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">
                           {doc.category?.name || 'Uncategorized'}
                         </p>
                       </div>
-                      <div className="flex-shrink-0 text-xs sm:text-sm text-gray-500 hidden sm:block">
-                        <Calendar className="inline h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      <div className="flex-shrink-0 text-xs sm:text-sm text-gray-500 hidden sm:flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </div>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="h-16 w-16 mx-auto rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-4">
+                  <FileText className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-lg font-medium">
+                  No documents available yet.
+                </p>
+              </div>
+            )}
+            <div className="mt-8">
+              <Link
+                to="/documents"
+                className="group relative w-full flex justify-center items-center px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative">View all documents</span>
+              </Link>
             </div>
-          ) : (
-            <p className="text-gray-500 text-center py-6 sm:py-8 text-sm">
-              No documents available yet.
-            </p>
-          )}
-          <div className="mt-4 sm:mt-6">
-            <Link
-              to="/documents"
-              className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
-            >
-              View all documents
-            </Link>
           </div>
         </div>
       </div>

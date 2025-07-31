@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCustomization } from '../contexts/CustomizationContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -21,7 +21,6 @@ import {
   Volume2,
   Camera
 } from 'lucide-react';
-import { useState } from 'react';
 
 const Layout = ({ children }) => {
   const { user, logout, isAdmin } = useAuth();
@@ -108,10 +107,7 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{ backgroundColor: themeColors.background }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       {/* SVG Filters for Color Blindness Support */}
       <svg className="accessibility-filters" aria-hidden="true">
         <defs>
@@ -140,76 +136,79 @@ const Layout = ({ children }) => {
       <NoticeDisplay />
       
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 flex z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div 
-          className="relative flex-1 flex flex-col max-w-xs w-full shadow-xl"
-          style={{ backgroundColor: themeColors.surface }}
-        >
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-6 w-6 text-white" />
-            </button>
-          </div>
-          <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-            <div className="flex-shrink-0 flex items-center px-4 mb-4">
-              {renderSystemBranding(true)}
+      <div className={`fixed inset-0 flex z-50 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className="relative flex-1 flex flex-col max-w-xs w-full">
+          <div className="relative bg-white/90 backdrop-blur-md shadow-2xl rounded-r-3xl border-r border-white/20 h-full">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60 rounded-r-3xl"></div>
+            <div className="absolute top-0 right-0 -mr-12 pt-2">
+              <button
+                className="ml-1 flex items-center justify-center h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-            <nav className="px-2 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`${
-                    isActive(item.href)
-                      ? 'theme-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  } group flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors duration-150`}
-                  style={isActive(item.href) ? { backgroundColor: themeColors.primary, color: 'white' } : {}}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              ))}
-            </nav>
+            <div className="relative flex-1 h-0 pt-6 pb-4 overflow-y-auto">
+              <div className="flex-shrink-0 flex items-center px-6 mb-8">
+                {renderSystemBranding(true)}
+              </div>
+              <nav className="px-4 space-y-2">
+                {navigation.map((item, index) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`group flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                      isActive(item.href)
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
+                        : 'text-gray-700 hover:bg-white/60 hover:shadow-md hover:scale-105'
+                    }`}
+                    onClick={() => setSidebarOpen(false)}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </div>
         </div>
       </div>
 
-              {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div 
-          className="flex-1 flex flex-col min-h-0 border-r shadow-sm"
-          style={{ 
-            backgroundColor: themeColors.surface,
-            borderColor: themeColors.border
-          }}
-        >
-          <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4 mb-4">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-40">
+        <div className="relative flex-1 flex flex-col min-h-0">
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-md shadow-2xl border-r border-white/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-white/70"></div>
+          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 blur-3xl"></div>
+          <div className="relative flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
+            <div className="flex items-center flex-shrink-0 px-6 mb-10">
               {renderSystemBranding(false)}
             </div>
-            <nav 
-              className="flex-1 px-2 space-y-1"
-              style={{ backgroundColor: themeColors.surface }}
-            >
-              {navigation.map((item) => (
+            <nav className="flex-1 px-4 space-y-3">
+              {navigation.map((item, index) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`${
+                  className={`group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 ${
                     isActive(item.href)
-                      ? 'theme-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  } group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150`}
-                  style={isActive(item.href) ? { backgroundColor: themeColors.primary, color: 'white' } : {}}
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl scale-105 border border-blue-400/20'
+                      : 'text-gray-700 hover:bg-white/70 hover:shadow-lg hover:scale-105 hover:border-white/40 border border-transparent'
+                  }`}
+                  style={{ animationDelay: `${index * 75}ms` }}
                 >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  <span className="truncate">{item.name}</span>
+                  <div className={`mr-4 p-2 rounded-xl transition-all duration-300 ${
+                    isActive(item.href) 
+                      ? 'bg-white/20' 
+                      : 'bg-gray-100 group-hover:bg-white group-hover:shadow-md'
+                  }`}>
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                  </div>
+                  <span className="truncate font-medium">{item.name}</span>
+                  {isActive(item.href) && (
+                    <div className="ml-auto w-2 h-2 bg-white rounded-full shadow-sm"></div>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -218,57 +217,56 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
+      <div className="lg:pl-72 flex flex-col flex-1">
         {/* Mobile header with menu button */}
-        <div 
-          className="sticky top-0 z-10 lg:hidden shadow-sm border-b"
-          style={{ 
-            backgroundColor: themeColors.surface,
-            borderColor: themeColors.border
-          }}
-        >
-          <div className="flex items-center justify-between px-4 py-3">
-            <button
-              className="inline-flex items-center justify-center h-10 w-10 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900 truncate">
-              {systemName}
-            </h1>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+        <div className="sticky top-0 z-30 lg:hidden bg-white/90 backdrop-blur-md shadow-xl border-b border-white/20">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-white/80 to-white/60"></div>
+            <div className="relative flex items-center justify-between px-4 py-4">
+              <button
+                className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                {systemName}
+              </h1>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-200"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
         
         {/* Desktop Header */}
-        <header 
-          className="hidden lg:block shadow-sm"
-          style={{ backgroundColor: themeColors.surface }}
-        >
-          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                  Welcome, {user?.name || user?.email}
-                </h1>
-                <p className="text-sm text-gray-600 capitalize">
-                  {user?.email} • Role: {user?.role}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </button>
+        <header className="hidden lg:block bg-white/80 backdrop-blur-md shadow-xl border-b border-white/20 sticky top-0 z-20">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-white/90 to-white/70"></div>
+            <div className="absolute top-0 right-0 w-64 h-20 bg-gradient-to-l from-blue-400/10 to-purple-400/10 blur-2xl"></div>
+            <div className="relative max-w-7xl mx-auto py-6 px-6 lg:px-8">
+              <div className="flex justify-between items-center">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                    Welcome, {user?.name || user?.email}
+                  </h1>
+                  <p className="text-base text-gray-600 capitalize mt-1 flex items-center">
+                    <div className="h-2 w-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-2"></div>
+                    {user?.email} • Role: <span className="font-semibold ml-1">{user?.role}</span>
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={handleLogout}
+                    className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-300"
+                  >
+                    <LogOut className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -276,7 +274,7 @@ const Layout = ({ children }) => {
 
         {/* Page content */}
         <main className="flex-1 min-h-0">
-          <div className="h-full max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <div className="h-full max-w-7xl mx-auto py-6 px-6 lg:px-8">
             {children}
           </div>
         </main>
