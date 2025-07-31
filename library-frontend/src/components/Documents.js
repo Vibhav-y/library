@@ -1010,6 +1010,36 @@ const Documents = () => {
         </div>
       </div> */}
 
+      {/* Search Bar */}
+      <div className="relative bg-white/70 backdrop-blur-md shadow-xl rounded-2xl border border-white/30 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/80 to-white/60 rounded-2xl"></div>
+        <div className="relative px-4 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search documents and categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-4 py-3 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+              />
+            </div>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-lg transition-all duration-200"
+                title="Clear search"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Results Summary */}
       <div className="relative bg-white/60 backdrop-blur-sm shadow-lg rounded-2xl border border-white/30">
         <div className="absolute inset-0 bg-gradient-to-r from-white/70 to-white/50 rounded-2xl"></div>
