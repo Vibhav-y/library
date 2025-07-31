@@ -9,6 +9,7 @@ import {
   Plus, 
   Save, 
   Edit, 
+  Edit3,
   X, 
   Check, 
   Eye, 
