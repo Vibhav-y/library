@@ -998,14 +998,14 @@ const Documents = () => {
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mr-4">
               <FileText className="h-6 w-6 text-white" />
             </div>
-            <div>
+            {/* <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Document Library
               </h3>
               <p className="mt-2 text-base sm:text-lg text-gray-600">
                 Browse and view documents organized by categories. Click on categories to expand and view documents.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
