@@ -437,18 +437,10 @@ const Documents = () => {
                   isMobileDevice() ? (
                     isAndroidDevice() ? (
                       // Android-specific PDF viewer with fallback
-                      <div className="h-full w-full relative">
-                        {/* Toolbar overlay to block any remaining interface elements */}
-                        <div 
-                          className="absolute top-0 left-0 right-0 h-12 bg-white z-50 pointer-events-none"
-                          style={{
-                            background: 'linear-gradient(to bottom, white 0%, white 80%, transparent 100%)',
-                            zIndex: 2147483647
-                          }}
-                        />
+                      <div className="h-full w-full">
                         {!mobileViewerError ? (
                           <iframe
-                            src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(documentUrl)}&toolbar=0`}
+                            src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(documentUrl)}`}
                             className="w-full h-full border-0"
                             title={selectedDocument.title}
                             style={{ 
@@ -458,178 +450,28 @@ const Documents = () => {
                               msUserSelect: 'none'
                             }}
                             onLoad={(e) => {
-                              // Aggressively hide PDF.js toolbar and interface elements
-                              const hideToolbarElements = () => {
+                              // Hide PDF.js toolbar on Android
+                              setTimeout(() => {
                                 try {
                                   const iframe = e.target;
                                   if (iframe.contentDocument) {
-                                    // Create comprehensive CSS to hide all interface elements
                                     const style = iframe.contentDocument.createElement('style');
                                     style.textContent = `
-                                      /* Hide all toolbar elements */
-                                      .toolbar, #toolbar, .toolbarViewer, #toolbarViewer,
-                                      .secondaryToolbar, #secondaryToolbar,
-                                      .doorHanger, .loadingBar, .findbar,
-                                      .toolbarButton, .toolbarLabel, .toolbarField,
-                                      #print, #download, #openFile, #secondaryOpenFile,
-                                      #viewFind, #previous, #next, #pageNumber, #numPages,
-                                      #zoomOut, #zoomIn, #presentationMode, #viewBookmark,
-                                      #secondaryPrint, #secondaryDownload, #firstPage, #lastPage,
-                                      .splitToolbarButton, .dropdownToolbarButton,
-                                      .verticalToolbarSeparator, .horizontalToolbarSeparator,
-                                      .toolbarButtonSpacer, .overlayContainer {
-                                        display: none !important;
-                                        visibility: hidden !important;
-                                        opacity: 0 !important;
-                                        height: 0 !important;
-                                        width: 0 !important;
-                                        margin: 0 !important;
-                                        padding: 0 !important;
-                                        overflow: hidden !important;
-                                        position: absolute !important;
-                                        left: -9999px !important;
-                                        top: -9999px !important;
-                                      }
-                                      
-                                      /* Adjust container layout */
-                                      #outerContainer { 
-                                        padding-top: 0 !important; 
-                                        margin-top: 0 !important;
-                                      }
-                                      #mainContainer { 
-                                        top: 0 !important; 
-                                        padding-top: 0 !important;
-                                        margin-top: 0 !important;
-                                      }
-                                      #viewerContainer { 
-                                        top: 0 !important; 
-                                        padding-top: 0 !important;
-                                        margin-top: 0 !important;
-                                      }
-                                      
-                                      /* Hide any remaining interface elements */
-                                      [class*="toolbar"], [id*="toolbar"],
-                                      [class*="button"], [id*="button"]:not(#viewer),
-                                      [class*="menu"], [id*="menu"],
-                                      [class*="dropdown"], [id*="dropdown"],
-                                      [title*="Print"], [title*="Download"], [title*="Save"],
-                                      [aria-label*="Print"], [aria-label*="Download"], [aria-label*="Save"],
-                                      button[data-l10n-id*="print"], button[data-l10n-id*="download"] {
-                                        display: none !important;
-                                        visibility: hidden !important;
-                                        pointer-events: none !important;
-                                      }
-                                      
-                                      /* Ensure viewer takes full space */
-                                      #viewer {
-                                        border: none !important;
-                                        margin: 0 !important;
-                                        padding: 0 !important;
-                                      }
-                                      
-                                      /* Disable context menu */
-                                      * { 
-                                        -webkit-user-select: none !important;
-                                        -moz-user-select: none !important;
-                                        -ms-user-select: none !important;
-                                        user-select: none !important;
-                                      }
+                                      .toolbar { display: none !important; }
+                                      .toolbarViewer { display: none !important; }
+                                      .secondaryToolbar { display: none !important; }
+                                      #outerContainer { padding-top: 0 !important; }
+                                      #mainContainer { top: 0 !important; }
+                                      #viewerContainer { top: 0 !important; }
+                                      .doorHanger { display: none !important; }
+                                      .loadingBar { display: none !important; }
                                     `;
                                     iframe.contentDocument.head.appendChild(style);
-                                    
-                                    // Also directly remove elements with JavaScript
-                                    const elementsToHide = [
-                                      'toolbar', 'toolbarViewer', 'secondaryToolbar',
-                                      'print', 'download', 'openFile', 'secondaryOpenFile',
-                                      'viewFind', 'previous', 'next', 'pageNumber',
-                                      'zoomOut', 'zoomIn', 'presentationMode',
-                                      'secondaryPrint', 'secondaryDownload'
-                                    ];
-                                    
-                                    elementsToHide.forEach(id => {
-                                      const element = iframe.contentDocument.getElementById(id);
-                                      if (element) {
-                                        element.style.display = 'none';
-                                        element.style.visibility = 'hidden';
-                                        element.style.opacity = '0';
-                                        element.style.pointerEvents = 'none';
-                                        element.remove();
-                                      }
-                                    });
-                                    
-                                    // Hide elements by class
-                                    const classesToHide = [
-                                      'toolbar', 'toolbarButton', 'splitToolbarButton',
-                                      'dropdownToolbarButton', 'toolbarField', 'toolbarLabel'
-                                    ];
-                                    
-                                    classesToHide.forEach(className => {
-                                      const elements = iframe.contentDocument.getElementsByClassName(className);
-                                      Array.from(elements).forEach(el => {
-                                        el.style.display = 'none';
-                                        el.style.visibility = 'hidden';
-                                        el.style.opacity = '0';
-                                        el.style.pointerEvents = 'none';
-                                      });
-                                    });
                                   }
                                 } catch (error) {
                                   // Cross-origin restrictions - this is expected
                                 }
-                              };
-                              
-                              // Try multiple times to ensure toolbar is hidden
-                              setTimeout(hideToolbarElements, 500);
-                              setTimeout(hideToolbarElements, 1000);
-                              setTimeout(hideToolbarElements, 2000);
-                              setTimeout(hideToolbarElements, 3000);
-                              setTimeout(hideToolbarElements, 5000);
-                              
-                              // Also try when PDF content loads
-                              const iframe = e.target;
-                              iframe.addEventListener('load', hideToolbarElements);
-                              
-                              // Continuous monitoring for dynamically added toolbar elements
-                              const setupContinuousHiding = () => {
-                                try {
-                                  if (iframe.contentDocument) {
-                                    const observer = new MutationObserver(() => {
-                                      hideToolbarElements();
-                                    });
-                                    
-                                    observer.observe(iframe.contentDocument.body, {
-                                      childList: true,
-                                      subtree: true,
-                                      attributes: true,
-                                      attributeFilter: ['class', 'id', 'style']
-                                    });
-                                    
-                                    // Also setup interval-based hiding as backup
-                                    const intervalId = setInterval(() => {
-                                      if (iframe.contentDocument) {
-                                        hideToolbarElements();
-                                      } else {
-                                        clearInterval(intervalId);
-                                      }
-                                    }, 1000);
-                                    
-                                    // Clean up after 30 seconds
-                                    setTimeout(() => {
-                                      observer.disconnect();
-                                      clearInterval(intervalId);
-                                    }, 30000);
-                                  }
-                                } catch (error) {
-                                  // Fallback to interval-based approach if MutationObserver fails
-                                  const intervalId = setInterval(() => {
-                                    hideToolbarElements();
-                                  }, 1000);
-                                  
-                                  setTimeout(() => clearInterval(intervalId), 30000);
-                                }
-                              };
-                              
-                              setTimeout(setupContinuousHiding, 2000);
+                              }, 1000);
                             }}
                             onError={() => setMobileViewerError(true)}
                             sandbox="allow-scripts allow-same-origin"
