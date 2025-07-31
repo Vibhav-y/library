@@ -690,31 +690,31 @@ const Chat = () => {
                             </p>
                           </div>
                         </div>
-                      {(user.role === 'admin' || user.role === 'superadmin') && activeConversation.type === 'group' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => openEditGroup(activeConversation)}
-                            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors"
-                            title="Manage group"
-                          >
-                            <Settings className="h-5 w-5" />
-                          </button>
-                          {activeConversation.name !== 'General Discussion' && (
+                        {(user.role === 'admin' || user.role === 'superadmin') && activeConversation.type === 'group' && (
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => deleteGroup(activeConversation._id)}
-                              className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                              title="Delete group"
+                              onClick={() => openEditGroup(activeConversation)}
+                              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors"
+                              title="Manage group"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Settings className="h-5 w-5" />
                             </button>
-                          )}
-                        </div>
-                      )}
+                            {activeConversation.name !== 'General Discussion' && (
+                              <button
+                                onClick={() => deleteGroup(activeConversation._id)}
+                                className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                title="Delete group"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors">
                           <MoreVertical className="h-5 w-5" />
                         </button>
                       </div>
-                    )}
+                    </div>
                   )}
 
                   {/* Messages */}
