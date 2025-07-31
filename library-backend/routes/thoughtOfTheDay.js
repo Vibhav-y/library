@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ThoughtOfTheDay = require('../models/ThoughtOfTheDay');
-const { adminOnly, superAdminOnly, managerOnly, adminOrManagerOnly } = require('../middleware/authMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // Get today's thought (public route for students)
 router.get('/today', async (req, res) => {
@@ -26,7 +26,7 @@ router.get('/today', async (req, res) => {
 });
 
 // Get all thoughts (admin only)
-router.get('/', adminOrManagerOnly, async (req, res) => {
+router.get('/', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const thoughts = await ThoughtOfTheDay.find()
       .populate('createdBy', 'name email')
@@ -40,7 +40,7 @@ router.get('/', adminOrManagerOnly, async (req, res) => {
 });
 
 // Create new thought (admin only)
-router.post('/', adminOrManagerOnly, async (req, res) => {
+router.post('/', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const { thought, author } = req.body;
     
@@ -70,7 +70,7 @@ router.post('/', adminOrManagerOnly, async (req, res) => {
 });
 
 // Update thought (admin only)
-router.put('/:id', adminOrManagerOnly, async (req, res) => {
+router.put('/:id', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const { thought, author, isActive } = req.body;
     
@@ -92,7 +92,7 @@ router.put('/:id', adminOrManagerOnly, async (req, res) => {
 });
 
 // Update thoughts order (admin only)
-router.put('/reorder/bulk', adminOrManagerOnly, async (req, res) => {
+router.put('/reorder/bulk', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const { thoughts } = req.body; // Array of { id, order }
     
@@ -120,7 +120,7 @@ router.put('/reorder/bulk', adminOrManagerOnly, async (req, res) => {
 });
 
 // Delete thought (admin only)
-router.delete('/:id', adminOrManagerOnly, async (req, res) => {
+router.delete('/:id', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const deletedThought = await ThoughtOfTheDay.findByIdAndDelete(req.params.id);
     
@@ -136,7 +136,7 @@ router.delete('/:id', adminOrManagerOnly, async (req, res) => {
 });
 
 // Bulk import thoughts (admin only)
-router.post('/bulk-import', adminOrManagerOnly, async (req, res) => {
+router.post('/bulk-import', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
     const { thoughts } = req.body; // Array of { thought, author }
     

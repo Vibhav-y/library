@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const ThoughtOfTheDay = require('./models/ThoughtOfTheDay');
 const User = require('./models/User');
@@ -89,8 +90,14 @@ const sampleThoughts = [
 async function seedThoughts() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/library-management');
-    console.log('Connected to MongoDB');
+    const mongoURI = process.env.MONGODB_URI;
+    console.log('Connecting to MongoDB:', mongoURI ? 'URI found' : 'Using default localhost');
+    console.log('Environment check:', { 
+      MONGODB_URI: process.env.MONGODB_URI ? 'Set' : 'Not set',
+      NODE_ENV: process.env.NODE_ENV || 'Not set'
+    });
+    await mongoose.connect(mongoURI);
+    console.log('Connected to MongoDB successfully');
 
     // Find a superadmin user to assign as creator
     const superAdmin = await User.findOne({ role: 'superadmin' });

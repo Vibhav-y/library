@@ -72,13 +72,7 @@ const Layout = ({ children }) => {
     ] : []),
   ];
 
-  // Debug: Log navigation and user info
-  console.log('Layout Debug:', { 
-    user: user, 
-    isAdmin: isAdmin, 
-    navigationCount: navigation.length,
-    systemName: systemName 
-  });
+
 
   const isActive = (path) => location.pathname === path;
   
@@ -117,18 +111,8 @@ const Layout = ({ children }) => {
     );
   };
 
-  // Early return if user is not loaded yet
-  if (!user) {
-    console.log('Layout: User not loaded yet');
-    return <div className="p-4 bg-red-100">Loading user...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      {/* Debug info for mobile */}
-      <div className="lg:hidden bg-yellow-100 p-2 text-xs">
-        Debug: User: {user?.email}, Role: {user?.role}, Nav items: {navigation.length}
-      </div>
       
       {/* SVG Filters for Color Blindness Support */}
       <svg className="accessibility-filters" aria-hidden="true">
@@ -235,22 +219,22 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="lg:pl-72 flex flex-col flex-1">
         {/* Mobile header with menu button */}
-        <div className="block lg:hidden bg-red-200 border-4 border-red-500 p-4 min-h-16">
-          <div className="flex items-center justify-between">
+        <div className="block lg:hidden bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-3 bg-blue-600 text-white rounded font-bold text-lg"
+              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              MENU
+              <Menu className="h-5 w-5" />
             </button>
-            <span className="font-bold text-black text-lg">
-              MOBILE HEADER TEST
+            <span className="font-semibold text-gray-900 truncate px-4">
+              {systemName || 'Library System'}
             </span>
             <button
               onClick={handleLogout}
-              className="p-3 bg-red-600 text-white rounded font-bold"
+              className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              LOGOUT
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
