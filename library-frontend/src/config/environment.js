@@ -1,37 +1,28 @@
 // Environment Configuration
 // Change ENVIRONMENT to switch between 'development' and 'production'
 
-const ENVIRONMENT = 'production'; // Change this to 'development' for localhost
+const ENVIRONMENT = 'production';
 
-const config = {
-  development: {
-    API_BASE_URL: 'http://localhost:5000',
-    name: 'Development (Localhost)',
-    description: 'Local development server'
-  },
-  production: {
-    API_BASE_URL: 'https://library-hpen.onrender.com',
-    name: 'Production (Render)',
-    description: 'Deployed server on Render'
-  }
+// Runtime-aware backend URL resolver with sensible defaults
+const getBackendBaseUrl = () => {
+  const envUrl = process.env.REACT_APP_BACKEND_URL;
+  if (envUrl && typeof envUrl === 'string') return envUrl;
+  try {
+    if (typeof window !== 'undefined') {
+      if (window.__BACKEND_URL__) return window.__BACKEND_URL__;
+      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      return isLocal ? 'http://localhost:5000' : 'https://library-hpen.onrender.com';
+    }
+  } catch {}
+  return 'https://library-hpen.onrender.com';
 };
 
-// Get current environment configuration
-const currentConfig = config[ENVIRONMENT];
+export const API_BASE_URL = getBackendBaseUrl();
+export const ENVIRONMENT_NAME = ['http://localhost:5000', 'http://localhost:3000'].some(u => API_BASE_URL.includes('localhost')) ? 'Development (Localhost)' : 'Production (Render)';
+export const ENVIRONMENT_DESCRIPTION = 'Resolved at runtime based on env/origin';
+export const IS_DEVELOPMENT = ENVIRONMENT_NAME.startsWith('Development');
+export const IS_PRODUCTION = !IS_DEVELOPMENT;
 
-if (!currentConfig) {
-  throw new Error(`Invalid environment: ${ENVIRONMENT}. Must be 'development' or 'production'`);
-}
-
-
-
-export const API_BASE_URL = currentConfig.API_BASE_URL;
-export const ENVIRONMENT_NAME = currentConfig.name;
-export const ENVIRONMENT_DESCRIPTION = currentConfig.description;
-export const IS_DEVELOPMENT = ENVIRONMENT === 'development';
-export const IS_PRODUCTION = ENVIRONMENT === 'production';
-
-// Export the config for easy switching
 export default {
   API_BASE_URL,
   ENVIRONMENT_NAME,
@@ -39,4 +30,4 @@ export default {
   IS_DEVELOPMENT,
   IS_PRODUCTION,
   CURRENT_ENV: ENVIRONMENT
-}; 
+};
