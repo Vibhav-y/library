@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { API_BASE_URL as CONFIG_BACKEND_URL } from '../config/environment';
 
 const ChatContext = createContext();
 
@@ -42,15 +43,25 @@ export const ChatProvider = ({ children }) => {
       userKeys: Object.keys(user)
     });
 
-    console.log('🔌 Attempting WebSocket connection...');
+    const envUrl = process.env.REACT_APP_BACKEND_URL || CONFIG_BACKEND_URL || 'http://localhost:5000';
+    // If frontend is https but envUrl is http, upgrade to https to avoid mixed-content block
+    let resolvedUrl = envUrl;
+    try {
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:' && envUrl.startsWith('http://')) {
+        resolvedUrl = envUrl.replace('http://', 'https://');
+      }
+    } catch {}
+
+    console.log('🔌 Attempting WebSocket connection to:', resolvedUrl);
     console.log('🔐 JWT token present:', !!token, 'length:', token?.length || 0);
-    const newSocket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000', {
+    const newSocket = io(resolvedUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       upgrade: true,
       rememberUpgrade: true,
       timeout: 20000,
-      forceNew: true
+      forceNew: true,
+      withCredentials: true
     });
 
     socketRef.current = newSocket;

@@ -11,7 +11,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow no origin (health checks) and any origin by default
+      callback(null, true);
+    },
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -21,7 +24,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware - Allow CORS from all domains
 app.use(cors({
-  origin: true, // Allow all domains
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -29,7 +32,7 @@ app.use(cors({
 
 // Additional CORS headers for maximum compatibility
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   
