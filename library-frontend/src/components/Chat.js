@@ -35,6 +35,7 @@ const Chat = () => {
   const [peopleSearch, setPeopleSearch] = useState('');
   const [peopleResults, setPeopleResults] = useState([]);
   const searchTimeoutRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Message sending state
   const [isSending, setIsSending] = useState(false);
@@ -381,7 +382,7 @@ const Chat = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Left Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`bg-white border-r border-gray-200 flex flex-col w-80 md:static md:translate-x-0 md:w-80 fixed inset-y-0 left-0 z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Chats</h2>
@@ -396,34 +397,34 @@ const Chat = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-                    </div>
-                  </div>
+          </div>
+        </div>
 
         <div className="px-4 py-2 flex space-x-2 border-b border-gray-200">
-          <button
+                      <button
             onClick={() => setFilter('private')}
             className={`text-xs px-3 py-1 rounded-full border ${filter === 'private' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 text-gray-700'}`}
           >
             Personal
-          </button>
-                    <button
+                      </button>
+                        <button
             onClick={() => setFilter('group')}
             className={`text-xs px-3 py-1 rounded-full border ${filter === 'group' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 text-gray-700'}`}
-                    >
+          >
             Groups
-                    </button>
+                        </button>
                       <button
             onClick={() => setFilter('all')}
             className={`text-xs px-3 py-1 rounded-full border ${filter === 'all' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 text-gray-700'}`}
                       >
             All
                       </button>
-              </div>
+                  </div>
 
         <ConversationList
           conversations={conversations.filter(c => filter === 'all' ? true : c.type === filter)}
           activeId={activeConversation?._id}
-          onSelect={handleConversationSelect}
+          onSelect={(c)=>{ setActiveConversation(c); setIsSidebarOpen(false); loadMessages(c._id); }}
           currentUserId={user.id}
           searchTerm={searchTerm}
           headerAddon={filter === 'private' ? (
@@ -460,13 +461,13 @@ const Chat = () => {
                       onClick={async () => {
                         try {
                           const conv = await chatAPI.createPrivateConversation(p._id);
-                          // Insert/activate conversation
                           setConversations(prev => {
                             const exists = prev.find(c => c._id === conv._id);
                             if (exists) return prev;
                             return [conv, ...prev];
                           });
                           setActiveConversation(conv);
+                          setIsSidebarOpen(false);
                           setPeopleSearch('');
                           setPeopleResults([]);
                           loadMessages(conv._id);
@@ -477,20 +478,38 @@ const Chat = () => {
                     >
                       <span className="text-gray-800">{p.name}</span>
                       <span className="text-xs text-gray-500">{p.role}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                      </div>
+                    ))}
+              </div>
+                    )}
+                  </div>
           ) : null}
         />
-            </div>
+              </div>
 
       {/* Main Area */}
-            <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col">
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center justify-between p-3 border-b bg-white">
+          <button onClick={() => setIsSidebarOpen(true)} className="px-3 py-2 rounded-md border border-gray-200 text-gray-700">Menu</button>
+          <div className="flex items-center space-x-2">
+            <ConnectionBadge connected={isConnected} />
+              </div>
+            </div>
+
               {activeConversation ? (
                 <>
-            <ChatHeader conversation={activeConversation} currentUser={user} />
+            <div className="hidden md:block">
+              <ChatHeader conversation={activeConversation} currentUser={user} />
+                          </div>
+            {/* Mobile back + title */}
+            <div className="md:hidden bg-white border-b border-gray-200 p-3 flex items-center justify-between">
+              <button onClick={() => setIsSidebarOpen(true)} className="px-3 py-2 rounded-md border border-gray-200 text-gray-700">Back</button>
+              <div className="text-sm font-semibold text-gray-900 truncate max-w-[60%]">
+                {activeConversation.type === 'group' ? activeConversation.name : activeConversation.participants.find(p => p.user._id !== user.id)?.user.name}
+                        </div>
+              <div className="w-14" />
+                          </div>
 
             {messagesLoading ? (
               <div className="flex items-center justify-center h-32">
@@ -529,7 +548,12 @@ const Chat = () => {
                   </div>
                 </div>
               )}
-            </div>
+      </div>
+
+      {/* Sidebar backdrop for mobile */}
+      {isSidebarOpen && (
+        <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/30 md:hidden" />
+      )}
     </div>
   );
 };
