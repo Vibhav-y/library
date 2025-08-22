@@ -179,6 +179,21 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
       }
     }
 
+    // Auto-enroll students into Announcement group
+    try {
+      if (user.role === 'student') {
+        const Conversation = require('../models/Conversation');
+        const announcement = await Conversation.getAnnouncementGroup();
+        if (!announcement.isParticipant(user._id)) {
+          announcement.addParticipant(user._id, 'member');
+          await announcement.save();
+        }
+      }
+    } catch (groupErr) {
+      console.error('Error auto-enrolling student to Announcement:', groupErr);
+      // Do not fail user creation on this
+    }
+
     res.status(201).json({ 
       message: 'User created successfully', 
       user: { 

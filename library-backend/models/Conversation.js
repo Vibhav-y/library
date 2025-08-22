@@ -42,7 +42,10 @@ const conversationSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: function() {
+      // Allow null for system-created conversations (like main group chat)
+      return this.type !== 'group' || this.name !== 'General Discussion';
+    }
   },
   lastMessage: {
     content: String,
@@ -158,6 +161,26 @@ conversationSchema.statics.getMainGroupChat = async function() {
   }
 
   return groupChat;
+};
+
+// Static method: get or create Announcement group (admins only posting)
+conversationSchema.statics.getAnnouncementGroup = async function() {
+  let group = await this.findOne({ type: 'group', name: 'Announcement' })
+    .populate('participants.user', 'name email role');
+
+  if (!group) {
+    group = new this({
+      type: 'group',
+      name: 'Announcement',
+      description: 'Official announcements. Only admins can post.',
+      participants: [],
+      createdBy: null,
+      isMonitored: true
+    });
+    await group.save();
+  }
+
+  return group;
 };
 
 module.exports = mongoose.model('Conversation', conversationSchema);

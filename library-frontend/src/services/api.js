@@ -474,9 +474,33 @@ export const chatAPI = {
     return response.data;
   },
 
+  // 🚀 PREMIUM: Add reaction to message
+  addReaction: async (messageId, emoji) => {
+    const response = await api.post(`/chat/messages/${messageId}/reactions`, { emoji });
+    return response.data;
+  },
+
+  // 🚀 PREMIUM: Edit message
+  editMessage: async (messageId, content) => {
+    const response = await api.put(`/chat/messages/${messageId}`, { content });
+    return response.data;
+  },
+
+  // 🚀 PREMIUM: Get message reactions
+  getMessageReactions: async (messageId) => {
+    const response = await api.get(`/chat/messages/${messageId}/reactions`);
+    return response.data;
+  },
+
   // Get online users
   getOnlineUsers: async () => {
     const response = await api.get('/chat/users/online');
+    return response.data;
+  },
+
+  // Search users to start private chat (exclude superadmin)
+  searchUsers: async (query) => {
+    const response = await api.get('/chat/users/search', { params: { q: query } });
     return response.data;
   },
 
