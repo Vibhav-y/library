@@ -90,10 +90,27 @@ const Chat = () => {
       console.log('🚀 Active conversation:', activeConversation?._id);
       console.log('🚀 Message conversation:', conversationId);
       
-      // Add new message to the active conversation
+      // Add or reconcile message in the active conversation
       if (activeConversation && activeConversation._id === conversationId) {
-        console.log('✅ Adding message to active conversation');
-        setMessages(prev => [...prev, message]);
+        console.log('✅ Reconciling message in active conversation');
+        setMessages(prev => {
+          // If message already exists, return prev (dedupe)
+          if (prev.some(m => m._id === message._id)) return prev;
+          // If it is from current user and there is a temp message, replace the latest temp
+          if (message.sender && message.sender._id === user.id) {
+            const lastTempIndex = [...prev]
+              .map((m, i) => (m.isTemp && m.sender && m.sender._id === user.id ? i : -1))
+              .filter(i => i >= 0)
+              .pop();
+            if (lastTempIndex !== undefined && lastTempIndex !== -1) {
+              const updated = [...prev];
+              updated[lastTempIndex] = message;
+              return updated;
+            }
+          }
+          // Otherwise append
+          return [...prev, message];
+        });
         scrollToBottom();
         
         // Mark message as read if it's not from current user
@@ -258,10 +275,10 @@ const Chat = () => {
       // Send message via API
       const response = await chatAPI.sendMessage(activeConversation._id, messageContent);
       
-      // Replace temp message with real message
-      setMessages(prev => prev.map(msg => 
-        msg.isTemp ? response : msg
-      ));
+      // Do not replace here; socket "new_message" will reconcile temp -> real
+      // setMessages(prev => prev.map(msg => 
+      //   msg.isTemp ? response : msg
+      // ));
       
       // Stop typing indicator
       sendTypingStop(activeConversation._id);
