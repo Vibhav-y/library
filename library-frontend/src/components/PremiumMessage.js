@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Edit3, Trash2, MoreVertical, Smile } from 'lucide-react';
+import { MessageCircle, Edit3, Trash2, Smile, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { chatAPI } from '../services/api';
 
-const PremiumMessage = ({ 
+const PremiumMessageCmp = ({ 
   message, 
   isOwnMessage, 
   onDelete, 
@@ -18,16 +18,52 @@ const PremiumMessage = ({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [reactions, setReactions] = useState(message.reactions || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showImage, setShowImage] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [panning, setPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
   const editInputRef = useRef(null);
 
   const canEdit = message.sender._id === user.id || user.role === 'admin' || user.role === 'superadmin';
   const canDelete = message.sender._id === user.id || user.role === 'admin' || user.role === 'superadmin';
   const isEdited = message.isEdited;
-  const isOldMessage = new Date(message.createdAt) < new Date(Date.now() - 5 * 60 * 1000);
+  const isOldMessage = new Date(message.createdAt) < new Date(Date.now() - 4 * 60 * 60 * 1000);
   const isTempMessage = message.isTemp;
 
-  // Common emojis for quick reactions
   const quickEmojis = ['👍', '❤️', '😊', '🎉', '👏', '🔥', '💯', '😎'];
+
+  // Render text content with clickable links
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    const parts = [];
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|mailto:[^\s]+)/gi;
+    let lastIndex = 0;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      const [url] = match;
+      const start = match.index;
+      if (start > lastIndex) {
+        parts.push(text.slice(lastIndex, start));
+      }
+      const href = url.startsWith('http') || url.startsWith('mailto:') ? url : `https://${url}`;
+      parts.push(
+        <a key={`${start}-${url}`} href={href} target="_blank" rel="noreferrer" className={`${isOwnMessage ? 'underline decoration-white/60 hover:decoration-white' : 'text-indigo-600 underline hover:text-indigo-700'}`}>
+          {url}
+        </a>
+      );
+      lastIndex = start + url.length;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+    // Replace newlines with <br/>
+    return parts.flatMap((chunk, i) =>
+      typeof chunk === 'string'
+        ? chunk.split('\n').flatMap((line, j) => (j === 0 ? [line] : [<br key={`br-${i}-${j}`} />, line]))
+        : [chunk]
+    );
+  };
 
   useEffect(() => {
     if (isEditing && editInputRef.current) {
@@ -36,12 +72,10 @@ const PremiumMessage = ({
     }
   }, [isEditing]);
 
-  // Update edit content when message content changes
   useEffect(() => {
     setEditContent(message.content);
   }, [message.content]);
 
-  // Update reactions when message reactions change
   useEffect(() => {
     setReactions(message.reactions || []);
   }, [message.reactions]);
@@ -51,14 +85,12 @@ const PremiumMessage = ({
       setIsEditing(false);
       return;
     }
-
     setIsSubmitting(true);
     try {
       await chatAPI.editMessage(message._id, editContent);
       onEdit && onEdit(message._id, editContent);
       setIsEditing(false);
-    } catch (error) {
-      console.error('Error editing message:', error);
+    } catch {
       alert('Failed to edit message');
     } finally {
       setIsSubmitting(false);
@@ -69,70 +101,79 @@ const PremiumMessage = ({
     try {
       await chatAPI.addReaction(message._id, emoji);
       setShowReactionPicker(false);
-    } catch (error) {
-      console.error('Error adding reaction:', error);
-    }
+    } catch {}
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this message?')) {
+    if (window.confirm('Delete this message?')) {
       try {
         await chatAPI.deleteMessage(message._id);
         onDelete && onDelete(message._id);
-      } catch (error) {
-        console.error('Error deleting message:', error);
-        alert('Failed to delete message');
+      } catch {
+        alert('Failed to delete');
       }
     }
   };
 
-  // Don't show actions for temp messages
+  const handleDownload = () => {
+    const url = message?.attachment?.url;
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = message?.attachment?.originalName || 'download';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   if (isTempMessage) {
     return (
       <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-          isOwnMessage 
-            ? 'bg-blue-100 text-blue-900 border border-blue-200' 
-            : 'bg-gray-100 text-gray-900 border border-gray-200'
+        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl border shadow-sm ${
+          isOwnMessage ? 'bg-indigo-50 border-indigo-100 text-indigo-900' : 'bg-gray-50 border-gray-200 text-gray-900'
         }`}>
-          <div className="flex items-center space-x-2">
-            <div className="text-sm opacity-75">{message.content}</div>
-            <div className="text-xs text-gray-500">Sending...</div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="opacity-80">{message.content}</span>
+            <span className="text-xs text-gray-500">Sending…</span>
           </div>
         </div>
       </div>
     );
   }
 
-  const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const getReactionCount = (emoji) => {
-    return reactions.filter(r => r.emoji === emoji).length;
-  };
-
-  const hasUserReacted = (emoji) => {
-    return reactions.some(r => r.emoji === emoji && r.user._id === user.id);
-  };
+  const ts = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const renderAttachment = () => {
     if (!message.attachment || !message.attachment.url) return null;
+    const name = message.attachment.originalName || 'file';
     if (message.type === 'image') {
       return (
-        <div className="mt-2">
-          <img src={message.attachment.url} alt={message.content} className="rounded-lg max-h-72 object-cover" />
+        <div className="mt-2 overflow-hidden rounded-xl border border-indigo-200 bg-white">
+          <img
+            loading="lazy"
+            src={message.attachment.url}
+            alt={name}
+            className="max-h-80 object-cover w-full transition-transform duration-300 hover:scale-[1.01] cursor-zoom-in"
+            onClick={() => { setShowImage(true); setZoom(1); setOffset({x:0,y:0}); }}
+          />
         </div>
       );
     }
+    // Document (e.g., PDF) preview + download button
     return (
       <div className="mt-2">
-        <a href={message.attachment.url} target="_blank" rel="noreferrer" className="text-sm underline">
-          Download {message.attachment.originalName || 'file'}
-        </a>
+        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+          <iframe
+            src={message.attachment.url}
+            title={name}
+            className="w-full h-52"
+          />
+        </div>
+        <button onClick={handleDownload} className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+          <Download size={16} />
+          <span className="truncate max-w-[220px]">Download {name}</span>
+        </button>
       </div>
     );
   };
@@ -140,30 +181,19 @@ const PremiumMessage = ({
   if (isEditing) {
     return (
       <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-        <div className="max-w-xs lg:max-w-md">
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+        <div className="max-w-xs lg:max-w-md w-full">
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-3 shadow-sm">
             <textarea
               ref={editInputRef}
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full p-2 border border-orange-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full p-2 rounded-lg border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
               rows="2"
-              placeholder="Edit your message..."
+              placeholder="Edit your message…"
             />
-            <div className="flex justify-end space-x-2 mt-2">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEdit}
-                disabled={isSubmitting || !editContent.trim()}
-                className="px-3 py-1 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Saving...' : 'Save'}
-              </button>
+            <div className="flex justify-end gap-2 mt-2">
+              <button onClick={() => setIsEditing(false)} className="px-3 py-1 text-sm text-gray-600">Cancel</button>
+              <button onClick={handleEdit} disabled={isSubmitting || !editContent.trim()} className="px-3 py-1 text-sm rounded-md bg-indigo-600 text-white disabled:opacity-50">{isSubmitting ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         </div>
@@ -172,135 +202,123 @@ const PremiumMessage = ({
   }
 
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 transition-all`}>
       <div className="max-w-xs lg:max-w-md">
-        {/* Message Header */}
-        <div className={`flex items-center mb-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-          {!isOwnMessage && (
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                {message.sender.name.charAt(0).toUpperCase()}
+        <div className={`text-xs mb-1 ${isOwnMessage ? 'text-right text-gray-400' : 'text-gray-400'}`}>{ts}{isEdited && <span className="ml-1 text-indigo-500">(edited)</span>}</div>
+        {/* Gradient, ultra-slim border wrapper */}
+        <div className={`group relative p-[1px] rounded-2xl transition-all duration-300 shadow-sm ${
+          isOwnMessage
+            ? 'bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500'
+            : 'bg-gradient-to-br from-slate-200 to-slate-100'
+        }`}>
+          {/* Bubble content */}
+          <div className={`rounded-2xl p-4 ${
+            isOwnMessage ? 'bg-gradient-to-br from-indigo-600 to-indigo-500 text-white' : 'bg-white text-gray-900'
+          }`}>
+            {message.type === 'text' && (
+              <div className="text-sm leading-relaxed break-words">{renderTextWithLinks(message.content)}</div>
+            )}
+            {renderAttachment()}
+            {message.replyTo && (
+              <div className={`mt-3 rounded-xl p-3 ${isOwnMessage ? 'bg-white/15' : 'bg-gray-100'}`}>
+                <p className={`text-xs ${isOwnMessage ? 'opacity-90' : 'opacity-80'}`}>Replying to {message.replyTo.sender.name}: {message.replyTo.content}</p>
               </div>
-              <span className="text-sm font-medium text-gray-700">
-                {message.sender.name}
-              </span>
-              {message.sender.role !== 'student' && (
-                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                  {message.sender.role}
-                </span>
-              )}
-            </div>
-          )}
-          <span className="text-xs text-gray-500 ml-2">
-            {formatTime(message.createdAt)}
-            {isEdited && <span className="ml-1 text-orange-500">(edited)</span>}
-          </span>
-        </div>
-
-        {/* Message Content */}
-        <div className={`relative ${isOwnMessage ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-white border border-gray-200 text-gray-800'} rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}>
-          {message.type === 'text' && (
-            <p className="text-sm leading-relaxed">{message.content}</p>
-          )}
-          {renderAttachment()}
-          
-          {/* Reply Preview */}
-          {message.replyTo && (
-            <div className={`mt-3 p-3 rounded-xl ${isOwnMessage ? 'bg-orange-400 bg-opacity-30' : 'bg-gray-100'}`}>
-              <p className="text-xs opacity-75">
-                Replying to {message.replyTo.sender.name}: {message.replyTo.content}
-              </p>
-            </div>
-          )}
-
-          {/* Message Actions */}
-          {showActions && (
-            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="flex space-x-1">
-                <button
-                  onClick={() => onReply && onReply(message)}
-                  className="p-2 rounded-xl hover:bg-white hover:bg-opacity-20 transition-colors"
-                  title="Reply"
-                >
-                  <MessageCircle size={16} />
+            )}
+            {showActions && (
+              <div className={`absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto`}>
+                <button onClick={() => onReply && onReply(message)} title="Reply" className={`h-8 w-8 rounded-full shadow-sm border backdrop-blur ${isOwnMessage ? 'bg-white/20 border-white/30 text-white hover:bg-white/25' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                  <MessageCircle size={14} className="mx-auto" />
                 </button>
                 {canEdit && !isOldMessage && message.type === 'text' && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="p-2 rounded-xl hover:bg-white hover:bg-opacity-20 transition-colors"
-                    title="Edit message"
-                  >
-                    <Edit3 size={16} />
+                  <button onClick={() => setIsEditing(true)} title="Edit" className={`h-8 w-8 rounded-full shadow-sm border backdrop-blur ${isOwnMessage ? 'bg-white/20 border-white/30 text-white hover:bg-white/25' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                    <Edit3 size={14} className="mx-auto" />
                   </button>
                 )}
                 {canDelete && (
-                  <button
-                    onClick={handleDelete}
-                    className="p-2 rounded-xl hover:bg-white hover:bg-opacity-20 transition-colors"
-                    title="Delete message"
-                  >
-                    <Trash2 size={16} />
+                  <button onClick={handleDelete} title="Delete" className={`h-8 w-8 rounded-full shadow-sm border backdrop-blur ${isOwnMessage ? 'bg-white/20 border-white/30 text-white hover:bg-white/25' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                    <Trash2 size={14} className="mx-auto" />
                   </button>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Reactions */}
-        {showReactions && reactions.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {Object.entries(
-              reactions.reduce((acc, reaction) => {
-                acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
-                return acc;
-              }, {})
-            ).map(([emoji, count]) => (
+        {/* Image modal */}
+        {showImage && message.type === 'image' && (
+          <div
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setShowImage(false)}
+          >
+            {/* Controls */}
+            <div className="absolute top-4 right-4 flex gap-2" onClick={(e)=>e.stopPropagation()}>
               <button
-                key={emoji}
-                onClick={() => handleReaction(emoji)}
-                className={`px-3 py-2 rounded-full text-sm transition-all duration-200 ${
-                  hasUserReacted(emoji)
-                    ? 'bg-orange-100 text-orange-800 border border-orange-300'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
+                className="px-3 py-2 rounded-lg bg-white/90 text-gray-800 hover:bg-white"
+                onClick={() => setZoom((z)=>Math.max(1, +(z-0.2).toFixed(2)))}
+              >-
+              </button>
+              <button
+                className="px-3 py-2 rounded-lg bg-white/90 text-gray-800 hover:bg-white"
+                onClick={() => setZoom((z)=>Math.min(5, +(z+0.2).toFixed(2)))}
+              >+
+              </button>
+              <button
+                className="px-3 py-2 rounded-lg bg-white/90 text-gray-800 hover:bg-white"
+                onClick={() => { setZoom(1); setOffset({x:0,y:0}); }}
+              >Reset
+              </button>
+            </div>
+            <div
+              className="max-h-[90vh] max-w-[90vw] overflow-hidden cursor-grab active:cursor-grabbing"
+              onClick={(e)=>e.stopPropagation()}
+              onWheel={(e)=>{ e.preventDefault(); const delta = e.deltaY>0 ? -0.2: 0.2; setZoom(z=>Math.min(5, Math.max(1, +(z+delta).toFixed(2)))); }}
+              onMouseDown={(e)=>{ setPanning(true); panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y }; }}
+              onMouseMove={(e)=>{ if(panning){ setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y }); } }}
+              onMouseUp={()=> setPanning(false)}
+              onMouseLeave={()=> setPanning(false)}
+              onTouchStart={(e)=>{ if(e.touches.length===1){ const t=e.touches[0]; setPanning(true); panStart.current={ x: t.clientX - offset.x, y: t.clientY - offset.y }; } }}
+              onTouchMove={(e)=>{ if(panning && e.touches.length===1){ const t=e.touches[0]; setOffset({ x: t.clientX - panStart.current.x, y: t.clientY - panStart.current.y }); } }}
+              onTouchEnd={()=> setPanning(false)}
+            >
+              <img
+                src={message.attachment.url}
+                alt={message.attachment.originalName || 'image'}
+                draggable="false"
+                style={{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`, transition: panning ? 'none' : 'transform 120ms ease-out' }}
+                className="select-none rounded-xl shadow-2xl block"
+              />
+            </div>
+          </div>
+        )}
+
+        {showReactions && reactions.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {Object.entries(
+              reactions.reduce((acc, r) => (acc[r.emoji] = (acc[r.emoji] || 0) + 1, acc), {})
+            ).map(([emoji, count]) => (
+              <button key={emoji} onClick={() => handleReaction(emoji)} className="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 transition-colors">
                 {emoji} {count}
               </button>
             ))}
           </div>
         )}
-
-        {/* Reaction Picker */}
-        {showReactionPicker && (
-          <div className="absolute bottom-full left-0 mb-3 bg-white border border-gray-200 rounded-2xl shadow-lg p-3 z-10">
-            <div className="grid grid-cols-4 gap-2">
-              {quickEmojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReaction(emoji)}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-lg"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-4 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={() => setShowReactionPicker(!showReactionPicker)}
-            className="flex items-center space-x-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <Smile size={16} />
-            <span>React</span>
-          </button>
-        </div>
       </div>
     </div>
   );
 };
+
+const areEqual = (prevProps, nextProps) => {
+  const a = prevProps.message;
+  const b = nextProps.message;
+  return (
+    a._id === b._id &&
+    a.content === b.content &&
+    a.isEdited === b.isEdited &&
+    a.editedAt === b.editedAt &&
+    (a.reactions?.length || 0) === (b.reactions?.length || 0)
+  );
+};
+
+const PremiumMessage = React.memo(PremiumMessageCmp, areEqual);
 
 export default PremiumMessage;

@@ -2,10 +2,15 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://whxqigaladikvofocwpu.supabase.co',
-  process.env.SUPABASE_ANON_KEY
-);
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://whxqigaladikvofocwpu.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+
+// Public client (anon) – fine for public reads
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Admin client (service role) – required for signed URLs and private bucket ops
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Configure multer for file handling (we'll upload to Supabase after multer processes)
 const storage = multer.memoryStorage(); // Store files in memory temporarily
@@ -28,7 +33,7 @@ const upload = multer({
 // Upload file to Supabase Storage (default bucket: 'documents')
 const uploadToSupabase = async (file, filename) => {
   try {
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('documents')
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
@@ -49,7 +54,7 @@ const uploadToSupabase = async (file, filename) => {
 // Generic upload helper to any bucket
 const uploadToBucket = async (file, filename, bucketName) => {
   try {
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
       .from(bucketName)
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
@@ -76,6 +81,17 @@ const getPublicUrl = (filename) => {
   return data.publicUrl;
 };
 
+// Create signed URL for private buckets
+const getSignedUrl = async (filename, expiresIn = 60 * 60) => {
+  const { data, error } = await supabaseAdmin.storage
+    .from('documents')
+    .createSignedUrl(filename, expiresIn);
+  if (error) {
+    throw error;
+  }
+  return data.signedUrl;
+};
+
 // Generic public URL helper
 const getPublicUrlFromBucket = (filename, bucketName) => {
   const { data } = supabase.storage
@@ -87,7 +103,7 @@ const getPublicUrlFromBucket = (filename, bucketName) => {
 // Delete file from Supabase Storage
 const deleteFromSupabase = async (filename) => {
   try {
-    const { error } = await supabase.storage
+    const { error } = await supabaseAdmin.storage
       .from('documents')
       .remove([filename]);
 
@@ -116,8 +132,10 @@ module.exports = {
   uploadToSupabase,
   uploadToBucket,
   getPublicUrl,
+  getSignedUrl,
   getPublicUrlFromBucket,
   deleteFromSupabase,
   generateUniqueFilename,
-  supabase
+  supabase,
+  supabaseAdmin
 }; 

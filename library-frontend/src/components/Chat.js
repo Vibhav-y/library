@@ -304,8 +304,9 @@ const Chat = () => {
     try {
       // Temp message preview
       const isImage = file.type.startsWith('image/');
+      const tempId = `temp_${Date.now()}`;
       const temp = {
-        _id: `temp_${Date.now()}`,
+        _id: tempId,
         content: file.name,
         sender: { _id: user.id, name: user.name, role: user.role },
         conversation: activeConversation._id,
@@ -318,8 +319,17 @@ const Chat = () => {
       setMessages(prev => [...prev, temp]);
       scrollToBottom();
 
-      await chatAPI.sendAttachment(activeConversation._id, file, replyToMessage?._id || null);
+      const response = await chatAPI.sendAttachment(activeConversation._id, file, replyToMessage?._id || null);
       setReplyToMessage(null);
+
+      // Replace temp with server message as a fallback (socket will also reconcile)
+      setMessages(prev => {
+        const idx = prev.findIndex(m => m._id === tempId);
+        if (idx === -1) return prev;
+        const copy = [...prev];
+        copy[idx] = response;
+        return copy;
+      });
     } catch (err) {
       console.error('Attachment send failed', err);
       setMessages(prev => prev.filter(m => !m.isTemp));
@@ -433,7 +443,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-[95vh] bg-gray-50">
       {/* Left Sidebar */}
       <div className={`bg-white border-r border-gray-200 flex flex-col w-80 md:static md:translate-x-0 md:w-80 fixed inset-y-0 left-0 z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-200 ease-in-out`}>
         <div className="p-4 border-b border-gray-200">

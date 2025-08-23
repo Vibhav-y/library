@@ -77,14 +77,11 @@ const Layout = ({ children }) => {
     ] : []),
   ];
 
-
-
   const isActive = (path) => location.pathname === path;
+  const isDashboardPage = location.pathname.startsWith('/dashboard');
   
   const getLogoSizeStyle = (logoSize) => {
-    // Use fixed size from customization, no mobile scaling
     const size = Number(logoSize) || 40;
-    
     return {
       height: `${size}px`,
       width: 'auto'
@@ -115,7 +112,7 @@ const Layout = ({ children }) => {
       </h1>
     );
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       
@@ -223,56 +220,60 @@ const Layout = ({ children }) => {
 
       {/* Main content */}
       <div className="lg:pl-72 flex flex-col flex-1">
-        {/* Mobile header with menu button */}
-        <div className="block lg:hidden bg-white border-b border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <span className="font-semibold text-gray-900 truncate px-4">
-              {systemName || 'Library System'}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+        {/* Mobile header with menu button (kept for navigation; not the welcome banner) */}
+        {(
+          <div className="block lg:hidden bg-white border-b border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <span className="font-semibold text-gray-900 truncate px-4">
+                {systemName || 'Library System'}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         
-        {/* Desktop Header */}
-        <header className="hidden lg:block bg-white/80 backdrop-blur-md shadow-xl border-b border-white/20 sticky top-0 z-20">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-white/90 to-white/70"></div>
-            <div className="absolute top-0 right-0 w-64 h-20 bg-gradient-to-l from-blue-400/10 to-purple-400/10 blur-2xl"></div>
-            <div className="relative max-w-7xl mx-auto py-6 px-6 lg:px-8">
-              <div className="flex justify-between items-center">
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
-                    Welcome, {user?.name || user?.email}
-                  </h1>
-                  <p className="text-base text-gray-600 capitalize mt-1 flex items-center">
-                    <div className="h-2 w-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-2"></div>
-                    {user?.email} • Role: <span className="font-semibold ml-1">{user?.role}</span>
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <button
-                    onClick={handleLogout}
-                    className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-300"
-                  >
-                    <LogOut className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                    Logout
-                  </button>
+        {/* Desktop Welcome Banner: show only on Dashboard */}
+        {isDashboardPage && (
+          <header className="hidden lg:block bg-white/80 backdrop-blur-md shadow-xl border-b border-white/20 sticky top-0 z-20">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-white/90 to-white/70"></div>
+              <div className="absolute top-0 right-0 w-64 h-20 bg-gradient-to-l from-blue-400/10 to-purple-400/10 blur-2xl"></div>
+              <div className="relative max-w-7xl mx-auto py-6 px-6 lg:px-8">
+                <div className="flex justify-between items-center">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                      Welcome, {user?.name || user?.email}
+                    </h1>
+                    <p className="text-base text-gray-600 capitalize mt-1 flex items-center">
+                      <div className="h-2 w-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-2"></div>
+                      {user?.email} • Role: <span className="font-semibold ml-1">{user?.role}</span>
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={handleLogout}
+                      className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500/20 transition-all duration-300"
+                    >
+                      <LogOut className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                      Logout
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Page content */}
         <main className="flex-1">

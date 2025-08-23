@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const { uploadToSupabase, uploadToBucket, getPublicUrlFromBucket, generateUniqueFilename } = require('../config/supabaseConfig');
+const { uploadToSupabase, getPublicUrl, generateUniqueFilename } = require('../config/supabaseConfig');
 const multer = require('multer');
 // Separate uploader for chat attachments: allow images and general files up to 20MB
 const chatUpload = multer({
@@ -336,10 +336,19 @@ router.post('/conversations/:conversationId/attachments', authMiddleware.verifyT
       return res.status(403).json({ message: 'Access denied. Not a participant in this conversation.' });
     }
 
-    // Upload to Supabase bucket 'Chat_uploads'
+    // Upload to 'documents' bucket under a dedicated folder
     const uniqueName = generateUniqueFilename(req.file.originalname);
-    await uploadToBucket(req.file, uniqueName, 'Chat_uploads');
-    const publicUrl = getPublicUrlFromBucket(uniqueName, 'Chat_uploads');
+    const objectPath = `chat/${uniqueName}`;
+    await uploadToSupabase(req.file, objectPath);
+    // If your bucket is private, use a signed URL; otherwise use public URL
+    let fileUrl;
+    try {
+      const { getSignedUrl } = require('../config/supabaseConfig');
+      fileUrl = await getSignedUrl(objectPath, 60 * 60 * 24); // 24h signed URL
+    } catch (e) {
+      const { getPublicUrl } = require('../config/supabaseConfig');
+      fileUrl = getPublicUrl(objectPath);
+    }
 
     const inferredType = req.file.mimetype.startsWith('image/') ? 'image' : 'file';
 
@@ -354,7 +363,7 @@ router.post('/conversations/:conversationId/attachments', authMiddleware.verifyT
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
-        url: publicUrl
+        url: fileUrl
       }
     });
 
@@ -595,10 +604,10 @@ router.put('/messages/:messageId', authMiddleware.verifyToken, async (req, res) 
       return res.status(403).json({ message: 'Access denied. Can only edit your own messages.' });
     }
 
-    // Check if message is too old (5 minutes)
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (message.createdAt < fiveMinutesAgo) {
-      return res.status(400).json({ message: 'Messages can only be edited within 5 minutes' });
+    // Check if message is too old (4 hours)
+    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+    if (message.createdAt < fourHoursAgo) {
+      return res.status(400).json({ message: 'Messages can only be edited within 4 hours' });
     }
 
     message.content = content.trim();

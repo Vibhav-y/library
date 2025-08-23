@@ -70,6 +70,10 @@ const conversationSchema = new mongoose.Schema({
   }
 });
 
+// Indexes for faster querying
+conversationSchema.index({ 'participants.user': 1, updatedAt: -1 });
+conversationSchema.index({ type: 1, name: 1 });
+
 // Update the updatedAt field before saving
 conversationSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
