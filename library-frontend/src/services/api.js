@@ -468,6 +468,17 @@ export const chatAPI = {
     return response.data;
   },
 
+  // Send attachment (image/file)
+  sendAttachment: async (conversationId, file, replyTo = null) => {
+    const form = new FormData();
+    form.append('file', file);
+    if (replyTo) form.append('replyTo', replyTo);
+    const response = await api.post(`/chat/conversations/${conversationId}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
   // Mark messages as read
   markAsRead: async (conversationId) => {
     const response = await api.put(`/chat/conversations/${conversationId}/read`);

@@ -25,11 +25,32 @@ const upload = multer({
   }
 });
 
-// Upload file to Supabase Storage
+// Upload file to Supabase Storage (default bucket: 'documents')
 const uploadToSupabase = async (file, filename) => {
   try {
     const { data, error } = await supabase.storage
       .from('documents')
+      .upload(filename, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Supabase upload error:', error);
+    throw error;
+  }
+};
+
+// Generic upload helper to any bucket
+const uploadToBucket = async (file, filename, bucketName) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
         upsert: false
@@ -52,6 +73,14 @@ const getPublicUrl = (filename) => {
     .from('documents')
     .getPublicUrl(filename);
   
+  return data.publicUrl;
+};
+
+// Generic public URL helper
+const getPublicUrlFromBucket = (filename, bucketName) => {
+  const { data } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(filename);
   return data.publicUrl;
 };
 
@@ -85,7 +114,9 @@ const generateUniqueFilename = (originalName) => {
 module.exports = {
   upload,
   uploadToSupabase,
+  uploadToBucket,
   getPublicUrl,
+  getPublicUrlFromBucket,
   deleteFromSupabase,
   generateUniqueFilename,
   supabase

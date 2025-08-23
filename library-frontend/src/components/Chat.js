@@ -39,6 +39,7 @@ const Chat = () => {
   
   // Message sending state
   const [isSending, setIsSending] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState(null);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -245,7 +246,7 @@ const Chat = () => {
 
   // Send message
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation || isSending) return;
+    if ((!newMessage.trim() && !replyToMessage) || !activeConversation || isSending) return;
 
     const messageContent = newMessage.trim();
     setNewMessage('');
@@ -257,7 +258,7 @@ const Chat = () => {
       // Create a temporary message object to show immediately
       const tempMessage = {
         _id: `temp_${Date.now()}`,
-        content: messageContent,
+        content: messageContent || (replyToMessage ? 'Reply' : ''),
         sender: {
           _id: user.id,
           name: user.name,
@@ -265,20 +266,21 @@ const Chat = () => {
         },
         conversation: activeConversation._id,
         createdAt: new Date(),
-        isTemp: true
+        isTemp: true,
+        replyTo: replyToMessage ? { _id: replyToMessage._id, content: replyToMessage.content, sender: replyToMessage.sender } : undefined
       };
 
       // Add message to UI immediately
-      setMessages(prev => [...prev, tempMessage]);
+      if (messageContent) {
+        setMessages(prev => [...prev, tempMessage]);
+      }
       scrollToBottom();
 
       // Send message via API
-      const response = await chatAPI.sendMessage(activeConversation._id, messageContent);
-      
-      // Do not replace here; socket "new_message" will reconcile temp -> real
-      // setMessages(prev => prev.map(msg => 
-      //   msg.isTemp ? response : msg
-      // ));
+      if (messageContent) {
+        await chatAPI.sendMessage(activeConversation._id, messageContent, 'text', replyToMessage?._id || null);
+      }
+      setReplyToMessage(null);
       
       // Stop typing indicator
       sendTypingStop(activeConversation._id);
@@ -291,6 +293,40 @@ const Chat = () => {
       setMessages(prev => prev.filter(msg => !msg.isTemp));
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // Attach file
+  const handleAttach = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file || !activeConversation) return;
+    setIsSending(true);
+    try {
+      // Temp message preview
+      const isImage = file.type.startsWith('image/');
+      const temp = {
+        _id: `temp_${Date.now()}`,
+        content: file.name,
+        sender: { _id: user.id, name: user.name, role: user.role },
+        conversation: activeConversation._id,
+        createdAt: new Date(),
+        isTemp: true,
+        type: isImage ? 'image' : 'file',
+        attachment: { originalName: file.name, url: isImage ? URL.createObjectURL(file) : undefined },
+        replyTo: replyToMessage ? { _id: replyToMessage._id, content: replyToMessage.content, sender: replyToMessage.sender } : undefined
+      };
+      setMessages(prev => [...prev, temp]);
+      scrollToBottom();
+
+      await chatAPI.sendAttachment(activeConversation._id, file, replyToMessage?._id || null);
+      setReplyToMessage(null);
+    } catch (err) {
+      console.error('Attachment send failed', err);
+      setMessages(prev => prev.filter(m => !m.isTemp));
+      alert('Failed to send attachment');
+    } finally {
+      setIsSending(false);
+      e.target.value = '';
     }
   };
 
@@ -541,19 +577,23 @@ const Chat = () => {
                 typingIndicator={activeConversation && (
                   <TypingIndicator conversationId={activeConversation._id} />
                 )}
+                onReply={(msg)=> setReplyToMessage(msg)}
               />
                     )}
                     
                     <div ref={messagesEndRef} />
 
             <MessageComposer
-                          value={newMessage}
+              value={newMessage}
               onChange={handleTyping}
               onSend={sendMessage}
-                          onKeyPress={handleKeyPress}
+              onKeyPress={handleKeyPress}
               isSending={isSending}
               disabled={activeConversation?.type === 'group' && activeConversation?.name === 'Announcement' && !(user.role === 'admin' || user.role === 'superadmin')}
               disabledReason={activeConversation?.type === 'group' && activeConversation?.name === 'Announcement' && !(user.role === 'admin' || user.role === 'superadmin') ? 'Only admins can post in Announcement.' : undefined}
+              onAttach={handleAttach}
+              replyToMessage={replyToMessage}
+              onCancelReply={() => setReplyToMessage(null)}
             />
                 </>
               ) : (

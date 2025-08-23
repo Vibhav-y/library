@@ -1,9 +1,26 @@
 import React from 'react';
 
-const MessageComposer = ({ value, onChange, onSend, onKeyPress, isSending, disabled = false, disabledReason }) => {
+const MessageComposer = ({ value, onChange, onSend, onKeyPress, isSending, disabled = false, disabledReason, onAttach, onCancelReply, replyToMessage }) => {
   return (
     <div className="bg-white border-t border-gray-200 p-4">
-      <div className="flex space-x-3">
+      {replyToMessage && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 flex items-start justify-between">
+          <div className="text-xs text-blue-800">
+            Replying to {replyToMessage.sender?.name || 'message'}: {replyToMessage.content?.slice(0, 80)}
+          </div>
+          <button onClick={onCancelReply} className="ml-3 text-xs text-blue-600 hover:underline">Cancel</button>
+        </div>
+      )}
+      <div className="flex space-x-3 items-center">
+        <button
+          type="button"
+          className="px-3 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          onClick={() => document.getElementById('chat-file-input')?.click()}
+          disabled={disabled}
+        >
+          Attach
+        </button>
+        <input id="chat-file-input" type="file" className="hidden" onChange={onAttach} />
         <div className="flex-1">
           <input
             type="text"
@@ -17,7 +34,7 @@ const MessageComposer = ({ value, onChange, onSend, onKeyPress, isSending, disab
         </div>
         <button
           onClick={onSend}
-          disabled={disabled || !value.trim() || isSending}
+          disabled={disabled || (!value.trim() && !isSending)}
           className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSending ? 'Sending...' : 'Send'}

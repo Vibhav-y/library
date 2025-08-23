@@ -1,7 +1,7 @@
 import React from 'react';
 import PremiumMessage from '../PremiumMessage';
 
-const MessageList = ({ messages, currentUserId, onDelete, onEdit, typingIndicator }) => {
+const MessageList = ({ messages, currentUserId, onDelete, onEdit, typingIndicator, onReply }) => {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4" id="message-list">
       {messages.length === 0 ? (
@@ -18,6 +18,7 @@ const MessageList = ({ messages, currentUserId, onDelete, onEdit, typingIndicato
               isOwnMessage={message.sender._id === currentUserId}
               onDelete={onDelete}
               onEdit={onEdit}
+              onReply={onReply}
             />
           ))}
           {typingIndicator}

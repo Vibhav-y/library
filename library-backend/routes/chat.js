@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
+const { uploadToSupabase, uploadToBucket, getPublicUrlFromBucket, generateUniqueFilename } = require('../config/supabaseConfig');
+const multer = require('multer');
+// Separate uploader for chat attachments: allow images and general files up to 20MB
+const chatUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }
+});
 const authMiddleware = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
@@ -186,7 +193,7 @@ router.get('/conversations/:conversationId/messages', authMiddleware.verifyToken
   }
 });
 
-// Send message
+// Send message (text)
 router.post('/conversations/:conversationId/messages', authMiddleware.verifyToken, async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -307,6 +314,82 @@ router.post('/conversations/:conversationId/messages', authMiddleware.verifyToke
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ message: 'Error sending message', error: error.message });
+  }
+});
+
+// Send attachment (image/file)
+router.post('/conversations/:conversationId/attachments', authMiddleware.verifyToken, chatUpload.single('file'), async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { replyTo } = req.body;
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+    if (!conversation.isParticipant(userId)) {
+      return res.status(403).json({ message: 'Access denied. Not a participant in this conversation.' });
+    }
+
+    // Upload to Supabase bucket 'Chat_uploads'
+    const uniqueName = generateUniqueFilename(req.file.originalname);
+    await uploadToBucket(req.file, uniqueName, 'Chat_uploads');
+    const publicUrl = getPublicUrlFromBucket(uniqueName, 'Chat_uploads');
+
+    const inferredType = req.file.mimetype.startsWith('image/') ? 'image' : 'file';
+
+    const message = new Message({
+      conversation: conversationId,
+      sender: userId,
+      content: req.file.originalname,
+      type: inferredType,
+      replyTo: replyTo || undefined,
+      attachment: {
+        filename: uniqueName,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        url: publicUrl
+      }
+    });
+
+    await message.save();
+    await message.populate('sender', 'name email role profilePicture');
+    if (replyTo) {
+      await message.populate('replyTo', 'content sender');
+    }
+
+    conversation.lastMessage = {
+      content: inferredType === 'image' ? '[Image]' : '[File] ' + req.file.originalname,
+      sender: userId,
+      timestamp: message.createdAt
+    };
+    conversation.updatedAt = new Date();
+    await conversation.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      const roomName = `conversation_${conversationId}`;
+      io.to(roomName).emit('new_message', {
+        message,
+        conversationId
+      });
+      io.to(roomName).emit('conversation_updated', {
+        conversationId,
+        lastMessage: conversation.lastMessage,
+        updatedAt: conversation.updatedAt
+      });
+    }
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Error sending attachment:', error);
+    res.status(500).json({ message: 'Error sending attachment', error: error.message });
   }
 });
 

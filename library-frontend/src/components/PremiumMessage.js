@@ -9,7 +9,8 @@ const PremiumMessage = ({
   onDelete, 
   onEdit,
   showReactions = true,
-  showActions = true 
+  showActions = true,
+  onReply
 }) => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -118,6 +119,24 @@ const PremiumMessage = ({
     return reactions.some(r => r.emoji === emoji && r.user._id === user.id);
   };
 
+  const renderAttachment = () => {
+    if (!message.attachment || !message.attachment.url) return null;
+    if (message.type === 'image') {
+      return (
+        <div className="mt-2">
+          <img src={message.attachment.url} alt={message.content} className="rounded-lg max-h-72 object-cover" />
+        </div>
+      );
+    }
+    return (
+      <div className="mt-2">
+        <a href={message.attachment.url} target="_blank" rel="noreferrer" className="text-sm underline">
+          Download {message.attachment.originalName || 'file'}
+        </a>
+      </div>
+    );
+  };
+
   if (isEditing) {
     return (
       <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -180,7 +199,10 @@ const PremiumMessage = ({
 
         {/* Message Content */}
         <div className={`relative ${isOwnMessage ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : 'bg-white border border-gray-200 text-gray-800'} rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}>
-          <p className="text-sm leading-relaxed">{message.content}</p>
+          {message.type === 'text' && (
+            <p className="text-sm leading-relaxed">{message.content}</p>
+          )}
+          {renderAttachment()}
           
           {/* Reply Preview */}
           {message.replyTo && (
@@ -195,7 +217,14 @@ const PremiumMessage = ({
           {showActions && (
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <div className="flex space-x-1">
-                {canEdit && !isOldMessage && (
+                <button
+                  onClick={() => onReply && onReply(message)}
+                  className="p-2 rounded-xl hover:bg-white hover:bg-opacity-20 transition-colors"
+                  title="Reply"
+                >
+                  <MessageCircle size={16} />
+                </button>
+                {canEdit && !isOldMessage && message.type === 'text' && (
                   <button
                     onClick={() => setIsEditing(true)}
                     className="p-2 rounded-xl hover:bg-white hover:bg-opacity-20 transition-colors"
@@ -267,11 +296,6 @@ const PremiumMessage = ({
           >
             <Smile size={16} />
             <span>React</span>
-          </button>
-          
-          <button className="flex items-center space-x-2 text-xs text-gray-500 hover:text-gray-700 transition-colors">
-            <MessageCircle size={16} />
-            <span>Reply</span>
           </button>
         </div>
       </div>
