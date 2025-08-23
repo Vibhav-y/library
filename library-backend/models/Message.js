@@ -21,6 +21,14 @@ const messageSchema = new mongoose.Schema({
     enum: ['text', 'file', 'image', 'system'],
     default: 'text'
   },
+  // E2EE fields: if encrypted, contentEncrypted holds ciphertext (base64) and related metadata
+  encryption: {
+    isEncrypted: { type: Boolean, default: false },
+    keyVersion: { type: Number, default: 0 },
+    iv: { type: String, default: null }, // base64 IV/nonce
+    authTag: { type: String, default: null }, // optional if using AES-GCM implicit tag
+    ciphertext: { type: String, default: null }
+  },
   // File attachment details (if type is 'file' or 'image')
   attachment: {
     filename: String,

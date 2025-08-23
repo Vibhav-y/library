@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { bootstrapE2EE } from '../utils/e2ee';
 // Minimal provider: use only REACT_APP_BACKEND_URL
 
 const ChatContext = createContext();
@@ -62,6 +63,9 @@ export const ChatProvider = ({ children }) => {
 
     socketRef.current = newSocket;
     setSocket(newSocket);
+
+    // Bootstrap E2EE (ensure user has RSA keypair and shared public key)
+    bootstrapE2EE().catch(()=>{});
 
     // Add connection event listeners
     newSocket.on('connect', () => {

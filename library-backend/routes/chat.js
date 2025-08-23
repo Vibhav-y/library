@@ -11,7 +11,134 @@ const chatUpload = multer({
 });
 const authMiddleware = require('../middleware/authMiddleware');
 const User = require('../models/User');
+const crypto = require('crypto');
 
+// --- E2EE KEY MANAGEMENT (Superadmin only) ---
+// Generate or rotate a conversation key. Only superadmin.
+router.post('/admin/conversations/:conversationId/keys/rotate', authMiddleware.verifyToken, authMiddleware.superAdminOnly, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { superAdminPublicKeyPem } = req.body; // optional: else take from env
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+
+    // Generate new random 256-bit key for AES-GCM
+    const newKey = crypto.randomBytes(32);
+
+    // Encrypt the key for superadmin using RSA-OAEP public key (PEM)
+    const publicKeyPem = superAdminPublicKeyPem || process.env.SUPERADMIN_PUBLIC_KEY_PEM;
+    if (!publicKeyPem) return res.status(400).json({ message: 'Superadmin public key not configured' });
+    const wrappedForSuper = crypto.publicEncrypt(
+      {
+        key: publicKeyPem,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      },
+      newKey
+    ).toString('base64');
+
+    // Bump version and store
+    conversation.encryption = conversation.encryption || {};
+    const nextVersion = (conversation.encryption.keyVersion || 0) + 1;
+    conversation.encryption.enabled = true;
+    conversation.encryption.algorithm = 'AES-GCM';
+    conversation.encryption.keyVersion = nextVersion;
+    conversation.encryption.wrappedKeyForSuperAdmin = wrappedForSuper;
+    conversation.encryption.wrappedKeysByUser = undefined; // reset per rotation; can re-grant later
+    await conversation.save();
+
+    res.json({ message: 'Key rotated', keyVersion: nextVersion });
+  } catch (error) {
+    console.error('Error rotating key:', error);
+    res.status(500).json({ message: 'Error rotating key', error: error.message });
+  }
+});
+
+// Superadmin grants user access to the conversation key by wrapping with user's public key
+router.post('/admin/conversations/:conversationId/keys/grant', authMiddleware.verifyToken, authMiddleware.superAdminOnly, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.body;
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+    if (!conversation.encryption?.enabled) return res.status(400).json({ message: 'E2EE not enabled for conversation' });
+
+    const user = await User.findById(userId);
+    if (!user || !user.encryptionPublicKey) {
+      return res.status(400).json({ message: 'User public key not set' });
+    }
+
+    // Superadmin must provide their private key to unwrap the conversation key or have it in env
+    const superPrivPem = process.env.SUPERADMIN_PRIVATE_KEY_PEM;
+    if (!superPrivPem) return res.status(400).json({ message: 'Superadmin private key not configured' });
+    const wrappedForSuperB64 = conversation.encryption.wrappedKeyForSuperAdmin;
+    if (!wrappedForSuperB64) return res.status(400).json({ message: 'No superadmin-wrapped key present' });
+
+    // Unwrap using superadmin private key
+    const convKey = crypto.privateDecrypt(
+      {
+        key: superPrivPem,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      },
+      Buffer.from(wrappedForSuperB64, 'base64')
+    );
+
+    // Wrap for user
+    const wrappedForUser = crypto.publicEncrypt(
+      {
+        key: user.encryptionPublicKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      },
+      convKey
+    ).toString('base64');
+
+    if (!conversation.encryption.wrappedKeysByUser) {
+      conversation.encryption.wrappedKeysByUser = new Map();
+    }
+    conversation.encryption.wrappedKeysByUser.set(userId.toString(), wrappedForUser);
+    await conversation.save();
+
+    res.json({ message: 'Access granted', userId, keyVersion: conversation.encryption.keyVersion });
+  } catch (error) {
+    console.error('Error granting key:', error);
+    res.status(500).json({ message: 'Error granting key', error: error.message });
+  }
+});
+
+// Fetch encryption metadata for a conversation (participant can fetch their wrapped key)
+router.get('/conversations/:conversationId/encryption', authMiddleware.verifyToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.id;
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+    if (!conversation.isParticipant(userId) && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const result = {
+      enabled: conversation.encryption?.enabled || false,
+      algorithm: conversation.encryption?.algorithm || 'AES-GCM',
+      keyVersion: conversation.encryption?.keyVersion || 0,
+      wrappedKey: null
+    };
+
+    if (req.user.role === 'superadmin') {
+      result.wrappedKey = conversation.encryption?.wrappedKeyForSuperAdmin || null;
+    } else if (conversation.encryption?.wrappedKeysByUser) {
+      result.wrappedKey = conversation.encryption.wrappedKeysByUser.get(userId.toString()) || null;
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching encryption metadata:', error);
+    res.status(500).json({ message: 'Error fetching encryption metadata', error: error.message });
+  }
+});
 // Get user's conversations
 router.get('/conversations', authMiddleware.verifyToken, async (req, res) => {
   try {
@@ -193,14 +320,14 @@ router.get('/conversations/:conversationId/messages', authMiddleware.verifyToken
   }
 });
 
-// Send message (text)
+// Send message (text or encrypted)
 router.post('/conversations/:conversationId/messages', authMiddleware.verifyToken, async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const { content, type = 'text', replyTo } = req.body;
+    const { content, type = 'text', replyTo, encryption } = req.body;
     const userId = req.user.id;
 
-    if (!content || content.trim().length === 0) {
+    if (!content && !(encryption && encryption.isEncrypted && encryption.ciphertext)) {
       return res.status(400).json({ message: 'Message content is required' });
     }
 
@@ -222,13 +349,26 @@ router.post('/conversations/:conversationId/messages', authMiddleware.verifyToke
     }
 
     // Create new message
-    const message = new Message({
+    const messageData = {
       conversation: conversationId,
       sender: userId,
-      content: content.trim(),
+      content: content ? content.trim() : '[encrypted]',
       type,
       replyTo: replyTo || undefined
-    });
+    };
+
+    // If encrypted payload present, store encryption metadata and ciphertext
+    if (encryption && encryption.isEncrypted) {
+      messageData.encryption = {
+        isEncrypted: true,
+        keyVersion: Number(encryption.keyVersion || 0),
+        iv: encryption.iv || null,
+        authTag: encryption.authTag || null,
+        ciphertext: encryption.ciphertext || null
+      };
+    }
+
+    const message = new Message(messageData);
 
     await message.save();
     
@@ -240,7 +380,7 @@ router.post('/conversations/:conversationId/messages', authMiddleware.verifyToke
 
     // Update conversation's last message
     conversation.lastMessage = {
-      content: content.trim(),
+      content: content ? content.trim() : '[encrypted]',
       sender: userId,
       timestamp: message.createdAt
     };
@@ -450,6 +590,45 @@ router.get('/admin/conversations/:conversationId/messages', authMiddleware.verif
     const { page = 1, limit = 50 } = req.query;
 
     const result = await Message.getConversationMessages(conversationId, parseInt(page), parseInt(limit));
+
+    // If superadmin and server has private key, attempt to decrypt messages for monitoring
+    if (req.user.role === 'superadmin') {
+      const conversation = await Conversation.findById(conversationId);
+      const privPem = process.env.SUPERADMIN_PRIVATE_KEY_PEM;
+      if (conversation?.encryption?.enabled && privPem && conversation.encryption.wrappedKeyForSuperAdmin) {
+        try {
+          const convKey = crypto.privateDecrypt(
+            {
+              key: privPem,
+              padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+              oaepHash: 'sha256'
+            },
+            Buffer.from(conversation.encryption.wrappedKeyForSuperAdmin, 'base64')
+          );
+
+          // Decrypt each message that is encrypted using AES-256-GCM
+          for (const msg of result.messages) {
+            if (msg.encryption?.isEncrypted && msg.encryption.ciphertext && msg.encryption.iv) {
+              try {
+                const iv = Buffer.from(msg.encryption.iv, 'base64');
+                const ciphertext = Buffer.from(msg.encryption.ciphertext, 'base64');
+                const authTag = msg.encryption.authTag ? Buffer.from(msg.encryption.authTag, 'base64') : ciphertext.slice(ciphertext.length - 16);
+                const ct = msg.encryption.authTag ? ciphertext : ciphertext.slice(0, ciphertext.length - 16);
+                const decipher = crypto.createDecipheriv('aes-256-gcm', convKey, iv);
+                decipher.setAuthTag(authTag);
+                const decrypted = Buffer.concat([decipher.update(ct), decipher.final()]).toString('utf8');
+                msg.content = decrypted;
+              } catch (e) {
+                // Leave content as is if decryption fails
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore decryption issues for monitoring to avoid breaking response
+        }
+      }
+    }
+
     res.json(result);
   } catch (error) {
     console.error('Error getting admin messages:', error);

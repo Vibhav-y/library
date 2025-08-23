@@ -70,6 +70,25 @@ const conversationSchema = new mongoose.Schema({
   }
 });
 
+// End-to-end encryption metadata per conversation
+conversationSchema.add({
+  encryption: {
+    enabled: { type: Boolean, default: false },
+    // AES-GCM or ChaCha20-Poly1305 recommended; store algorithm name
+    algorithm: { type: String, default: 'AES-GCM' },
+    // Key versioning to allow rotation by superadmin
+    keyVersion: { type: Number, default: 0 },
+    // Base64 of the conversation symmetric key, encrypted (wrapped) for superadmin only
+    wrappedKeyForSuperAdmin: { type: String, default: null },
+    // Map of participant userId -> wrapped key with their public key (optional; only if allowed by superadmin)
+    wrappedKeysByUser: {
+      type: Map,
+      of: String,
+      default: undefined
+    }
+  }
+});
+
 // Indexes for faster querying
 conversationSchema.index({ 'participants.user': 1, updatedAt: -1 });
 conversationSchema.index({ type: 1, name: 1 });

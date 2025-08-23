@@ -11,6 +11,7 @@ import ChatHeader from './chat/ChatHeader';
 import ConversationList from './chat/ConversationList';
 import MessageList from './chat/MessageList';
 import MessageComposer from './chat/MessageComposer';
+import { encryptMessage, decryptMessageIfNeeded, fetchAndCacheConversationKey } from '../utils/e2ee';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -85,38 +86,40 @@ const Chat = () => {
     console.log('🔌 Setting up WebSocket event listeners...');
     
     // Listen for new messages in real-time - DIRECTLY from socket
-    const handleNewMessage = (data) => {
+    const handleNewMessage = async (data) => {
       const { message, conversationId } = data;
       console.log('🚀 WebSocket: New message received:', message);
       console.log('🚀 Active conversation:', activeConversation?._id);
       console.log('🚀 Message conversation:', conversationId);
       
       // Add or reconcile message in the active conversation
+      let msg = message;
+      try { msg = await decryptMessageIfNeeded(conversationId, message); } catch {}
       if (activeConversation && activeConversation._id === conversationId) {
         console.log('✅ Reconciling message in active conversation');
         setMessages(prev => {
           // If message already exists, return prev (dedupe)
-          if (prev.some(m => m._id === message._id)) return prev;
+          if (prev.some(m => m._id === msg._id)) return prev;
           // If it is from current user and there is a temp message, replace the latest temp
-          if (message.sender && message.sender._id === user.id) {
+          if (msg.sender && msg.sender._id === user.id) {
             const lastTempIndex = [...prev]
               .map((m, i) => (m.isTemp && m.sender && m.sender._id === user.id ? i : -1))
               .filter(i => i >= 0)
               .pop();
             if (lastTempIndex !== undefined && lastTempIndex !== -1) {
               const updated = [...prev];
-              updated[lastTempIndex] = message;
+              updated[lastTempIndex] = msg;
               return updated;
             }
           }
           // Otherwise append
-          return [...prev, message];
+          return [...prev, msg];
         });
         scrollToBottom();
         
         // Mark message as read if it's not from current user
-        if (message.sender._id !== user.id) {
-          markMessageAsRead(message._id, conversationId);
+        if (msg.sender._id !== user.id) {
+          markMessageAsRead(msg._id, conversationId);
         }
       } else {
         console.log('❌ Message not for active conversation');
@@ -128,11 +131,11 @@ const Chat = () => {
           return {
             ...conv,
             lastMessage: {
-              content: message.content,
-              sender: message.sender._id,
-              timestamp: message.createdAt
+              content: msg.content,
+              sender: msg.sender._id,
+              timestamp: msg.createdAt
             },
-            updatedAt: message.createdAt
+            updatedAt: msg.createdAt
           };
         }
         return conv;
@@ -231,7 +234,18 @@ const Chat = () => {
     try {
       setMessagesLoading(true);
       const data = await chatAPI.getMessages(conversationId);
-      setMessages(data.messages || []);
+      // Attempt decrypt if E2EE enabled and key exists
+      try {
+        const maybeKey = await fetchAndCacheConversationKey(conversationId);
+        if (maybeKey) {
+          const decrypted = await Promise.all((data.messages || []).map(m => decryptMessageIfNeeded(conversationId, m)));
+          setMessages(decrypted);
+        } else {
+          setMessages(data.messages || []);
+        }
+      } catch {
+        setMessages(data.messages || []);
+      }
       // Scroll after messages render
       setTimeout(() => scrollToBottom(true), 0);
       
@@ -276,9 +290,17 @@ const Chat = () => {
       }
       scrollToBottom();
 
-      // Send message via API
+      // Send message via API (encrypt if possible)
+      let encryption = null;
+      try { encryption = await encryptMessage(activeConversation._id, messageContent); } catch {}
       if (messageContent) {
-        await chatAPI.sendMessage(activeConversation._id, messageContent, 'text', replyToMessage?._id || null);
+        await chatAPI.sendMessage(
+          activeConversation._id,
+          encryption ? null : messageContent,
+          'text',
+          replyToMessage?._id || null,
+          encryption || null
+        );
       }
       setReplyToMessage(null);
       

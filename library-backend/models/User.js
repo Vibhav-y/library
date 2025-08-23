@@ -61,6 +61,11 @@ const userSchema = new mongoose.Schema({
     min: 1,
     max: 38,
     default: null
+  },
+  // End-to-end encryption: user's public key for wrapping conversation keys (PEM string)
+  encryptionPublicKey: {
+    type: String,
+    default: null
   }
 }, { timestamps: true });
 

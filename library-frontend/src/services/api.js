@@ -178,6 +178,11 @@ export const userAPI = {
     const response = await api.put(`/user/${userId}`, userData);
     return response.data;
   },
+  // E2EE: set user's public key
+  setPublicKey: async (publicKeyPem) => {
+    const response = await api.put('/user/encryption/public-key', { publicKeyPem });
+    return response.data;
+  },
   
   delete: async (id) => {
     const response = await api.delete(`/user/${id}`);
@@ -459,12 +464,10 @@ export const chatAPI = {
   },
 
   // Send message
-  sendMessage: async (conversationId, content, type = 'text', replyTo = null) => {
-    const response = await api.post(`/chat/conversations/${conversationId}/messages`, {
-      content,
-      type,
-      replyTo
-    });
+  sendMessage: async (conversationId, content, type = 'text', replyTo = null, encryption = null) => {
+    const body = { content, type, replyTo };
+    if (encryption) body.encryption = encryption;
+    const response = await api.post(`/chat/conversations/${conversationId}/messages`, body);
     return response.data;
   },
 
@@ -476,6 +479,12 @@ export const chatAPI = {
     const response = await api.post(`/chat/conversations/${conversationId}/attachments`, form, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+    return response.data;
+  },
+
+  // E2EE: get conversation encryption metadata
+  getConversationEncryption: async (conversationId) => {
+    const response = await api.get(`/chat/conversations/${conversationId}/encryption`);
     return response.data;
   },
 

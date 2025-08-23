@@ -8,6 +8,7 @@ const Category = require('../models/Category');
 const Fee = require('../models/Fee');
 const auth = require('../middleware/authMiddleware');
 const { uploadToSupabase, getPublicUrl, deleteFromSupabase, generateUniqueFilename } = require('../config/supabaseConfig');
+const crypto = require('crypto');
 
 // Configure multer for profile picture uploads
 const storage = multer.memoryStorage();
@@ -507,6 +508,47 @@ router.post('/fees/generate/:studentId', auth.verifyToken, auth.managerOnly, asy
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// E2EE: Set or update user's public key (user can set their own)
+router.put('/encryption/public-key', auth.verifyToken, async (req, res) => {
+  try {
+    const { publicKeyPem } = req.body;
+    if (!publicKeyPem || typeof publicKeyPem !== 'string' || publicKeyPem.length < 50) {
+      return res.status(400).json({ message: 'Valid PEM public key is required' });
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.encryptionPublicKey = publicKeyPem;
+    await user.save();
+    res.json({ message: 'Public key saved' });
+  } catch (err) {
+    console.error('Set public key error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// E2EE: Superadmin fetch users' public keys
+router.get('/encryption/public-keys', auth.verifyToken, auth.superAdminOnly, async (req, res) => {
+  try {
+    const users = await User.find({}, 'name email role encryptionPublicKey');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// E2EE: Superadmin clear a user's public key
+router.delete('/encryption/public-key/:userId', auth.verifyToken, auth.superAdminOnly, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.encryptionPublicKey = null;
+    await user.save();
+    res.json({ message: 'Public key cleared' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
