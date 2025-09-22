@@ -43,11 +43,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // God admin flows
+  // Master admin flows
   const godLogin = async (email, password) => {
     try {
       const response = await authAPI.godLogin(email, password);
-      // Store god token separately to avoid overriding normal token
+      // Store master token separately to avoid overriding normal token
       localStorage.setItem('god_token', response.token);
       localStorage.setItem('god_user', JSON.stringify(response.user));
       return { success: true };
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     isSuperAdmin: user?.role === 'superadmin',
     isManager: user?.role === 'manager',
     isAdminOrManager: user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'manager',
-    // God mode if superadmin logged in via god login and not impersonating a library
+    // Master mode if superadmin logged in via master login and not impersonating a library
     isGodMode: user?.role === 'superadmin' && !user?.actingLibrary && !!localStorage.getItem('god_token'),
     godLogin,
     godLogout,

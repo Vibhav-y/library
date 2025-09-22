@@ -81,8 +81,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// God admin login (separate page). Only users with role superadmin.
-router.post('/god/login', async (req, res) => {
+// Master admin login (separate page). Only users with role superadmin.
+router.post('/master/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     if (!email || !password) {
@@ -106,17 +106,17 @@ router.post('/god/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('God login error:', err);
+    console.error('Master login error:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// God admin impersonate/switch to a library context
-router.post('/god/impersonate', async (req, res) => {
-  const { token: godToken, libraryId } = req.body;
+// Master admin impersonate/switch to a library context
+router.post('/master/impersonate', async (req, res) => {
+  const { token: masterToken, libraryId } = req.body;
   try {
-    if (!godToken || !libraryId) return res.status(400).json({ message: 'Token and libraryId required' });
-    const decoded = jwt.verify(godToken, process.env.JWT_SECRET);
+    if (!masterToken || !libraryId) return res.status(400).json({ message: 'Token and libraryId required' });
+    const decoded = jwt.verify(masterToken, process.env.JWT_SECRET);
     if (decoded.role !== 'superadmin') return res.status(403).json({ message: 'Access denied' });
 
     const library = await Library.findById(libraryId);

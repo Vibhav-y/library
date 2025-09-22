@@ -24,7 +24,7 @@ const GodAdminLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-8">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900">God Admin Login</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-900">Master Admin Login</h1>
         {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>

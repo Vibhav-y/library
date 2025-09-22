@@ -45,12 +45,12 @@ export const authAPI = {
     return response.data;
   },
   godLogin: async (email, password) => {
-    const response = await api.post('/auth/god/login', { email, password });
+    const response = await api.post('/auth/master/login', { email, password });
     return response.data;
   },
   godImpersonate: async (godToken, libraryId) => {
     // Use a direct axios call without interceptor token replacement
-    const response = await axios.post(`${API_BASE_URL}/auth/god/impersonate`, { token: godToken, libraryId });
+    const response = await axios.post(`${API_BASE_URL}/auth/master/impersonate`, { token: godToken, libraryId });
     return response.data;
   }
 };

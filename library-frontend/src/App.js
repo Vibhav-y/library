@@ -42,9 +42,9 @@ function App() {
               {/* Public Routes */}
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
-              {/* God Admin routes (separate entry) */}
-              <Route path="/god-admin-login" element={<GodAdminLogin />} />
-              <Route path="/god-admin" element={<GodAdminDashboard />} />
+              {/* Master Admin routes (separate entry) */}
+              <Route path="/master-admin-login" element={<GodAdminLogin />} />
+              <Route path="/master-admin" element={<GodAdminDashboard />} />
               
               {/* Protected Routes */}
               <Route

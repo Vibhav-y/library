@@ -97,7 +97,7 @@ const GodAdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">God Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Master Admin Dashboard</h1>
           <button onClick={logout} className="text-red-600">Logout</button>
         </div>
 
