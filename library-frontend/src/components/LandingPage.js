@@ -742,6 +742,15 @@ const LandingPage = () => {
                     <span>Member Login</span>
                   </Link>
                 </li>
+                <li>
+                  <Link 
+                    to="/master-admin-login" 
+                    className="group flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300"
+                  >
+                    <Shield className="h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Master Admin</span>
+                  </Link>
+                </li>
                 <li className="flex items-center space-x-2 text-gray-300">
                   <BookOpen className="h-4 w-4" />
                   <span>Digital Resources</span>
