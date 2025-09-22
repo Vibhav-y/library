@@ -31,6 +31,11 @@ router.post('/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    // Block login if user's library is suspended/inactive
+    if (user.library && user.library.isActive === false) {
+      return res.status(403).json({ message: 'This library is suspended. Please contact the platform administrator.' });
+    }
+
 
     // Check if account is expired
     if (user.terminationDate) {
