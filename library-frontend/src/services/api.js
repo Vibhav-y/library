@@ -74,6 +74,17 @@ export const libraryAPI = {
     const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
     const response = await api.get(`/library/${libraryId}/users`, { params: { q, role }, headers });
     return response.data;
+  },
+  updateLibrary: async (libraryId, data) => {
+    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const response = await api.put(`/library/${libraryId}`, data, { headers });
+    return response.data;
+  },
+  suspendLibrary: async (libraryId) => {
+    return await libraryAPI.updateLibrary(libraryId, { isActive: false });
+  },
+  activateLibrary: async (libraryId) => {
+    return await libraryAPI.updateLibrary(libraryId, { isActive: true });
   }
 };
 

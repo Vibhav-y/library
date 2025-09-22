@@ -44,7 +44,16 @@ function App() {
               <Route path="/login" element={<Login />} />
               {/* Master Admin routes (separate entry) */}
               <Route path="/master-admin-login" element={<GodAdminLogin />} />
-              <Route path="/master-admin" element={<GodAdminDashboard />} />
+              <Route
+                path="/master-admin"
+                element={
+                  <ProtectedRoute godOnly>
+                    <Layout>
+                      <GodAdminDashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
               
               {/* Protected Routes */}
               <Route

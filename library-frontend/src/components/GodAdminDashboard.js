@@ -15,6 +15,7 @@ const GodAdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [userQuery, setUserQuery] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [updatingLib, setUpdatingLib] = useState(false);
 
   const fetchLibraries = async () => {
     setError('');
@@ -164,7 +165,7 @@ const GodAdminDashboard = () => {
                 <div key={lib._id} className={`flex items-center justify-between border rounded p-3 ${activeLibId===lib._id ? 'ring-2 ring-blue-500' : ''}`}>
                   <div onClick={() => setActiveLibId(lib._id)} className="cursor-pointer">
                     <div className="font-medium">{lib.name}</div>
-                    <div className="text-sm text-gray-600">{lib.handle} • Seats: {lib.totalSeats} • {lib.isActive ? 'Active' : 'Inactive'}</div>
+                      <div className="text-sm text-gray-600">{lib.handle} • Seats: {lib.totalSeats} • {lib.isActive ? 'Active' : 'Suspended'}</div>
                     {lib.contact?.email && <div className="text-sm text-gray-600">Contact: {lib.contact.email} {lib.contact.phone ? `• ${lib.contact.phone}` : ''}</div>}
                   </div>
                   <div className="flex gap-2">
@@ -232,6 +233,22 @@ const GodAdminDashboard = () => {
                   <div className="border rounded p-3"><div className="text-xs text-gray-500">Conversations</div><div className="text-xl font-bold">{metrics.counts.conversations}</div></div>
                   <div className="border rounded p-3"><div className="text-xs text-gray-500">Messages</div><div className="text-xl font-bold">{metrics.counts.messages}</div></div>
                 </div>
+                {libraries.find(l=>l._id===activeLibId) && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <label className="inline-flex items-center space-x-2">
+                      <input type="checkbox" disabled={updatingLib} checked={!!libraries.find(l=>l._id===activeLibId)?.features?.chatEnabled} onChange={async(e)=>{
+                        try{ setUpdatingLib(true); const v=e.target.checked; await libraryAPI.updateLibrary(activeLibId,{ features: { chatEnabled: v }}); await fetchLibraries(); } finally{ setUpdatingLib(false);} }} />
+                      <span className="text-sm">Enable Chat</span>
+                    </label>
+                    <label className="inline-flex items-center space-x-2">
+                      <input type="checkbox" disabled={updatingLib} checked={!!libraries.find(l=>l._id===activeLibId)?.features?.documentUploadsEnabled} onChange={async(e)=>{
+                        try{ setUpdatingLib(true); const v=e.target.checked; await libraryAPI.updateLibrary(activeLibId,{ features: { documentUploadsEnabled: v }}); await fetchLibraries(); } finally{ setUpdatingLib(false);} }} />
+                      <span className="text-sm">Enable Document Uploads</span>
+                    </label>
+                    <button disabled={updatingLib} onClick={async()=>{ try{ setUpdatingLib(true); await libraryAPI.updateLibrary(activeLibId,{ isActive: false }); await fetchLibraries(); } finally{ setUpdatingLib(false);} }} className="px-3 py-1.5 rounded bg-red-600 text-white text-sm">Suspend</button>
+                    <button disabled={updatingLib} onClick={async()=>{ try{ setUpdatingLib(true); await libraryAPI.updateLibrary(activeLibId,{ isActive: true }); await fetchLibraries(); } finally{ setUpdatingLib(false);} }} className="px-3 py-1.5 rounded bg-green-600 text-white text-sm">Activate</button>
+                  </div>
+                )}
               </div>
             )}
             <div className="bg-white rounded shadow p-6">
