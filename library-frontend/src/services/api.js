@@ -64,6 +64,16 @@ export const libraryAPI = {
   getPublicByHandle: async (handle) => {
     const response = await api.get(`/library/public/by-handle/${encodeURIComponent(handle)}`);
     return response.data;
+  },
+  getMetrics: async (libraryId) => {
+    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const response = await api.get(`/library/${libraryId}/metrics`, { headers });
+    return response.data;
+  },
+  getUsers: async (libraryId, q = '', role = '') => {
+    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const response = await api.get(`/library/${libraryId}/users`, { params: { q, role }, headers });
+    return response.data;
   }
 };
 

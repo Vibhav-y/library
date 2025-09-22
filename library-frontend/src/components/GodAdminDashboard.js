@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api, { authAPI, chatAPI } from '../services/api';
+import api, { authAPI, chatAPI, libraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const GodAdminDashboard = () => {
@@ -11,6 +11,10 @@ const GodAdminDashboard = () => {
   const [activeLibId, setActiveLibId] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [flagged, setFlagged] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [userQuery, setUserQuery] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   const fetchLibraries = async () => {
     setError('');
@@ -43,6 +47,21 @@ const GodAdminDashboard = () => {
     };
     loadMonitoring();
   }, [activeLibId]);
+
+  useEffect(()=>{
+    const loadDetails = async () => {
+      if (!activeLibId) return;
+      try {
+        const [m, u] = await Promise.all([
+          libraryAPI.getMetrics(activeLibId),
+          libraryAPI.getUsers(activeLibId, userQuery, userRole)
+        ]);
+        setMetrics(m);
+        setUsers(u);
+      } catch {}
+    };
+    loadDetails();
+  }, [activeLibId, userQuery, userRole]);
 
   const createLibrary = async (e) => {
     e.preventDefault();
@@ -194,6 +213,65 @@ const GodAdminDashboard = () => {
                   </div>
                 ))}
                 {flagged.length===0 && <div className="text-sm text-gray-600">No flagged messages</div>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Metrics + Users for selected library */}
+        {activeLibId && (
+          <div className="mt-6 grid grid-cols-1 gap-6">
+            {metrics && (
+              <div className="bg-white rounded shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">Library Metrics</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Students</div><div className="text-xl font-bold">{metrics.counts.students}</div></div>
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Managers</div><div className="text-xl font-bold">{metrics.counts.managers}</div></div>
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Admins</div><div className="text-xl font-bold">{metrics.counts.admins}</div></div>
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Documents</div><div className="text-xl font-bold">{metrics.counts.documents}</div></div>
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Conversations</div><div className="text-xl font-bold">{metrics.counts.conversations}</div></div>
+                  <div className="border rounded p-3"><div className="text-xs text-gray-500">Messages</div><div className="text-xl font-bold">{metrics.counts.messages}</div></div>
+                </div>
+              </div>
+            )}
+            <div className="bg-white rounded shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Users</h2>
+                <div className="flex items-center gap-2">
+                  <input value={userQuery} onChange={e=> setUserQuery(e.target.value)} placeholder="Search name/email/phone" className="border rounded px-2 py-1 text-sm" />
+                  <select value={userRole} onChange={e=> setUserRole(e.target.value)} className="border rounded px-2 py-1 text-sm">
+                    <option value="">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="overflow-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-2 pr-4">Name</th>
+                      <th className="py-2 pr-4">Email</th>
+                      <th className="py-2 pr-4">Role</th>
+                      <th className="py-2 pr-4">Phone</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map(u => (
+                      <tr key={u._id} className="border-b">
+                        <td className="py-2 pr-4">{u.name}</td>
+                        <td className="py-2 pr-4">{u.email}</td>
+                        <td className="py-2 pr-4 capitalize">{u.role}</td>
+                        <td className="py-2 pr-4">{u.phone || '-'}</td>
+                      </tr>
+                    ))}
+                    {users.length===0 && (
+                      <tr><td className="py-3 text-gray-600" colSpan={4}>No users found</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

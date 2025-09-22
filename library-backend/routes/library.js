@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Library = require('../models/Library');
 const auth = require('../middleware/authMiddleware');
+const User = require('../models/User');
+const Document = require('../models/Document');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
 
 // Get current acting library (based on token context)
 router.get('/me', auth.verifyToken, async (req, res) => {
@@ -108,5 +112,50 @@ router.get('/public/by-handle/:handle', async (req, res) => {
 });
 
 module.exports = router;
+// Metrics for a specific library (superadmin only)
+router.get('/:id/metrics', auth.verifyToken, auth.superAdminOnly, async (req, res) => {
+  try {
+    const libraryId = req.params.id;
+    const library = await Library.findById(libraryId);
+    if (!library) return res.status(404).json({ message: 'Library not found' });
+
+    const [students, managers, admins, documents, conversations, messages] = await Promise.all([
+      User.countDocuments({ library: libraryId, role: 'student' }),
+      User.countDocuments({ library: libraryId, role: 'manager' }),
+      User.countDocuments({ library: libraryId, role: { $in: ['admin', 'superadmin'] } }),
+      Document.countDocuments({ library: libraryId }),
+      Conversation.countDocuments({ library: libraryId, isActive: true }),
+      Message.countDocuments({ library: libraryId, isDeleted: false })
+    ]);
+
+    res.json({
+      library: { id: library._id, name: library.name, handle: library.handle, features: library.features, isActive: library.isActive, totalSeats: library.totalSeats },
+      counts: { students, managers, admins, documents, conversations, messages }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Users list for a specific library (superadmin only)
+router.get('/:id/users', auth.verifyToken, auth.superAdminOnly, async (req, res) => {
+  try {
+    const libraryId = req.params.id;
+    const { q = '', role } = req.query;
+    const filter = { library: libraryId };
+    if (role) filter.role = role;
+    if (q && q.trim()) {
+      filter.$or = [
+        { name: { $regex: q.trim(), $options: 'i' } },
+        { email: { $regex: q.trim(), $options: 'i' } },
+        { phone: { $regex: q.trim(), $options: 'i' } }
+      ];
+    }
+    const users = await User.find(filter).select('-password').sort({ name: 1, email: 1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
