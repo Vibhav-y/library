@@ -240,7 +240,7 @@ const Chat = () => {
         if (maybeKey) {
           const decrypted = await Promise.all((data.messages || []).map(m => decryptMessageIfNeeded(conversationId, m)));
           setMessages(decrypted);
-        } else {
+      } else {
           setMessages(data.messages || []);
         }
       } catch {
@@ -268,6 +268,18 @@ const Chat = () => {
 
     try {
       console.log('📤 Sending message via WebSocket...');
+      // If conversation is encrypted, ensure we have a key before proceeding
+      try {
+        const meta = await chatAPI.getConversationEncryption(activeConversation._id);
+        if (meta?.enabled) {
+          const entry = await fetchAndCacheConversationKey(activeConversation._id).catch(() => null);
+          if (!entry) {
+            setIsSending(false);
+            alert('This conversation is encrypted. Please request access from a superadmin or paste the key in monitoring.');
+            return;
+          }
+        }
+      } catch {}
       
       // Create a temporary message object to show immediately
       const tempMessage = {
@@ -616,10 +628,10 @@ const Chat = () => {
                     <div ref={messagesEndRef} />
 
             <MessageComposer
-              value={newMessage}
+                          value={newMessage}
               onChange={handleTyping}
               onSend={sendMessage}
-              onKeyPress={handleKeyPress}
+                          onKeyPress={handleKeyPress}
               isSending={isSending}
               disabled={activeConversation?.type === 'group' && activeConversation?.name === 'Announcement' && !(user.role === 'admin' || user.role === 'superadmin')}
               disabledReason={activeConversation?.type === 'group' && activeConversation?.name === 'Announcement' && !(user.role === 'admin' || user.role === 'superadmin') ? 'Only admins can post in Announcement.' : undefined}

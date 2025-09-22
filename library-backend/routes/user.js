@@ -29,10 +29,12 @@ const profileUpload = multer({
 // Dashboard data
 router.get('/dashboard', auth.verifyToken, async (req, res) => {
   try {
-    const totalDocuments = await Document.countDocuments();
+    const libraryFilter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const totalDocuments = await Document.countDocuments(libraryFilter);
     
     // Count only root categories (categories without parent)
     const totalCategories = await Category.countDocuments({
+      ...libraryFilter,
       $or: [
         { parentCategory: null },
         { parentCategory: { $exists: false } }
@@ -40,11 +42,11 @@ router.get('/dashboard', auth.verifyToken, async (req, res) => {
     });
     
     // Count only students, not all users
-    const totalUsers = await User.countDocuments({ role: 'student' });
+    const totalUsers = await User.countDocuments({ role: 'student', ...libraryFilter });
     
     let userDocuments = 0;
     if (req.user.role === 'student') {
-      userDocuments = await Document.countDocuments();
+      userDocuments = await Document.countDocuments(libraryFilter);
     }
 
     res.json({
@@ -62,7 +64,8 @@ router.get('/dashboard', auth.verifyToken, async (req, res) => {
 // Get all users (admin, superadmin, and manager)
 router.get('/', auth.verifyToken, auth.adminOrManagerOnly, async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const users = await User.find(filter).select('-password');
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -115,11 +118,9 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
         }
         
         // Check if seat number is already taken
-        const existingSeat = await User.findOne({ 
-          seatNumber: seatNum, 
-          role: 'student',
-          terminationDate: null // Only check active students
-        });
+    const seatFilter = { seatNumber: seatNum, role: 'student', terminationDate: null };
+    if (req.user.libraryId) seatFilter.library = req.user.libraryId;
+    const existingSeat = await User.findOne(seatFilter);
         if (existingSeat) {
           return res.status(400).json({ message: `Seat number ${seatNum} is already occupied` });
         }
@@ -154,6 +155,11 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
       terminationDate,
       phone: phone ? phone.trim() : null
     };
+
+    // attach library context for created user if creator is scoped
+    if (req.user.libraryId) {
+      userData.library = req.user.libraryId;
+    }
 
     // Add student-specific fields if role is student
     if (role === 'student' || !role) {
@@ -228,6 +234,11 @@ router.put('/:id/termination', auth.verifyToken, auth.adminOnly, async (req, res
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
 
+    // Enforce library scope for admins/managers
+    if (req.user.role !== 'superadmin' && req.user.libraryId && user.library && user.library.toString() !== req.user.libraryId) {
+      return res.status(403).json({ message: 'Access denied: different library context' });
+    }
+
     user.terminationDate = terminationDate;
     await user.save();
 
@@ -298,6 +309,11 @@ router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete your own account' });
     }
 
+    // Enforce library scope for admins/managers
+    if (req.user.role !== 'superadmin' && req.user.libraryId && user.library && user.library.toString() !== req.user.libraryId) {
+      return res.status(403).json({ message: 'Access denied: different library context' });
+    }
+
     await user.deleteOne();
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
@@ -316,6 +332,11 @@ router.get('/profile/:id', auth.verifyToken, async (req, res) => {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Enforce library scope for admins/managers
+    if (req.user.role !== 'superadmin' && req.user.role !== 'student' && req.user.libraryId && user.library && user.library.toString() !== req.user.libraryId) {
+      return res.status(403).json({ message: 'Access denied: different library context' });
     }
 
     res.json(user);
@@ -340,6 +361,11 @@ router.put('/profile/:id', auth.verifyToken, profileUpload.single('profilePictur
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Enforce library scope for admins (manager already blocked above)
+    if (req.user.role !== 'superadmin' && req.user.libraryId && user.library && user.library.toString() !== req.user.libraryId) {
+      return res.status(403).json({ message: 'Access denied: different library context' });
     }
 
     const { name, dob, slot, seatNumber, phone } = req.body;
@@ -415,11 +441,14 @@ router.put('/profile/:id', auth.verifyToken, profileUpload.single('profilePictur
 router.get('/fees', auth.verifyToken, auth.managerOnly, async (req, res) => {
   try {
     const fees = await Fee.find()
-      .populate('student', 'name email seatNumber slot dateJoinedLibrary')
+      .populate('student', 'name email seatNumber slot dateJoinedLibrary library')
       .populate('paidBy', 'name')
       .sort({ year: -1, month: -1, 'student.name': 1 });
-
-    res.json(fees);
+    let filtered = fees;
+    if (req.user.libraryId) {
+      filtered = fees.filter(f => f.student && f.student.library && f.student.library.toString() === req.user.libraryId);
+    }
+    res.json(filtered);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -431,6 +460,15 @@ router.get('/fees/:studentId', auth.verifyToken, async (req, res) => {
     // Students can only view their own fees, admins can view any
     if (req.user.role === 'student' && req.user.id !== req.params.studentId) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Enforce library scope
+    if (req.user.libraryId && req.user.role !== 'superadmin') {
+      const target = await User.findById(req.params.studentId);
+      if (!target) return res.status(404).json({ message: 'Student not found' });
+      if (target.library && target.library.toString() !== req.user.libraryId) {
+        return res.status(403).json({ message: 'Access denied: different library context' });
+      }
     }
 
     const fees = await Fee.find({ student: req.params.studentId })
@@ -451,6 +489,14 @@ router.put('/fees/:feeId', auth.verifyToken, auth.managerOnly, async (req, res) 
     const fee = await Fee.findById(req.params.feeId);
     if (!fee) {
       return res.status(404).json({ message: 'Fee record not found' });
+    }
+
+    // Enforce library scope
+    if (req.user.libraryId && req.user.role !== 'superadmin') {
+      const student = await User.findById(fee.student);
+      if (student && student.library && student.library.toString() !== req.user.libraryId) {
+        return res.status(403).json({ message: 'Access denied: different library context' });
+      }
     }
 
     if (paid !== undefined) {
@@ -488,6 +534,13 @@ router.post('/fees/generate/:studentId', auth.verifyToken, auth.managerOnly, asy
     const student = await User.findById(req.params.studentId);
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Enforce library scope
+    if (req.user.libraryId && req.user.role !== 'superadmin') {
+      if (student.library && student.library.toString() !== req.user.libraryId) {
+        return res.status(403).json({ message: 'Access denied: different library context' });
+      }
     }
 
     if (!student.dateJoinedLibrary) {

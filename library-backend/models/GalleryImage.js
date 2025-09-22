@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 // Gallery Image Schema
 const galleryImageSchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   title: {
     type: String,
     required: true,

@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   name: {
     type: String,
     required: true
@@ -29,7 +34,7 @@ const categorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Compound index to ensure unique names within the same parent
-categorySchema.index({ name: 1, parentCategory: 1 }, { unique: true });
+categorySchema.index({ name: 1, parentCategory: 1, library: 1 }, { unique: true });
 
 // Virtual for subcategories
 categorySchema.virtual('subcategories', {

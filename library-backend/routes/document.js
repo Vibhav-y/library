@@ -8,6 +8,14 @@ const { upload, uploadToSupabase, getPublicUrl, deleteFromSupabase, generateUniq
 // Upload PDF (admin/superadmin)
 router.post('/', auth.verifyToken, auth.adminOnly, upload.single('pdf'), async (req, res) => {
   try {
+    // Feature flag: document uploads per library (superadmin bypass)
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.documentUploadsEnabled === false) {
+        return res.status(403).json({ message: 'Document uploads are disabled for this library' });
+      }
+    }
     const { title, category } = req.body;
     if (!req.file) return res.status(400).json({ message: 'PDF file required' });
 
@@ -21,6 +29,7 @@ router.post('/', auth.verifyToken, auth.adminOnly, upload.single('pdf'), async (
     const publicUrl = getPublicUrl(uniqueFilename);
 
     const document = new Document({
+      library: req.user.libraryId || null,
       title,
       fileUrl: publicUrl,
       fileKey: uniqueFilename, // Store filename as key for deletion
@@ -41,7 +50,8 @@ router.post('/', auth.verifyToken, auth.adminOnly, upload.single('pdf'), async (
 // Get all documents (student view)
 router.get('/', auth.verifyToken, async (req, res) => {
   try {
-    const docs = await Document.find().populate('category', 'name');
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const docs = await Document.find(filter).populate('category', 'name');
     res.json(docs);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -51,7 +61,9 @@ router.get('/', auth.verifyToken, async (req, res) => {
 // Get document with public URL
 router.get('/:id/download', auth.verifyToken, async (req, res) => {
   try {
-    const document = await Document.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const document = await Document.findOne(criteria);
     if (!document) {
       return res.status(404).json({ message: 'Document not found' });
     }

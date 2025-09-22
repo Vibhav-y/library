@@ -6,13 +6,17 @@ const auth = require('../middleware/authMiddleware');
 // Get all active announcements for landing page (public)
 router.get('/public', async (req, res) => {
   try {
-    const announcements = await Announcement.find({
+    const baseQuery = {
       isActive: true,
       $or: [
         { expiresAt: null },
         { expiresAt: { $gt: new Date() } }
       ]
-    })
+    };
+    // optional: filter by library via query param handle or id
+    const { libraryId } = req.query;
+    const query = libraryId ? { ...baseQuery, library: libraryId } : baseQuery;
+    const announcements = await Announcement.find(query)
     .sort({ priority: -1, createdAt: -1 })
     .limit(10)
     .select('title content createdAt')
@@ -29,7 +33,8 @@ router.get('/public', async (req, res) => {
 // Get all announcements for admin
 router.get('/admin', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
-    const announcements = await Announcement.find({})
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const announcements = await Announcement.find(filter)
       .populate('createdBy', 'name email')
       .sort({ priority: -1, createdAt: -1 });
 
@@ -54,7 +59,8 @@ router.post('/', auth.verifyToken, auth.adminOnly, async (req, res) => {
       content: content.trim(),
       priority: Number(priority),
       expiresAt: expiresAt ? new Date(expiresAt) : null,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      library: req.user.libraryId || null
     });
 
     await announcement.save();
@@ -81,7 +87,9 @@ router.put('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
     const { title, content, priority, isActive, expiresAt } = req.body;
     
-    const announcement = await Announcement.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const announcement = await Announcement.findOne(criteria);
     if (!announcement) {
       return res.status(404).json({ message: 'Announcement not found' });
     }
@@ -115,12 +123,14 @@ router.put('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
 // Delete announcement
 router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
-    const announcement = await Announcement.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const announcement = await Announcement.findOne(criteria);
     if (!announcement) {
       return res.status(404).json({ message: 'Announcement not found' });
     }
 
-    await Announcement.findByIdAndDelete(req.params.id);
+    await Announcement.deleteOne({ _id: req.params.id });
 
     res.json({ message: 'Announcement deleted successfully' });
   } catch (error) {

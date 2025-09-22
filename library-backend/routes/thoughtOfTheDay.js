@@ -6,7 +6,22 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Get today's thought (public route for students)
 router.get('/today', async (req, res) => {
   try {
-    const thought = await ThoughtOfTheDay.getThoughtForDate();
+    // Optionally accept libraryId as query for public fetch
+    const { libraryId } = req.query;
+    let thought;
+    if (libraryId) {
+      const active = await ThoughtOfTheDay.find({ library: libraryId, isActive: true }).sort({ order: 1, createdAt: 1 });
+      if (active.length > 0) {
+        const epoch = new Date('2024-01-01');
+        const daysSinceEpoch = Math.floor((new Date() - epoch) / (1000 * 60 * 60 * 24));
+        const idx = daysSinceEpoch % active.length;
+        thought = active[idx];
+      } else {
+        thought = null;
+      }
+    } else {
+      thought = await ThoughtOfTheDay.getThoughtForDate();
+    }
     
     if (!thought) {
       return res.json({
@@ -28,7 +43,8 @@ router.get('/today', async (req, res) => {
 // Get all thoughts (admin only)
 router.get('/', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, async (req, res) => {
   try {
-    const thoughts = await ThoughtOfTheDay.find()
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const thoughts = await ThoughtOfTheDay.find(filter)
       .populate('createdBy', 'name email')
       .sort({ order: 1, createdAt: 1 });
     
@@ -49,14 +65,15 @@ router.post('/', authMiddleware.verifyToken, authMiddleware.adminOrManagerOnly, 
     }
     
     // Get the highest order number to add at the end
-    const lastThought = await ThoughtOfTheDay.findOne().sort({ order: -1 });
+    const lastThought = await ThoughtOfTheDay.findOne(req.user.libraryId ? { library: req.user.libraryId } : {}).sort({ order: -1 });
     const order = lastThought ? lastThought.order + 1 : 1;
     
     const newThought = new ThoughtOfTheDay({
       thought,
       author: author || 'Anonymous',
       order,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      library: req.user.libraryId || null
     });
     
     await newThought.save();
@@ -108,7 +125,7 @@ router.put('/reorder/bulk', authMiddleware.verifyToken, authMiddleware.adminOrMa
     await Promise.all(updatePromises);
     
     // Return updated list
-    const updatedThoughts = await ThoughtOfTheDay.find()
+    const updatedThoughts = await ThoughtOfTheDay.find(req.user.libraryId ? { library: req.user.libraryId } : {})
       .populate('createdBy', 'name email')
       .sort({ order: 1, createdAt: 1 });
     
@@ -145,14 +162,15 @@ router.post('/bulk-import', authMiddleware.verifyToken, authMiddleware.adminOrMa
     }
     
     // Get starting order number
-    const lastThought = await ThoughtOfTheDay.findOne().sort({ order: -1 });
+    const lastThought = await ThoughtOfTheDay.findOne(req.user.libraryId ? { library: req.user.libraryId } : {}).sort({ order: -1 });
     let startOrder = lastThought ? lastThought.order + 1 : 1;
     
     const thoughtsToInsert = thoughts.map((thoughtData, index) => ({
       thought: thoughtData.thought,
       author: thoughtData.author || 'Anonymous',
       order: startOrder + index,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      library: req.user.libraryId || null
     }));
     
     const insertedThoughts = await ThoughtOfTheDay.insertMany(thoughtsToInsert);

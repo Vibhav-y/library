@@ -24,7 +24,8 @@ const galleryUpload = multer({
 // Get all gallery images for admin
 router.get('/admin', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
-    const images = await GalleryImage.find()
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const images = await GalleryImage.find(filter)
       .sort({ order: 1, createdAt: -1 })
       .populate('uploadedBy', 'name email');
     
@@ -38,7 +39,11 @@ router.get('/admin', auth.verifyToken, auth.adminOnly, async (req, res) => {
 // Get active gallery images for public (landing page)
 router.get('/public', async (req, res) => {
   try {
-    const images = await GalleryImage.getActiveImages();
+    const criteria = { isActive: true };
+    if (req.user?.libraryId) criteria.library = req.user.libraryId;
+    const images = await GalleryImage.find(criteria)
+      .sort({ order: 1, createdAt: 1 })
+      .populate('uploadedBy', 'name email');
     
     res.json(images);
   } catch (error) {
@@ -95,6 +100,7 @@ router.post('/', auth.verifyToken, auth.adminOnly, galleryUpload.single('image')
 
     // Create gallery image record
     const galleryImage = new GalleryImage({
+      library: req.user.libraryId || null,
       title: title.trim(),
       description: description ? description.trim() : '',
       imageUrl,
@@ -122,7 +128,9 @@ router.put('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
     const { title, description, order, isActive } = req.body;
 
-    const galleryImage = await GalleryImage.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const galleryImage = await GalleryImage.findOne(criteria);
     if (!galleryImage) {
       return res.status(404).json({ message: 'Gallery image not found' });
     }
@@ -163,7 +171,9 @@ router.put('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
 // Delete gallery image (admin only)
 router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
-    const galleryImage = await GalleryImage.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const galleryImage = await GalleryImage.findOne(criteria);
     if (!galleryImage) {
       return res.status(404).json({ message: 'Gallery image not found' });
     }
@@ -212,7 +222,7 @@ router.put('/reorder/bulk', auth.verifyToken, auth.adminOnly, async (req, res) =
 
     await Promise.all(updatePromises);
 
-    const updatedImages = await GalleryImage.find()
+    const updatedImages = await GalleryImage.find(req.user.libraryId ? { library: req.user.libraryId } : {})
       .sort({ order: 1, createdAt: -1 })
       .populate('uploadedBy', 'name email');
 

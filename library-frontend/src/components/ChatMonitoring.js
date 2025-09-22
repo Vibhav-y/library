@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatAPI } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
 import { 
   MessageCircle, 
   Users, 
@@ -14,6 +15,7 @@ import {
   Download,
   X
 } from 'lucide-react';
+import { decryptMessagesWithKeyB64 } from '../utils/e2ee';
 
 const ChatMonitoring = () => {
   // State management
@@ -26,16 +28,22 @@ const ChatMonitoring = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, group, private
   const [activeTab, setActiveTab] = useState('conversations'); // conversations, flagged
+  const [superKeyPem, setSuperKeyPem] = useState('');
+  const [grantUserId, setGrantUserId] = useState('');
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [flagReason, setFlagReason] = useState('');
+  const [manualSymmetricKeyB64, setManualSymmetricKeyB64] = useState('');
   
   const messagesEndRef = useRef(null);
+
+  const [searchParams] = useSearchParams();
+  const libraryId = searchParams.get('libraryId') || undefined;
 
   useEffect(() => {
     loadConversations();
     loadFlaggedMessages();
-  }, []);
+  }, [libraryId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -48,7 +56,7 @@ const ChatMonitoring = () => {
   const loadConversations = async () => {
     try {
       setLoading(true);
-      const data = await chatAPI.admin.getAllConversations();
+      const data = await chatAPI.admin.getAllConversations(libraryId, true);
       setConversations(data);
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -60,8 +68,13 @@ const ChatMonitoring = () => {
   const loadMessages = async (conversationId, page = 1) => {
     try {
       setMessagesLoading(true);
-      const data = await chatAPI.admin.getConversationMessages(conversationId, page);
-      setMessages(data.messages);
+      const data = await chatAPI.admin.getConversationMessages(conversationId, page, 50, true);
+      let msgs = data.messages;
+      // If admin pasted a manual key, try to decrypt client-side for view-only
+      if (manualSymmetricKeyB64) {
+        msgs = await decryptMessagesWithKeyB64(conversationId, msgs, manualSymmetricKeyB64);
+      }
+      setMessages(msgs);
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
@@ -71,7 +84,7 @@ const ChatMonitoring = () => {
 
   const loadFlaggedMessages = async () => {
     try {
-      const data = await chatAPI.admin.getFlaggedMessages();
+      const data = await chatAPI.admin.getFlaggedMessages(libraryId, true);
       setFlaggedMessages(data);
     } catch (error) {
       console.error('Error loading flagged messages:', error);
@@ -119,12 +132,50 @@ const ChatMonitoring = () => {
     return participants;
   };
 
+  // E2EE: Rotate conversation key from UI (superadmin)
+  const rotateKey = async () => {
+    if (!selectedConversation) return;
+    try {
+      await chatAPI.admin.rotateConversationKey(selectedConversation._id, superKeyPem?.trim() || null);
+      setMonitoringKeyLoaded(true);
+      loadMessages(selectedConversation._id);
+      alert('New conversation key created');
+    } catch (e) {
+      console.error('Rotate key failed', e);
+      alert('Failed to rotate key');
+    }
+  };
+
+  // E2EE: Grant access to a user for current conversation
+  const grantAccess = async () => {
+    if (!selectedConversation || !grantUserId.trim()) return;
+    try {
+      await chatAPI.admin.grantConversationKey(selectedConversation._id, grantUserId.trim());
+      alert('Access granted');
+    } catch (e) {
+      console.error('Grant access failed', e);
+      alert('Failed to grant access');
+    }
+  };
+
+  const fetchRawKey = async () => {
+    if (!selectedConversation) return;
+    try {
+      const data = await chatAPI.admin.getRawConversationKey(selectedConversation._id);
+      setManualSymmetricKeyB64(data.symmetricKeyB64 || '');
+    } catch (e) {
+      console.error('Fetch raw key failed', e);
+      alert('Failed to fetch raw key');
+    }
+  };
+
   const getConversationAvatar = (conversation) => {
     if (conversation.type === 'group') {
       return <Users className="h-8 w-8 text-blue-600" />;
     }
     return <User className="h-8 w-8 text-gray-600" />;
   };
+
 
   const exportConversation = () => {
     if (!selectedConversation || !messages.length) return;
@@ -330,14 +381,56 @@ const ChatMonitoring = () => {
                             </p>
                           </div>
                         </div>
-                        <button
-                          onClick={exportConversation}
-                          className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors"
-                          title="Export conversation"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Export
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            placeholder="Superadmin PUBLIC key PEM (optional)"
+                            value={superKeyPem}
+                            onChange={(e) => setSuperKeyPem(e.target.value)}
+                            className="w-64 px-3 py-2 text-xs border border-gray-200 rounded-lg"
+                          />
+                          <button
+                            onClick={rotateKey}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                          >
+                            Create/Rotate Key
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Grant access: userId"
+                            value={grantUserId}
+                            onChange={(e) => setGrantUserId(e.target.value)}
+                            className="w-48 px-3 py-2 text-xs border border-gray-200 rounded-lg"
+                          />
+                          <button
+                            onClick={grantAccess}
+                            className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
+                          >
+                            Grant Access
+                          </button>
+                          <button
+                            onClick={fetchRawKey}
+                            className="px-3 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-900"
+                          >
+                            Get Raw Key
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Paste symmetric key (base64) to view (admin)"
+                            value={manualSymmetricKeyB64}
+                            onChange={(e) => setManualSymmetricKeyB64(e.target.value)}
+                            className="w-72 px-3 py-2 text-xs border border-gray-200 rounded-lg"
+                            title="Symmetric key (base64)"
+                          />
+                          <button
+                            onClick={exportConversation}
+                            className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors"
+                            title="Export conversation"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Export
+                          </button>
+                        </div>
                       </div>
                     </div>
 

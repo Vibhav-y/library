@@ -10,6 +10,8 @@ const RSA_PUBLIC_KEY_KEY = 'e2ee_rsa_public_pem';
 
 // In-memory cache: conversationId -> { keyVersion, rawKey: ArrayBuffer }
 const conversationKeyCache = new Map();
+// Optional manual override: conversationId -> base64 symmetric key
+const manualKeyOverrides = new Map();
 
 function arrayBufferToBase64(buffer) {
   const bytes = new Uint8Array(buffer);
@@ -107,6 +109,14 @@ export async function fetchAndCacheConversationKey(conversationId) {
   let entry = conversationKeyCache.get(conversationId);
   if (entry && entry.keyVersion === meta.keyVersion) return entry;
 
+  // If a manual override key is set, use it
+  if (manualKeyOverrides.has(conversationId)) {
+    const rawKey = base64ToArrayBuffer(manualKeyOverrides.get(conversationId));
+    entry = { keyVersion: meta.keyVersion, rawKey };
+    conversationKeyCache.set(conversationId, entry);
+    return entry;
+  }
+
   if (!meta.wrappedKey) return null; // user not granted yet
   const privateKey = await getOrImportPrivateKey();
   if (!privateKey) return null;
@@ -155,6 +165,39 @@ export function clearConversationKeyCache(conversationId) {
   else conversationKeyCache.clear();
 }
 
+export function setManualSymmetricKey(conversationId, base64Key) {
+  if (!conversationId || !base64Key) return;
+  manualKeyOverrides.set(conversationId, base64Key);
+  conversationKeyCache.delete(conversationId);
+}
+
+export async function decryptMessagesWithKeyB64(conversationId, messages, base64Key) {
+  try {
+    if (!base64Key) return messages;
+    const rawKey = base64ToArrayBuffer(base64Key);
+    const key = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['decrypt']);
+    const out = [];
+    for (const m of messages) {
+      if (m?.encryption?.isEncrypted && m.encryption.ciphertext && m.encryption.iv) {
+        try {
+          const iv = new Uint8Array(base64ToArrayBuffer(m.encryption.iv));
+          const ctBuf = base64ToArrayBuffer(m.encryption.ciphertext);
+          const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ctBuf);
+          const content = new TextDecoder().decode(pt);
+          out.push({ ...m, content });
+        } catch {
+          out.push(m);
+        }
+      } else {
+        out.push(m);
+      }
+    }
+    return out;
+  } catch {
+    return messages;
+  }
+}
+
 export async function bootstrapE2EE() {
   try { await ensureUserKeyPair(); } catch {}
 }
@@ -164,7 +207,9 @@ export default {
   fetchAndCacheConversationKey,
   encryptMessage,
   decryptMessageIfNeeded,
+  decryptMessagesWithKeyB64,
   clearConversationKeyCache,
+  setManualSymmetricKey,
   bootstrapE2EE
 };
 

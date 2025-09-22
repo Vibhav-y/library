@@ -18,7 +18,7 @@ const crypto = require('crypto');
 router.post('/admin/conversations/:conversationId/keys/rotate', authMiddleware.verifyToken, authMiddleware.superAdminOnly, async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const { superAdminPublicKeyPem } = req.body; // optional: else take from env
+    const { superAdminPublicKeyPem } = req.body; // optional legacy
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
@@ -26,17 +26,22 @@ router.post('/admin/conversations/:conversationId/keys/rotate', authMiddleware.v
     // Generate new random 256-bit key for AES-GCM
     const newKey = crypto.randomBytes(32);
 
-    // Encrypt the key for superadmin using RSA-OAEP public key (PEM)
+    // Store a plain base64 for superadmin retrieval only, and optionally wrap if PEM provided
+    const symmetricKeyB64 = newKey.toString('base64');
+    let wrappedForSuper = null;
     const publicKeyPem = superAdminPublicKeyPem || process.env.SUPERADMIN_PUBLIC_KEY_PEM;
-    if (!publicKeyPem) return res.status(400).json({ message: 'Superadmin public key not configured' });
-    const wrappedForSuper = crypto.publicEncrypt(
-      {
-        key: publicKeyPem,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256'
-      },
-      newKey
-    ).toString('base64');
+    if (publicKeyPem) {
+      try {
+        wrappedForSuper = crypto.publicEncrypt(
+          {
+            key: publicKeyPem,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: 'sha256'
+          },
+          newKey
+        ).toString('base64');
+      } catch {}
+    }
 
     // Bump version and store
     conversation.encryption = conversation.encryption || {};
@@ -44,6 +49,7 @@ router.post('/admin/conversations/:conversationId/keys/rotate', authMiddleware.v
     conversation.encryption.enabled = true;
     conversation.encryption.algorithm = 'AES-GCM';
     conversation.encryption.keyVersion = nextVersion;
+    conversation.encryption.symmetricKeyB64 = symmetricKeyB64;
     conversation.encryption.wrappedKeyForSuperAdmin = wrappedForSuper;
     conversation.encryption.wrappedKeysByUser = undefined; // reset per rotation; can re-grant later
     await conversation.save();
@@ -70,21 +76,10 @@ router.post('/admin/conversations/:conversationId/keys/grant', authMiddleware.ve
       return res.status(400).json({ message: 'User public key not set' });
     }
 
-    // Superadmin must provide their private key to unwrap the conversation key or have it in env
-    const superPrivPem = process.env.SUPERADMIN_PRIVATE_KEY_PEM;
-    if (!superPrivPem) return res.status(400).json({ message: 'Superadmin private key not configured' });
-    const wrappedForSuperB64 = conversation.encryption.wrappedKeyForSuperAdmin;
-    if (!wrappedForSuperB64) return res.status(400).json({ message: 'No superadmin-wrapped key present' });
-
-    // Unwrap using superadmin private key
-    const convKey = crypto.privateDecrypt(
-      {
-        key: superPrivPem,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256'
-      },
-      Buffer.from(wrappedForSuperB64, 'base64')
-    );
+    // Use stored symmetric key directly (no PEM required)
+    const symmetricKeyB64 = conversation.encryption.symmetricKeyB64;
+    if (!symmetricKeyB64) return res.status(400).json({ message: 'No symmetric key present' });
+    const convKey = Buffer.from(symmetricKeyB64, 'base64');
 
     // Wrap for user
     const wrappedForUser = crypto.publicEncrypt(
@@ -139,14 +134,39 @@ router.get('/conversations/:conversationId/encryption', authMiddleware.verifyTok
     res.status(500).json({ message: 'Error fetching encryption metadata', error: error.message });
   }
 });
+
+// Superadmin: retrieve raw symmetric key (base64) for a conversation
+router.get('/admin/conversations/:conversationId/keys/raw', authMiddleware.verifyToken, authMiddleware.superAdminOnly, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+    if (!conversation.encryption?.enabled || !conversation.encryption?.symmetricKeyB64) {
+      return res.status(400).json({ message: 'No symmetric key present for this conversation' });
+    }
+    res.json({ keyVersion: conversation.encryption.keyVersion, symmetricKeyB64: conversation.encryption.symmetricKeyB64 });
+  } catch (error) {
+    console.error('Error retrieving raw key:', error);
+    res.status(500).json({ message: 'Error retrieving raw key', error: error.message });
+  }
+});
 // Get user's conversations
 router.get('/conversations', authMiddleware.verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
+    // If library has chat disabled, block access (except superadmin)
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.chatEnabled === false) {
+        return res.status(403).json({ message: 'Chat feature is disabled for this library' });
+      }
+    }
     
     const conversations = await Conversation.find({
       'participants.user': userId,
-      isActive: true
+      isActive: true,
+      ...(req.user.libraryId ? { library: req.user.libraryId } : {})
     })
     .populate('participants.user', 'name email role profilePicture')
     .populate('lastMessage.sender', 'name')
@@ -173,13 +193,21 @@ router.get('/conversations', authMiddleware.verifyToken, async (req, res) => {
 // Search users to start a private chat (exclude superadmin)
 router.get('/users/search', authMiddleware.verifyToken, async (req, res) => {
   try {
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.chatEnabled === false) {
+        return res.status(403).json({ message: 'Chat feature is disabled for this library' });
+      }
+    }
     const { q = '' } = req.query;
     const currentUserId = req.user.id;
 
     const query = {
       _id: { $ne: currentUserId },
       role: { $in: ['student', 'admin', 'manager'] }, // exclude superadmin
-      name: { $regex: q.trim(), $options: 'i' }
+      name: { $regex: q.trim(), $options: 'i' },
+      ...(req.user.libraryId ? { library: req.user.libraryId } : {})
     };
 
     const users = await User.find(query, 'name email role profilePicture').sort({ name: 1 }).limit(20);
@@ -193,6 +221,13 @@ router.get('/users/search', authMiddleware.verifyToken, async (req, res) => {
 // Get or create private conversation
 router.post('/conversations/private', authMiddleware.verifyToken, async (req, res) => {
   try {
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.chatEnabled === false) {
+        return res.status(403).json({ message: 'Chat feature is disabled for this library' });
+      }
+    }
     const { userId: otherUserId } = req.body;
     const currentUserId = req.user.id;
 
@@ -200,10 +235,38 @@ router.post('/conversations/private', authMiddleware.verifyToken, async (req, re
       return res.status(400).json({ message: 'Cannot create conversation with yourself' });
     }
 
-    const conversation = await Conversation.findOrCreatePrivateConversation(
-      currentUserId,
-      otherUserId
-    );
+    // Enforce cross-library isolation: users can only chat within the same library context
+    if (req.user.libraryId) {
+      const otherUser = await User.findById(otherUserId);
+      if (!otherUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      if (!otherUser.library || otherUser.library.toString() !== req.user.libraryId) {
+        return res.status(403).json({ message: 'Cannot chat across libraries' });
+      }
+    }
+
+    let conversation = await Conversation.findOne({
+      type: 'private',
+      'participants.user': { $all: [currentUserId, otherUserId] },
+      participants: { $size: 2 },
+      ...(req.user.libraryId ? { library: req.user.libraryId } : {})
+    }).populate('participants.user', 'name email role');
+
+    if (!conversation) {
+      conversation = new Conversation({
+        type: 'private',
+        participants: [
+          { user: currentUserId, role: 'member' },
+          { user: otherUserId, role: 'member' }
+        ],
+        createdBy: currentUserId,
+        isMonitored: true,
+        library: req.user.libraryId || null
+      });
+      await conversation.save();
+      await conversation.populate('participants.user', 'name email role');
+    }
 
     // Notify both users in real-time so the new chat appears without refresh
     const io = req.app.get('io');
@@ -226,9 +289,33 @@ router.post('/conversations/private', authMiddleware.verifyToken, async (req, re
 // Join main group chat
 router.post('/conversations/group/join', authMiddleware.verifyToken, async (req, res) => {
   try {
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.chatEnabled === false) {
+        return res.status(403).json({ message: 'Chat feature is disabled for this library' });
+      }
+    }
     const userId = req.user.id;
     
-    const groupChat = await Conversation.getMainGroupChat();
+    let groupChat = await Conversation.findOne({
+      type: 'group',
+      name: 'General Discussion',
+      ...(req.user.libraryId ? { library: req.user.libraryId } : {})
+    }).populate('participants.user', 'name email role profilePicture');
+
+    if (!groupChat) {
+      groupChat = new Conversation({
+        type: 'group',
+        name: 'General Discussion',
+        description: 'Main chat room for all library members',
+        participants: [],
+        createdBy: null,
+        isMonitored: true,
+        library: req.user.libraryId || null
+      });
+      await groupChat.save();
+    }
     
     // Add user to group chat if not already a participant
     if (!groupChat.isParticipant(userId)) {
@@ -247,9 +334,33 @@ router.post('/conversations/group/join', authMiddleware.verifyToken, async (req,
 // Ensure user is in Announcement group (auto-join for students)
 router.post('/conversations/announcement/join', authMiddleware.verifyToken, async (req, res) => {
   try {
+    if (req.user.role !== 'superadmin' && req.user.libraryId) {
+      const Library = require('../models/Library');
+      const lib = await Library.findById(req.user.libraryId);
+      if (lib && lib.features && lib.features.chatEnabled === false) {
+        return res.status(403).json({ message: 'Chat feature is disabled for this library' });
+      }
+    }
     const userId = req.user.id;
     const Conversation = require('../models/Conversation');
-    const announcement = await Conversation.getAnnouncementGroup();
+    let announcement = await Conversation.findOne({
+      type: 'group',
+      name: 'Announcement',
+      ...(req.user.libraryId ? { library: req.user.libraryId } : {})
+    }).populate('participants.user', 'name email role profilePicture');
+
+    if (!announcement) {
+      announcement = new Conversation({
+        type: 'group',
+        name: 'Announcement',
+        description: 'Official announcements. Only admins can post.',
+        participants: [],
+        createdBy: null,
+        isMonitored: true,
+        library: req.user.libraryId || null
+      });
+      await announcement.save();
+    }
 
     if (!announcement.isParticipant(userId)) {
       // All roles can be members; posting is restricted elsewhere
@@ -368,7 +479,15 @@ router.post('/conversations/:conversationId/messages', authMiddleware.verifyToke
       };
     }
 
-    const message = new Message(messageData);
+    // If conversation requires encryption, enforce it
+    if (conversation.encryption?.enabled) {
+      const hasEnc = messageData.encryption?.isEncrypted && messageData.encryption.ciphertext && messageData.encryption.iv;
+      if (!hasEnc) {
+        return res.status(400).json({ message: 'Encryption required for this conversation' });
+      }
+    }
+
+    const message = new Message({ ...messageData, library: req.user.libraryId || null });
 
     await message.save();
     
@@ -493,6 +612,7 @@ router.post('/conversations/:conversationId/attachments', authMiddleware.verifyT
     const inferredType = req.file.mimetype.startsWith('image/') ? 'image' : 'file';
 
     const message = new Message({
+      library: req.user.libraryId || null,
       conversation: conversationId,
       sender: userId,
       content: req.file.originalname,
@@ -571,7 +691,15 @@ router.put('/conversations/:conversationId/read', authMiddleware.verifyToken, as
 // Admin routes - Get all conversations (hidden monitoring)
 router.get('/admin/conversations', authMiddleware.verifyToken, authMiddleware.adminOnly, async (req, res) => {
   try {
-    const conversations = await Conversation.find({ isActive: true })
+    // Superadmin may pass ?libraryId=... to view a specific library; admins are scoped
+    let filter = { isActive: true };
+    if (req.user.role === 'superadmin' && req.query.libraryId) {
+      filter.library = req.query.libraryId;
+    } else if (req.user.libraryId) {
+      filter.library = req.user.libraryId;
+    }
+
+    const conversations = await Conversation.find(filter)
       .populate('participants.user', 'name email role profilePicture')
       .populate('lastMessage.sender', 'name')
       .sort({ updatedAt: -1 });
@@ -639,14 +767,19 @@ router.get('/admin/conversations/:conversationId/messages', authMiddleware.verif
 // Admin routes - Get flagged messages
 router.get('/admin/messages/flagged', authMiddleware.verifyToken, authMiddleware.adminOnly, async (req, res) => {
   try {
-    const flaggedMessages = await Message.find({
-      'flagged.isFlagged': true,
-      isDeleted: false
-    })
-    .populate('sender', 'name email role')
-    .populate('conversation', 'name type')
-    .populate('flagged.flaggedBy', 'name email')
-    .sort({ 'flagged.flaggedAt': -1 });
+    // Filter by library if provided (superadmin) or scoped to admin's library
+    const filter = { 'flagged.isFlagged': true, isDeleted: false };
+    if (req.user.role === 'superadmin' && req.query.libraryId) {
+      filter.library = req.query.libraryId;
+    } else if (req.user.libraryId) {
+      filter.library = req.user.libraryId;
+    }
+
+    const flaggedMessages = await Message.find(filter)
+      .populate('sender', 'name email role')
+      .populate('conversation', 'name type library')
+      .populate('flagged.flaggedBy', 'name email')
+      .sort({ 'flagged.flaggedAt': -1 });
 
     res.json(flaggedMessages);
   } catch (error) {

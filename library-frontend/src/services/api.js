@@ -44,6 +44,27 @@ export const authAPI = {
     const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
+  godLogin: async (email, password) => {
+    const response = await api.post('/auth/god/login', { email, password });
+    return response.data;
+  },
+  godImpersonate: async (godToken, libraryId) => {
+    // Use a direct axios call without interceptor token replacement
+    const response = await axios.post(`${API_BASE_URL}/auth/god/impersonate`, { token: godToken, libraryId });
+    return response.data;
+  }
+};
+
+// Library API
+export const libraryAPI = {
+  getCurrent: async () => {
+    const response = await api.get('/library/me');
+    return response.data;
+  },
+  getPublicByHandle: async (handle) => {
+    const response = await api.get(`/library/public/by-handle/${encodeURIComponent(handle)}`);
+    return response.data;
+  }
 };
 
 // Document API
@@ -533,22 +554,26 @@ export const chatAPI = {
   // Admin APIs
   admin: {
     // Get all conversations (admin monitoring)
-    getAllConversations: async () => {
-      const response = await api.get('/chat/admin/conversations');
+    getAllConversations: async (libraryId = undefined, useGodToken = false) => {
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const response = await api.get('/chat/admin/conversations', { params: { libraryId }, headers });
       return response.data;
     },
 
     // Get messages from any conversation
-    getConversationMessages: async (conversationId, page = 1, limit = 50) => {
+    getConversationMessages: async (conversationId, page = 1, limit = 50, useGodToken = false) => {
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
       const response = await api.get(`/chat/admin/conversations/${conversationId}/messages`, {
-        params: { page, limit }
+        params: { page, limit },
+        headers
       });
       return response.data;
     },
 
     // Get flagged messages
-    getFlaggedMessages: async () => {
-      const response = await api.get('/chat/admin/messages/flagged');
+    getFlaggedMessages: async (libraryId = undefined, useGodToken = false) => {
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const response = await api.get('/chat/admin/messages/flagged', { params: { libraryId }, headers });
       return response.data;
     },
 
@@ -604,6 +629,28 @@ export const chatAPI = {
     // Get all users for group management
     getAllUsers: async () => {
       const response = await api.get('/chat/admin/users');
+      return response.data;
+    },
+
+    // E2EE: rotate conversation key (superadmin only)
+    rotateConversationKey: async (conversationId, superAdminPublicKeyPem = null, useGodToken = false) => {
+      const body = superAdminPublicKeyPem ? { superAdminPublicKeyPem } : {};
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const response = await api.post(`/chat/admin/conversations/${conversationId}/keys/rotate`, body, { headers });
+      return response.data;
+    },
+
+    // E2EE: grant user access to conversation key (superadmin only)
+    grantConversationKey: async (conversationId, userId, useGodToken = false) => {
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const response = await api.post(`/chat/admin/conversations/${conversationId}/keys/grant`, { userId }, { headers });
+      return response.data;
+    },
+
+    // E2EE: superadmin fetch raw symmetric key
+    getRawConversationKey: async (conversationId, useGodToken = false) => {
+      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const response = await api.get(`/chat/admin/conversations/${conversationId}/keys/raw`, { headers });
       return response.data;
     }
   }

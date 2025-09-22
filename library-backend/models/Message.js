@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   conversation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Conversation',

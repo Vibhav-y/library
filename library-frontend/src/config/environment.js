@@ -1,12 +1,21 @@
 // Environment Configuration
 // Change ENVIRONMENT to switch between 'development' and 'production'
 
-const ENVIRONMENT = 'production';
+const ENVIRONMENT = 'development';
 
 // Runtime-aware backend URL resolver with sensible defaults
 const getBackendBaseUrl = () => {
   const envUrl = process.env.REACT_APP_BACKEND_URL;
-  if (envUrl && typeof envUrl === 'string') return envUrl;
+  if (envUrl && typeof envUrl === 'string') {
+    try {
+      const u = new URL(envUrl);
+      if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && u.protocol === 'https:') {
+        u.protocol = 'http:'; // force http for local dev
+      }
+      return u.toString().replace(/\/$/, '');
+    } catch {}
+    return envUrl;
+  }
   try {
     if (typeof window !== 'undefined') {
       if (window.__BACKEND_URL__) return window.__BACKEND_URL__;

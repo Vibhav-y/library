@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Library = require('../models/Library');
 
 const authMiddleware = {};
 
@@ -33,7 +34,10 @@ authMiddleware.verifyToken = async (req, res, next) => {
       }
     }
 
-    req.user = { ...decoded, terminationDate: user.terminationDate };
+    // Attach library context
+    // actingLibraryId comes from tokens issued via impersonation; otherwise use user's own library
+    const libraryId = decoded.actingLibraryId || (user.library ? user.library.toString() : null);
+    req.user = { ...decoded, terminationDate: user.terminationDate, libraryId };
     next();
   } catch (err) {
     res.status(401).json({ message: 'Invalid token.' });

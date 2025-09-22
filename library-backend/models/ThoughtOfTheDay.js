@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const thoughtOfTheDaySchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   thought: {
     type: String,
     required: true,

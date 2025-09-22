@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { documentAPI, userAPI, thoughtAPI } from '../services/api';
+import { documentAPI, userAPI, thoughtAPI, libraryAPI } from '../services/api';
 import { FileText, Users, FolderOpen, Upload, Calendar, Activity, Star, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -16,6 +16,7 @@ const Dashboard = () => {
     favoritesCount: 0,
   });
   const [thoughtOfTheDay, setThoughtOfTheDay] = useState(null);
+  const [libraryInfo, setLibraryInfo] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -42,6 +43,11 @@ const Dashboard = () => {
       
       setDocuments(docsResponse);
       setThoughtOfTheDay(thoughtResponse);
+      // fetch current library contact info (for Contact Us)
+      try {
+        const lib = await libraryAPI.getCurrent();
+        setLibraryInfo(lib);
+      } catch {}
       setStats({
         totalDocuments: dashboardData.totalDocuments,
         totalCategories: dashboardData.totalCategories,
@@ -267,6 +273,53 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+      {/* Contact Us Card */}
+      {libraryInfo && (
+        <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-white/30"></div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 sm:mb-8 flex items-center">
+              <div className="h-2 w-2 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full mr-3"></div>
+              Contact Us
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <div className="text-sm text-gray-600">Library</div>
+                <div className="text-lg font-semibold text-gray-900">{libraryInfo.name} <span className="text-gray-500 text-sm">{libraryInfo.handle}</span></div>
+              </div>
+              {libraryInfo.contact?.email && (
+                <div>
+                  <div className="text-sm text-gray-600">Email</div>
+                  <div className="text-lg font-semibold text-gray-900">{libraryInfo.contact.email}</div>
+                </div>
+              )}
+              {libraryInfo.contact?.phone && (
+                <div>
+                  <div className="text-sm text-gray-600">Phone</div>
+                  <div className="text-lg font-semibold text-gray-900">{libraryInfo.contact.phone}</div>
+                </div>
+              )}
+              {libraryInfo.contact?.website && (
+                <div>
+                  <div className="text-sm text-gray-600">Website</div>
+                  <div>
+                    <a href={libraryInfo.contact.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                      {libraryInfo.contact.website}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {libraryInfo.contact?.address && (
+                <div className="sm:col-span-2">
+                  <div className="text-sm text-gray-600">Address</div>
+                  <div className="text-lg font-semibold text-gray-900">{libraryInfo.contact.address}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Recent Documents */}
         <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">

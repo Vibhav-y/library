@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const conversationSchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   type: {
     type: String,
     enum: ['group', 'private'],
@@ -78,6 +83,8 @@ conversationSchema.add({
     algorithm: { type: String, default: 'AES-GCM' },
     // Key versioning to allow rotation by superadmin
     keyVersion: { type: Number, default: 0 },
+    // Plain symmetric key (base64) stored for superadmin retrieval only
+    symmetricKeyB64: { type: String, default: null },
     // Base64 of the conversation symmetric key, encrypted (wrapped) for superadmin only
     wrappedKeyForSuperAdmin: { type: String, default: null },
     // Map of participant userId -> wrapped key with their public key (optional; only if allowed by superadmin)

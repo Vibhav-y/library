@@ -43,6 +43,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // God admin flows
+  const godLogin = async (email, password) => {
+    try {
+      const response = await authAPI.godLogin(email, password);
+      // Store god token separately to avoid overriding normal token
+      localStorage.setItem('god_token', response.token);
+      localStorage.setItem('god_user', JSON.stringify(response.user));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Login failed' };
+    }
+  };
+
+  const godImpersonate = async (libraryId) => {
+    try {
+      const godToken = localStorage.getItem('god_token');
+      if (!godToken) return { success: false, error: 'Not authenticated as god admin' };
+      const data = await authAPI.godImpersonate(godToken, libraryId);
+      // Set acting token as normal token; keep god token intact
+      localStorage.setItem('token', data.token);
+      // Preserve the current user but flag acting library
+      const acting = { ...(JSON.parse(localStorage.getItem('god_user')) || {}), actingLibrary: data.library };
+      localStorage.setItem('user', JSON.stringify(acting));
+      setUser(acting);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Impersonation failed' };
+    }
+  };
+
+  const godLogout = () => {
+    localStorage.removeItem('god_token');
+    localStorage.removeItem('god_user');
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -59,6 +94,11 @@ export const AuthProvider = ({ children }) => {
     isSuperAdmin: user?.role === 'superadmin',
     isManager: user?.role === 'manager',
     isAdminOrManager: user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'manager',
+    // God mode if superadmin logged in via god login and not impersonating a library
+    isGodMode: user?.role === 'superadmin' && !user?.actingLibrary && !!localStorage.getItem('god_token'),
+    godLogin,
+    godLogout,
+    godImpersonate
   };
 
   return (

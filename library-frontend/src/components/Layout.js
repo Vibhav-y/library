@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isGodMode } = useAuth();
   const { getSystemName, getLogo, getThemeColors } = useCustomization();
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,11 +69,13 @@ const Layout = ({ children }) => {
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
       { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
-      { name: 'Chat Monitoring', href: '/chat-monitoring', icon: Eye },
       { name: 'Announcements', href: '/announcements', icon: Volume2 },
       { name: 'Gallery', href: '/gallery', icon: Camera },
       { name: 'Customization', href: '/customization', icon: Settings },
       { name: 'Accessibility', href: '/accessibility', icon: Accessibility },
+    ] : []),
+    ...(isGodMode ? [
+      { name: 'Chat Monitoring', href: '/chat-monitoring', icon: Eye },
     ] : []),
   ];
 

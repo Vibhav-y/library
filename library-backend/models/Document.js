@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
+  library: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Library',
+    default: null
+  },
   title: {
     type: String,
     required: true

@@ -26,6 +26,8 @@ import ManageGallery from './components/ManageGallery';
 import ManageThoughts from './components/ManageThoughts';
 import Chat from './components/Chat';
 import ChatMonitoring from './components/ChatMonitoring';
+import GodAdminLogin from './components/GodAdminLogin';
+import GodAdminDashboard from './components/GodAdminDashboard';
 import './App.css';
 
 function App() {
@@ -40,6 +42,9 @@ function App() {
               {/* Public Routes */}
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
+              {/* God Admin routes (separate entry) */}
+              <Route path="/god-admin-login" element={<GodAdminLogin />} />
+              <Route path="/god-admin" element={<GodAdminDashboard />} />
               
               {/* Protected Routes */}
               <Route
@@ -165,7 +170,7 @@ function App() {
               <Route
                 path="/chat-monitoring"
                 element={
-                  <ProtectedRoute adminOnly>
+                  <ProtectedRoute godOnly>
                     <Layout>
                       <ChatMonitoring />
                     </Layout>

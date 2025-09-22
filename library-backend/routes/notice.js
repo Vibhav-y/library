@@ -7,7 +7,8 @@ const auth = require('../middleware/authMiddleware');
 // Get all notices for admin
 router.get('/admin', auth.verifyToken, auth.managerOnly, async (req, res) => {
   try {
-    const notices = await Notice.find()
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const notices = await Notice.find(filter)
       .populate('createdBy', 'email name')
       .populate('targetUsers', 'email name role')
       .sort({ createdAt: -1 });
@@ -24,7 +25,7 @@ router.get('/user', auth.verifyToken, async (req, res) => {
     const userId = req.user.id;
     
     // Get notices where user is target or targetAllUsers is true
-    const notices = await Notice.find({
+    const base = {
       isActive: true,
       $and: [
         {
@@ -40,7 +41,9 @@ router.get('/user', auth.verifyToken, async (req, res) => {
           ]
         }
       ]
-    })
+    };
+    const query = req.user.libraryId ? { ...base, library: req.user.libraryId } : base;
+    const notices = await Notice.find(query)
     .populate('createdBy', 'email name')
     .sort({ priority: -1, createdAt: -1 });
 
@@ -55,7 +58,7 @@ router.get('/banner-marquee', auth.verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const notices = await Notice.find({
+    const base = {
       isActive: true,
       type: { $in: ['banner', 'marquee'] },
       $and: [
@@ -72,7 +75,9 @@ router.get('/banner-marquee', auth.verifyToken, async (req, res) => {
           ]
         }
       ]
-    })
+    };
+    const query = req.user.libraryId ? { ...base, library: req.user.libraryId } : base;
+    const notices = await Notice.find(query)
     .populate('createdBy', 'email name')
     .sort({ priority: -1, createdAt: -1 });
 
@@ -87,7 +92,7 @@ router.get('/tab', auth.verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const notices = await Notice.find({
+    const base = {
       isActive: true,
       type: 'tab',
       $and: [
@@ -104,7 +109,9 @@ router.get('/tab', auth.verifyToken, async (req, res) => {
           ]
         }
       ]
-    })
+    };
+    const query = req.user.libraryId ? { ...base, library: req.user.libraryId } : base;
+    const notices = await Notice.find(query)
     .populate('createdBy', 'email name')
     .sort({ priority: -1, createdAt: -1 });
 
@@ -150,7 +157,8 @@ router.post('/', auth.verifyToken, auth.managerOnly, async (req, res) => {
       targetAllUsers: !!targetAllUsers,
       priority: priority || 0,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      library: req.user.libraryId || null
     });
 
     await notice.save();
@@ -168,7 +176,9 @@ router.put('/:id', auth.verifyToken, auth.managerOnly, async (req, res) => {
   try {
     const { title, content, type, targetUsers, targetAllUsers, priority, expiresAt, isActive } = req.body;
 
-    const notice = await Notice.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const notice = await Notice.findOne(criteria);
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found' });
     }
@@ -204,7 +214,9 @@ router.put('/:id', auth.verifyToken, auth.managerOnly, async (req, res) => {
 // Delete notice (admin only)
 router.delete('/:id', auth.verifyToken, auth.managerOnly, async (req, res) => {
   try {
-    const notice = await Notice.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const notice = await Notice.findOne(criteria);
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found' });
     }
@@ -219,7 +231,9 @@ router.delete('/:id', auth.verifyToken, auth.managerOnly, async (req, res) => {
 // Mark notice as read
 router.post('/:id/read', auth.verifyToken, async (req, res) => {
   try {
-    const notice = await Notice.findById(req.params.id);
+    const criteria = { _id: req.params.id };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const notice = await Notice.findOne(criteria);
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found' });
     }

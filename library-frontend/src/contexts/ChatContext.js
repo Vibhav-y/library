@@ -49,6 +49,13 @@ export const ChatProvider = ({ children }) => {
       backendUrl = 'http://localhost:5000';
       console.warn('⚠️ REACT_APP_BACKEND_URL not set; using local fallback:', backendUrl);
     }
+    try {
+      const u = new URL(backendUrl);
+      if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && u.protocol === 'https:') {
+        u.protocol = 'http:'; // force ws over http locally
+        backendUrl = u.toString().replace(/\/$/, '');
+      }
+    } catch {}
     console.log('🔌 Attempting WebSocket connection to:', backendUrl);
     console.log('🔐 JWT token present:', !!token, 'length:', token?.length || 0);
     const newSocket = io(backendUrl, {

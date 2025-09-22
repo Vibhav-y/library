@@ -26,10 +26,9 @@ router.post('/', auth.verifyToken, auth.adminOnly, imageUpload.single('image'), 
   const { name, parentCategory } = req.body;
   try {
     // Check if category with same name exists under the same parent
-    const existing = await Category.findOne({ 
-      name, 
-      parentCategory: parentCategory || null 
-    });
+    const filter = { name, parentCategory: parentCategory || null };
+    if (req.user.libraryId) filter.library = req.user.libraryId;
+    const existing = await Category.findOne(filter);
     if (existing) {
       const parentName = parentCategory ? 
         (await Category.findById(parentCategory))?.name : 'root';
@@ -72,7 +71,8 @@ router.post('/', auth.verifyToken, auth.adminOnly, imageUpload.single('image'), 
       name, 
       parentCategory,
       image,
-      imagePublicUrl
+      imagePublicUrl,
+      library: req.user.libraryId || null
     });
     await category.save();
     
@@ -88,7 +88,7 @@ router.post('/', auth.verifyToken, auth.adminOnly, imageUpload.single('image'), 
 // ✅ Get all categories with hierarchical structure (any logged-in user)
 router.get('/', auth.verifyToken, async (req, res) => {
   try {
-    const categories = await Category.find()
+    const categories = await Category.find(req.user.libraryId ? { library: req.user.libraryId } : {})
       .populate('parentCategory', 'name')
       .sort({ level: 1, name: 1 });
     res.json(categories);
@@ -101,7 +101,9 @@ router.get('/', auth.verifyToken, async (req, res) => {
 router.get('/tree', auth.verifyToken, async (req, res) => {
   try {
     const buildTree = async (parentId = null, level = 0) => {
-      const categories = await Category.find({ parentCategory: parentId })
+      const criteria = { parentCategory: parentId };
+      if (req.user.libraryId) criteria.library = req.user.libraryId;
+      const categories = await Category.find(criteria)
         .sort({ name: 1 });
       
       const tree = [];
@@ -137,7 +139,9 @@ router.get('/by-parent/:parentId', auth.verifyToken, async (req, res) => {
 // ✅ Get root categories (alternative endpoint)
 router.get('/by-parent', auth.verifyToken, async (req, res) => {
   try {
-    const categories = await Category.find({ parentCategory: null })
+    const criteria = { parentCategory: null };
+    if (req.user.libraryId) criteria.library = req.user.libraryId;
+    const categories = await Category.find(criteria)
       .sort({ name: 1 });
     res.json(categories);
   } catch (err) {

@@ -12,7 +12,9 @@ router.get('/test', (req, res) => {
 // Get all students (admin only)
 router.get('/', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
-    const students = await User.find({ role: 'student' }).select('-password');
+    const filter = { role: 'student' };
+    if (req.user.libraryId) filter.library = req.user.libraryId;
+    const students = await User.find(filter).select('-password');
     res.json(students);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -38,7 +40,8 @@ router.post('/', auth.verifyToken, auth.adminOnly, async (req, res) => {
       email,
       password: hashed,
       role: 'student',
-      terminationDate
+      terminationDate,
+      library: req.user.libraryId || null
     });
 
     await student.save();

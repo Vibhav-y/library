@@ -62,6 +62,7 @@ app.use('/api/announcement', require('./routes/announcement'));
 app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/thought', require('./routes/thoughtOfTheDay'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/library', require('./routes/library'));
 
 // Make io available to routes
 app.set('io', io);
