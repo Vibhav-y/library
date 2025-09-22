@@ -91,7 +91,7 @@ const GodAdminDashboard = () => {
 
   const logout = () => {
     godLogout();
-    window.location.href = '/god-admin-login';
+      window.location.href = '/master-admin-login';
   };
 
   return (

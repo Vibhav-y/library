@@ -17,7 +17,7 @@ const GodAdminLogin = () => {
     if (!res.success) {
       setError(res.error);
     } else {
-      window.location.href = '/god-admin';
+      window.location.href = '/master-admin';
     }
   };
 
