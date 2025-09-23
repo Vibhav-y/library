@@ -50,6 +50,9 @@ export const AuthProvider = ({ children }) => {
       // Store master token separately to avoid overriding normal token
       localStorage.setItem('god_token', response.token);
       localStorage.setItem('god_user', JSON.stringify(response.user));
+      // Set app user context so ProtectedRoutes and UI work in master mode
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.message || 'Login failed' };
