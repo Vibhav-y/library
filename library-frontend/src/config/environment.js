@@ -1,7 +1,7 @@
 // Environment Configuration
 // Change ENVIRONMENT to switch between 'development' and 'production'
 
-const ENVIRONMENT = 'development';
+const ENVIRONMENT = 'production';
 
 // Runtime-aware backend URL resolver with sensible defaults
 const getBackendBaseUrl = () => {

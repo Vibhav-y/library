@@ -72,7 +72,7 @@ const customizationSchema = new mongoose.Schema({
   // System settings
   systemName: {
     type: String,
-    default: 'Library System'
+    default: 'LibraFlow'
   },
   
   // Metadata

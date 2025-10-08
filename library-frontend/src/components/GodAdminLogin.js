@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const GodAdminLogin = () => {
-  const { godLogin } = useAuth();
+  const { masterLogin } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('admin@library.com');
   const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
@@ -12,12 +14,18 @@ const GodAdminLogin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const res = await godLogin(email, password);
+    
+    console.log('Attempting master login with:', email); // Debug log
+    const res = await masterLogin(email, password);
+    console.log('Master login result:', res); // Debug log
+    
     setLoading(false);
     if (!res.success) {
       setError(res.error);
+      console.error('Master login failed:', res.error); // Debug log
     } else {
-      window.location.href = '/master-admin';
+      console.log('Master login successful, redirecting to /master-admin'); // Debug log
+      navigate('/master-admin');
     }
   };
 

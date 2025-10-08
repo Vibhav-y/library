@@ -5,6 +5,7 @@ import { CustomizationProvider } from './contexts/CustomizationContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { ChatProvider } from './contexts/ChatContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import FeatureProtectedRoute from './components/FeatureProtectedRoute';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -19,10 +20,8 @@ import Customization from './components/Customization';
 import Accessibility from './components/Accessibility';
 import StudentProfile from './components/StudentProfile';
 import FeeManagement from './components/FeeManagement';
-import RoleBasedRedirect from './components/RoleBasedRedirect';
 import LandingPage from './components/LandingPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
-import ManageGallery from './components/ManageGallery';
 import ManageThoughts from './components/ManageThoughts';
 import Chat from './components/Chat';
 import ChatMonitoring from './components/ChatMonitoring';
@@ -48,9 +47,7 @@ function App() {
                 path="/master-admin"
                 element={
                   <ProtectedRoute godOnly>
-                    <Layout>
-                      <GodAdminDashboard />
-                    </Layout>
+                    <GodAdminDashboard />
                   </ProtectedRoute>
                 }
               />
@@ -71,9 +68,11 @@ function App() {
                 path="/documents"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Documents />
-                    </Layout>
+                    <FeatureProtectedRoute requiredFeature="documentUploadsEnabled">
+                      <Layout>
+                        <Documents />
+                      </Layout>
+                    </FeatureProtectedRoute>
                   </ProtectedRoute>
                 }
               />
@@ -105,9 +104,11 @@ function App() {
                 path="/upload"
                 element={
                   <ProtectedRoute adminOnly>
-                    <Layout>
-                      <UploadDocument />
-                    </Layout>
+                    <FeatureProtectedRoute requiredFeature="documentUploadsEnabled">
+                      <Layout>
+                        <UploadDocument />
+                      </Layout>
+                    </FeatureProtectedRoute>
                   </ProtectedRoute>
                 }
               />
@@ -127,9 +128,11 @@ function App() {
                 path="/categories"
                 element={
                   <ProtectedRoute adminOnly>
-                    <Layout>
-                      <Categories />
-                    </Layout>
+                    <FeatureProtectedRoute requiredFeature="documentUploadsEnabled">
+                      <Layout>
+                        <Categories />
+                      </Layout>
+                    </FeatureProtectedRoute>
                   </ProtectedRoute>
                 }
               />
@@ -145,16 +148,6 @@ function App() {
                 }
               />
               
-              <Route
-                path="/customization"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <Layout>
-                      <Customization />
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
               
               <Route
                 path="/thoughts"
@@ -170,9 +163,11 @@ function App() {
                 path="/chat"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Chat />
-                    </Layout>
+                    <FeatureProtectedRoute requiredFeature="chatEnabled">
+                      <Layout>
+                        <Chat />
+                      </Layout>
+                    </FeatureProtectedRoute>
                   </ProtectedRoute>
                 }
               />
@@ -198,16 +193,6 @@ function App() {
                 }
               />
               
-              <Route
-                path="/gallery"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <Layout>
-                      <ManageGallery />
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
               
               <Route
                 path="/accessibility"
@@ -241,9 +226,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
-              {/* Backward compatibility redirect */}
-              <Route path="/students" element={<Navigate to="/users" replace />} />
               
               {/* Default redirect */}
               <Route path="/" element={<LandingPage />} />

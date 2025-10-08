@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { userAPI } from '../services/api';
+import { userAPI, feeStructureAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   DollarSign, 
   CheckCircle, 
@@ -14,12 +15,18 @@ import {
   MapPin,
   Edit3,
   Save,
-  X
+  X,
+  Settings,
+  TrendingUp,
+  Info
 } from 'lucide-react';
+
+import FeeStructureManagement from './FeeStructureManagement';
 
 const FeeManagement = () => {
   const [fees, setFees] = useState([]);
   const [students, setStudents] = useState([]);
+  const [currentStructure, setCurrentStructure] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
   const [error, setError] = useState('');
@@ -29,6 +36,8 @@ const FeeManagement = () => {
   const [selectedStudent, setSelectedStudent] = useState('all');
   const [editingFee, setEditingFee] = useState(null);
   const [editData, setEditData] = useState({ amount: '', notes: '' });
+  const [activeTab, setActiveTab] = useState('fees');
+  const { user: currentUser, isAdminOrManager } = useAuth();
 
   useEffect(() => {
     loadData();
@@ -37,12 +46,14 @@ const FeeManagement = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [feesData, studentsData] = await Promise.all([
+      const [feesData, studentsData, currentStructureData] = await Promise.all([
         userAPI.getAllFees(),
-        userAPI.getAll()
+        userAPI.getAll(),
+        feeStructureAPI.getCurrent().catch(() => null)
       ]);
       setFees(feesData);
       setStudents(studentsData.filter(user => user.role === 'student'));
+      setCurrentStructure(currentStructureData);
     } catch (error) {
       setError('Failed to load fee data');
       console.error('Fee data load error:', error);
@@ -79,15 +90,28 @@ const FeeManagement = () => {
 
   const handleSaveEdit = async (feeId) => {
     try {
+      const fee = fees.find(f => f._id === feeId);
+      const isAmountChanged = Number(editData.amount) !== fee.originalAmount;
+      
       await userAPI.updateFee(feeId, {
         amount: Number(editData.amount),
-        notes: editData.notes
+        notes: editData.notes,
+        isManuallyAdjusted: isAmountChanged,
+        adjustmentReason: isAmountChanged ? editData.notes || 'Manual adjustment' : ''
       });
-      setFees(prev => prev.map(fee => 
-        fee._id === feeId 
-          ? { ...fee, amount: Number(editData.amount), notes: editData.notes }
-          : fee
+      
+      setFees(prev => prev.map(f => 
+        f._id === feeId 
+          ? { 
+              ...f, 
+              amount: Number(editData.amount), 
+              notes: editData.notes,
+              isManuallyAdjusted: isAmountChanged,
+              adjustmentReason: isAmountChanged ? editData.notes || 'Manual adjustment' : f.adjustmentReason
+            }
+          : f
       ));
+      
       setEditingFee(null);
       setSuccess('Fee updated successfully');
       setTimeout(() => setSuccess(''), 3000);
@@ -160,7 +184,7 @@ const FeeManagement = () => {
     );
   }
 
-  return (
+    return (
     <div className="space-y-6 lg:space-y-8">
       {/* Header */}
       <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
@@ -175,20 +199,70 @@ const FeeManagement = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Fee Management</h1>
                 <p className="mt-2 text-base sm:text-lg text-gray-600">
-                  Manage student fees, payments, and generate comprehensive reports
+                  Manage student fees, payments, and fee structures
                 </p>
               </div>
             </div>
-            <button
-              onClick={loadData}
-              className="group inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 border border-gray-200/50"
-            >
-              <RefreshCw className="h-5 w-5 mr-2 group-hover:rotate-180 transition-transform duration-300" />
-              Refresh
-            </button>
+            <div className="flex space-x-3">
+              {currentStructure && (
+                <div className="bg-green-50 px-4 py-2 rounded-xl border border-green-200">
+                  <div className="text-sm text-green-600 font-medium">
+                    Active Structure: {currentStructure.name}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={loadData}
+                className="group inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 border border-gray-200/50"
+              >
+                <RefreshCw className="h-5 w-5 mr-2 group-hover:rotate-180 transition-transform duration-300" />
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Tab Navigation */}
+      <div className="bg-white shadow-lg rounded-xl border border-gray-200">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab('fees')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'fees'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Fee Records
+              </div>
+            </button>
+            {(currentUser.role === 'admin' || currentUser.role === 'superadmin') && (
+              <button
+                onClick={() => setActiveTab('structures')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'structures'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Fee Structures
+                </div>
+              </button>
+            )}
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'fees' && (
+        <div className="space-y-6">
+          {/* Fee Records Content */}
 
       {/* Success/Error Messages */}
       {success && (
@@ -409,7 +483,7 @@ const FeeManagement = () => {
                       Month/Year
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                      Amount
+                      Slot/Amount
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                       Status
@@ -471,14 +545,32 @@ const FeeManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {editingFee === fee._id ? (
-                          <input
-                            type="number"
-                            value={editData.amount}
-                            onChange={(e) => setEditData(prev => ({ ...prev, amount: e.target.value }))}
-                            className="w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
+                          <div className="space-y-1">
+                            <input
+                              type="number"
+                              value={editData.amount}
+                              onChange={(e) => setEditData(prev => ({ ...prev, amount: e.target.value }))}
+                              className="w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            />
+                            <div className="text-xs text-gray-500">
+                              {fee.slotName || fee.slotType || 'N/A'}
+                            </div>
+                          </div>
                         ) : (
-                          `₹${fee.amount}`
+                          <div>
+                            <div className="font-medium">₹{fee.amount}</div>
+                            <div className="text-xs text-gray-500 flex items-center">
+                              {fee.slotName || fee.slotType || 'N/A'}
+                              {fee.isManuallyAdjusted && (
+                                <Info className="h-3 w-3 ml-1 text-yellow-500" title="Manually adjusted from structure" />
+                              )}
+                            </div>
+                            {fee.originalAmount && fee.originalAmount !== fee.amount && (
+                              <div className="text-xs text-gray-400">
+                                Original: ₹{fee.originalAmount}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -635,6 +727,13 @@ const FeeManagement = () => {
           )}
         </div>
       </div>
+        </div>
+      )}
+
+      {/* Fee Structures Tab */}
+      {activeTab === 'structures' && (
+        <FeeStructureManagement />
+      )}
     </div>
   );
 };

@@ -11,7 +11,27 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Use master token if available and not overridden by headers
+  let token = localStorage.getItem('token');
+  
+  // Check if we're in a Master Admin context
+  if (!config.headers?.Authorization) {
+    const masterToken = localStorage.getItem('master_token');
+    const masterUser = localStorage.getItem('master_user');
+    
+    // Use master token if:
+    // 1. It's a master admin specific route, OR
+    // 2. We have a master token and we're on a master admin page, OR
+    // 3. We have a master token but no regular token (master admin session)
+    const isMasterAdminRoute = config.url?.includes('/master/') || config.url?.includes('/library/');
+    const isOnMasterAdminPage = window.location.pathname.includes('/master-admin');
+    const isMasterAdminSession = masterToken && masterUser && !token;
+    
+    if (masterToken && (isMasterAdminRoute || isOnMasterAdminPage || isMasterAdminSession)) {
+      token = masterToken;
+    }
+  }
+  
   if (token) {
     config.headers.Authorization = token;
   }
@@ -23,9 +43,33 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Check if this is a master admin session
+      const isMasterAdmin = !!localStorage.getItem('master_token');
+      
+      // Don't redirect to login for public endpoints or if we're already on public pages
+      const isPublicEndpoint = error.config?.url?.includes('/public') || 
+                               error.config?.url?.includes('/library/me');
+      const isPublicPage = window.location.pathname === '/' || 
+                          window.location.pathname === '/landing' ||
+                          window.location.pathname === '/login' ||
+                          window.location.pathname === '/master-admin-login';
+      const isOnMasterAdminPage = window.location.pathname.includes('/master-admin');
+      
+      // Only redirect if not a public endpoint and not on a public page
+      if (!isPublicEndpoint && !isPublicPage) {
+        // If we're on a master admin page or have master admin session, handle differently
+        if (isMasterAdmin || isOnMasterAdminPage) {
+          localStorage.removeItem('master_token');
+          localStorage.removeItem('master_user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/master-admin-login';
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      }
     } else if (error.response?.status === 403 && error.response?.data?.expired) {
       // Handle expired account
       localStorage.removeItem('token');
@@ -44,13 +88,13 @@ export const authAPI = {
     const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
-  godLogin: async (email, password) => {
+  masterLogin: async (email, password) => {
     const response = await api.post('/auth/master/login', { email, password });
     return response.data;
   },
-  godImpersonate: async (godToken, libraryId) => {
+  masterImpersonate: async (masterToken, libraryId) => {
     // Use a direct axios call without interceptor token replacement
-    const response = await axios.post(`${API_BASE_URL}/auth/master/impersonate`, { token: godToken, libraryId });
+    const response = await axios.post(`${API_BASE_URL}/auth/master/impersonate`, { token: masterToken, libraryId });
     return response.data;
   }
 };
@@ -65,19 +109,34 @@ export const libraryAPI = {
     const response = await api.get(`/library/public/by-handle/${encodeURIComponent(handle)}`);
     return response.data;
   },
+  getAll: async () => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.get('/library', { headers });
+    return response.data;
+  },
+  create: async (libraryData) => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.post('/library', libraryData, { headers });
+    return response.data;
+  },
   getMetrics: async (libraryId) => {
-    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
     const response = await api.get(`/library/${libraryId}/metrics`, { headers });
     return response.data;
   },
   getUsers: async (libraryId, q = '', role = '') => {
-    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
     const response = await api.get(`/library/${libraryId}/users`, { params: { q, role }, headers });
     return response.data;
   },
   updateLibrary: async (libraryId, data) => {
-    const headers = localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
     const response = await api.put(`/library/${libraryId}`, data, { headers });
+    return response.data;
+  },
+  updateLibraryFull: async (libraryId, data) => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.put(`/library/${libraryId}/full`, data, { headers });
     return response.data;
   },
   suspendLibrary: async (libraryId) => {
@@ -85,6 +144,37 @@ export const libraryAPI = {
   },
   activateLibrary: async (libraryId) => {
     return await libraryAPI.updateLibrary(libraryId, { isActive: true });
+  },
+  getPlatformAnalytics: async () => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.get('/library/platform/analytics', { headers });
+    return response.data;
+  },
+  deleteLibrary: async (libraryId, masterPassword) => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.delete(`/library/${libraryId}`, { 
+      headers,
+      data: { masterPassword }
+    });
+    return response.data;
+  },
+  permanentDeleteLibrary: async (libraryId, masterPassword) => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.delete(`/library/${libraryId}/permanent`, { 
+      headers,
+      data: { masterPassword }
+    });
+    return response.data;
+  },
+  getDeletedLibraries: async () => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.get('/library/deleted', { headers });
+    return response.data;
+  },
+  restoreLibrary: async (libraryId) => {
+    const headers = localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
+    const response = await api.post(`/library/${libraryId}/restore`, {}, { headers });
+    return response.data;
   }
 };
 
@@ -194,6 +284,11 @@ export const categoryAPI = {
 export const userAPI = {
   getDashboard: async () => {
     const response = await api.get('/user/dashboard');
+    return response.data;
+  },
+  
+  getSeatAvailability: async () => {
+    const response = await api.get('/user/seats/availability');
     return response.data;
   },
   
@@ -575,15 +670,15 @@ export const chatAPI = {
   // Admin APIs
   admin: {
     // Get all conversations (admin monitoring)
-    getAllConversations: async (libraryId = undefined, useGodToken = false) => {
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    getAllConversations: async (libraryId = undefined, useMasterToken = false) => {
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.get('/chat/admin/conversations', { params: { libraryId }, headers });
       return response.data;
     },
 
     // Get messages from any conversation
-    getConversationMessages: async (conversationId, page = 1, limit = 50, useGodToken = false) => {
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    getConversationMessages: async (conversationId, page = 1, limit = 50, useMasterToken = false) => {
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.get(`/chat/admin/conversations/${conversationId}/messages`, {
         params: { page, limit },
         headers
@@ -592,8 +687,8 @@ export const chatAPI = {
     },
 
     // Get flagged messages
-    getFlaggedMessages: async (libraryId = undefined, useGodToken = false) => {
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    getFlaggedMessages: async (libraryId = undefined, useMasterToken = false) => {
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.get('/chat/admin/messages/flagged', { params: { libraryId }, headers });
       return response.data;
     },
@@ -654,27 +749,70 @@ export const chatAPI = {
     },
 
     // E2EE: rotate conversation key (superadmin only)
-    rotateConversationKey: async (conversationId, superAdminPublicKeyPem = null, useGodToken = false) => {
+    rotateConversationKey: async (conversationId, superAdminPublicKeyPem = null, useMasterToken = false) => {
       const body = superAdminPublicKeyPem ? { superAdminPublicKeyPem } : {};
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.post(`/chat/admin/conversations/${conversationId}/keys/rotate`, body, { headers });
       return response.data;
     },
 
     // E2EE: grant user access to conversation key (superadmin only)
-    grantConversationKey: async (conversationId, userId, useGodToken = false) => {
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    grantConversationKey: async (conversationId, userId, useMasterToken = false) => {
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.post(`/chat/admin/conversations/${conversationId}/keys/grant`, { userId }, { headers });
       return response.data;
     },
 
     // E2EE: superadmin fetch raw symmetric key
-    getRawConversationKey: async (conversationId, useGodToken = false) => {
-      const headers = useGodToken && localStorage.getItem('god_token') ? { Authorization: localStorage.getItem('god_token') } : undefined;
+    getRawConversationKey: async (conversationId, useMasterToken = false) => {
+      const headers = useMasterToken && localStorage.getItem('master_token') ? { Authorization: localStorage.getItem('master_token') } : undefined;
       const response = await api.get(`/chat/admin/conversations/${conversationId}/keys/raw`, { headers });
       return response.data;
     }
   }
 };
+
+export const feeStructureAPI = {
+  getAll: async () => {
+    const response = await api.get('/fee-structures');
+    return response.data;
+  },
+  
+  getCurrent: async () => {
+    const response = await api.get('/fee-structures/current');
+    return response.data;
+  },
+  
+  getById: async (id) => {
+    const response = await api.get(`/fee-structures/${id}`);
+    return response.data;
+  },
+  
+  create: async (data) => {
+    const response = await api.post('/fee-structures', data);
+    return response.data;
+  },
+  
+  update: async (id, data) => {
+    const response = await api.put(`/fee-structures/${id}`, data);
+    return response.data;
+  },
+  
+  deactivate: async (id, data = {}) => {
+    const response = await api.patch(`/fee-structures/${id}/deactivate`, data);
+    return response.data;
+  },
+  
+  delete: async (id) => {
+    const response = await api.delete(`/fee-structures/${id}`);
+    return response.data;
+  },
+  
+  preview: async (id, data = {}) => {
+    const response = await api.post(`/fee-structures/${id}/preview`, data);
+    return response.data;
+  }
+};
+
 
 export default api; 

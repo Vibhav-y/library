@@ -62,7 +62,7 @@ export const CustomizationProvider = ({ children }) => {
       
       // Set default customization
       setCustomization({
-        systemName: 'Library System',
+        systemName: 'LibraFlow',
         showLogo: false,
         logoUrl: null,
         activeTheme: defaultTheme
@@ -97,7 +97,7 @@ export const CustomizationProvider = ({ children }) => {
   };
 
   const getSystemName = () => {
-    return customization?.systemName || 'Library System';
+    return customization?.systemName || 'LibraFlow';
   };
 
   const getLogo = () => {

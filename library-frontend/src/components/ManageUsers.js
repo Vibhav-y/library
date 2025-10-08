@@ -1,7 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { userAPI } from '../services/api';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { userAPI, libraryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, Edit, Trash2, Calendar, AlertCircle, CheckCircle, Shield, User as UserIcon, Users, Camera, Clock, MapPin, X } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Calendar, AlertCircle, CheckCircle, Shield, User as UserIcon, Users, Camera, Clock, MapPin, X, Eye, EyeOff } from 'lucide-react';
+import SeatSelector from './SeatSelector';
+
+// Debounce hook for form inputs
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -10,6 +28,7 @@ const ManageUsers = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     role: 'student',
@@ -24,12 +43,24 @@ const ManageUsers = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [currentLibrary, setCurrentLibrary] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { user: currentUser, isAdminOrManager, isSuperAdmin } = useAuth();
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadUsers();
+    loadCurrentLibrary();
   }, []);
+
+  const loadCurrentLibrary = async () => {
+    try {
+      const library = await libraryAPI.getCurrent();
+      setCurrentLibrary(library);
+    } catch (error) {
+      console.error('Error loading current library:', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -43,7 +74,7 @@ const ManageUsers = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = React.useCallback((e) => {
     const { name, value, type, files } = e.target;
     
     if (type === 'file') {
@@ -63,42 +94,53 @@ const ManageUsers = () => {
         [name]: value
       }));
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = React.useCallback(async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent multiple submissions
+    if (loading) return;
+    
     setError('');
     setSuccess('');
-
-    // Validation
-    if (!formData.name.trim()) {
-      setError('Name is required');
-      return;
-    }
-
-    if (!formData.email.trim()) {
-      setError('Email is required');
-      return;
-    }
-
-    if (!editingUser && !formData.password.trim()) {
-      setError('Password is required');
-      return;
-    }
-
-    // Check if non-superadmin is trying to create admin accounts
-    if ((formData.role === 'admin' || formData.role === 'superadmin') && currentUser.role !== 'superadmin') {
-      setError('Only superadmins can create admin accounts');
-      return;
-    }
-
-    // Check if manager is trying to create non-student accounts
-    if (currentUser.role === 'manager' && formData.role !== 'student') {
-      setError('Managers can only create student accounts');
-      return;
-    }
+    setLoading(true);
 
     try {
+      // Validation
+      if (!formData.name.trim()) {
+        setError('Name is required');
+        return;
+      }
+
+      if (!formData.username.trim()) {
+        setError('Username is required');
+        return;
+      }
+
+      if (!formData.email.trim()) {
+        setError('Email is required');
+        return;
+      }
+
+      if (!editingUser && !formData.password.trim()) {
+        setError('Password is required');
+        return;
+      }
+
+      // Check if non-superadmin is trying to create admin accounts
+      if ((formData.role === 'admin' || formData.role === 'superadmin') && currentUser.role !== 'superadmin') {
+        setError('Only superadmins can create admin accounts');
+        return;
+      }
+
+      // Check if manager is trying to create non-student accounts
+      if (currentUser.role === 'manager' && formData.role !== 'student') {
+        setError('Managers can only create student accounts');
+        return;
+      }
+
       if (editingUser) {
         // Update user (superadmin can edit all fields, others only termination)
         if (currentUser.role === 'superadmin') {
@@ -125,6 +167,7 @@ const ManageUsers = () => {
         // Create new user with FormData
         const submitData = new FormData();
         submitData.append('name', formData.name.trim());
+        submitData.append('username', formData.username.trim());
         submitData.append('email', formData.email.trim());
         submitData.append('password', formData.password.trim());
         submitData.append('role', formData.role);
@@ -147,6 +190,7 @@ const ManageUsers = () => {
       // Reset form
       setFormData({
         name: '',
+        username: '',
         email: '',
         password: '',
         role: 'student',
@@ -167,13 +211,16 @@ const ManageUsers = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       setError(error.response?.data?.message || 'Operation failed');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [editingUser, formData, currentUser, loadUsers]);
 
   const handleEdit = (user) => {
     setEditingUser(user);
     setFormData({
       name: user.name || '',
+      username: user.username || '',
       email: user.email,
       password: '',
       role: user.role,
@@ -187,6 +234,7 @@ const ManageUsers = () => {
       phone: user.phone || '',
       profilePicture: null
     });
+    setImagePreview(user.profilePictureUrl || null);
     setShowAddForm(true);
   };
 
@@ -205,11 +253,12 @@ const ManageUsers = () => {
     }
   };
 
-  const cancelForm = () => {
+  const cancelForm = React.useCallback(() => {
     setShowAddForm(false);
     setEditingUser(null);
     setFormData({
       name: '',
+      username: '',
       email: '',
       password: '',
       role: 'student',
@@ -223,9 +272,11 @@ const ManageUsers = () => {
     });
     setImagePreview(null);
     setError('');
-  };
+    setLoading(false); // Reset loading state
+    setShowPassword(false);
+  }, []);
 
-  const getRoleIcon = (role) => {
+  const getRoleIcon = React.useMemo(() => (role) => {
     switch (role) {
       case 'superadmin':
         return <Shield className="h-4 w-4 text-red-600" />;
@@ -236,9 +287,9 @@ const ManageUsers = () => {
       default:
         return <UserIcon className="h-4 w-4 text-gray-600" />;
     }
-  };
+  }, []);
 
-  const getRoleBadge = (role) => {
+  const getRoleBadge = React.useMemo(() => (role) => {
     const badges = {
       superadmin: 'bg-red-100 text-red-800',
       admin: 'bg-blue-100 text-blue-800',
@@ -246,7 +297,7 @@ const ManageUsers = () => {
       student: 'bg-green-100 text-green-800'
     };
     return badges[role] || badges.student;
-  };
+  }, []);
 
   const isAccountExpired = (terminationDate) => {
     if (!terminationDate) return false;
@@ -257,9 +308,21 @@ const ManageUsers = () => {
   };
 
   const canEditUser = (user) => {
-    if (currentUser.role === 'manager') return false; // Managers cannot edit users
+    // Users cannot edit themselves
+    if (currentUser.id === user._id) return false;
+    
+    // Students and managers cannot edit anyone
+    if (currentUser.role === 'student' || currentUser.role === 'manager') return false;
+    
+    // Superadmin can edit anyone
     if (currentUser.role === 'superadmin') return true;
-    return user.role === 'student';
+    
+    // Admins can edit students but not other admins/superadmins
+    if (currentUser.role === 'admin') {
+      return user.role === 'student';
+    }
+    
+    return false;
   };
 
   const canDeleteUser = (user) => {
@@ -269,7 +332,7 @@ const ManageUsers = () => {
     return user.role === 'student';
   };
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -336,19 +399,19 @@ const ManageUsers = () => {
 
       {/* Add/Edit Form */}
       {showAddForm && (
-        <div className="relative bg-white/70 backdrop-blur-md shadow-2xl rounded-3xl border border-white/30 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/60"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="relative px-4 py-5 sm:px-6 sm:py-6">
-            <div className="flex items-center mb-5">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg mr-3">
+        <div className="bg-white shadow-lg rounded-xl border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center mr-3">
                 {editingUser ? <Edit className="h-4 w-4 text-white" /> : <UserPlus className="h-4 w-4 text-white" />}
               </div>
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-semibold text-gray-900">
                 {editingUser ? 'Edit User' : 'Add New User'}
               </h3>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          </div>
+          <div className="px-6 py-6">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="space-y-1">
                 <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
                   Name
@@ -360,13 +423,35 @@ const ManageUsers = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="John Doe"
                 />
               </div>
+              
+              <div className="space-y-1">
+                <label htmlFor="username" className="block text-sm font-semibold text-gray-700">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="john"
+                />
+                {formData.username && currentLibrary && (
+                  <div className="text-sm text-blue-600 bg-blue-50/80 px-3 py-2 rounded-lg">
+                    <strong>Login ID:</strong> {formData.username}{currentLibrary.handle}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-1">
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                  Email Address
+                  Email Address (for records)
                 </label>
                 <input
                   type="email"
@@ -376,80 +461,125 @@ const ManageUsers = () => {
                   onChange={handleInputChange}
                   disabled={editingUser && currentUser.role !== 'superadmin'}
                   required
-                  className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400 disabled:bg-gray-100/80 disabled:cursor-not-allowed"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="user@example.com"
+                />
+                <p className="text-xs text-gray-600 bg-gray-50/80 px-2 py-1 rounded-lg">
+                  Used for contact and records. Login will use username{currentLibrary?.handle} instead.
+                </p>
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-1">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required={!editingUser}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                    placeholder={editingUser ? "Leave blank to keep current password" : "Enter password"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                {editingUser && (
+                  <p className="text-xs text-gray-600 bg-blue-50/80 px-2 py-1 rounded-lg">
+                    Leave blank to keep the current password, or enter a new password to change it.
+                  </p>
+                )}
+              </div>
+
+              {/* Role Field */}
+              <div className="space-y-1">
+                <label htmlFor="role" className="block text-sm font-semibold text-gray-700">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  disabled={editingUser && currentUser.role !== 'superadmin'}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="student">Student</option>
+                  {currentUser.role === 'superadmin' && (
+                    <>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Admin</option>
+                      <option value="superadmin">Super Admin</option>
+                    </>
+                  )}
+                </select>
+                {currentUser.role !== 'superadmin' && (
+                  <p className="text-xs text-gray-600 bg-amber-50/80 px-2 py-1 rounded-lg">
+                    Only superadmins can create admin accounts or change roles
+                  </p>
+                )}
+              </div>
+
+              {/* Phone Field */}
+              <div className="space-y-1">
+                <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter phone number"
                 />
               </div>
 
-              {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && (
-                <>
-                  <div className="space-y-1">
-                    <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required={!editingUser}
-                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
-                      placeholder={editingUser ? "Leave blank to keep current password" : "Enter password"}
-                    />
-                    {editingUser && currentUser.role === 'superadmin' && (
-                      <p className="text-xs text-gray-600 bg-blue-50/80 px-2 py-1 rounded-lg">
-                        Leave blank to keep the current password, or enter a new password to change it.
-                      </p>
-                    )}
-                  </div>
+              {/* Date of Birth */}
+              <div className="space-y-1">
+                <label htmlFor="dob" className="block text-sm font-semibold text-gray-700">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  id="dob"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-                  <div className="space-y-1">
-                    <label htmlFor="role" className="block text-sm font-semibold text-gray-700">
-                      Role
-                    </label>
-                    <select
-                      id="role"
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
-                    >
-                      <option value="student">Student</option>
-                      {currentUser.role === 'superadmin' && (
-                        <>
-                          <option value="manager">Manager</option>
-                          <option value="admin">Admin</option>
-                          <option value="superadmin">Super Admin</option>
-                        </>
-                      )}
-                    </select>
-                    {currentUser.role !== 'superadmin' && (
-                      <p className="text-xs text-gray-600 bg-amber-50/80 px-2 py-1 rounded-lg">
-                        Only superadmins can create admin accounts
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="block w-full px-3 py-2 text-sm border-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                </>
-              )}
+              {/* Date Joined Library */}
+              <div className="space-y-1">
+                <label htmlFor="dateJoinedLibrary" className="block text-sm font-semibold text-gray-700">
+                  Date Joined Library
+                </label>
+                <input
+                  type="date"
+                  id="dateJoinedLibrary"
+                  name="dateJoinedLibrary"
+                  value={formData.dateJoinedLibrary}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-600 bg-gray-50/80 px-2 py-1 rounded-lg">
+                  Used to generate monthly fee records
+                </p>
+              </div>
 
               {/* Student-specific fields */}
-              {(!editingUser || (editingUser && currentUser.role === 'superadmin')) && formData.role === 'student' && (
+              {formData.role === 'student' && (
                 <>
                   <div className="col-span-2">
                     <div className="border-t border-gray-200/50 pt-3 mb-3">
@@ -514,73 +644,26 @@ const ManageUsers = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="dob" className="block text-base font-semibold text-gray-700">
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      id="dob"
-                      name="dob"
-                      value={formData.dob}
-                      onChange={handleInputChange}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
-                    />
-                  </div>
+
 
                   <div className="space-y-2">
-                    <label htmlFor="dateJoinedLibrary" className="block text-base font-semibold text-gray-700">
-                      Date Joined Library
+                    <label className="block text-base font-semibold text-gray-700">
+                      Slot & Seat Selection
                     </label>
-                    <input
-                      type="date"
-                      id="dateJoinedLibrary"
-                      name="dateJoinedLibrary"
-                      value={formData.dateJoinedLibrary}
-                      onChange={handleInputChange}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
-                    />
-                    <p className="text-sm text-gray-600 bg-blue-50/80 px-3 py-2 rounded-xl">
-                      Used to generate monthly fee records
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="slot" className="block text-base font-semibold text-gray-700">
-                      Time Slot
-                    </label>
-                    <select
-                      id="slot"
-                      name="slot"
-                      value={formData.slot}
-                      onChange={handleInputChange}
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300"
-                    >
-                      <option value="">Select slot</option>
-                      <option value="morning">Morning</option>
-                      <option value="afternoon">Afternoon</option>
-                      <option value="full-day">Full Day</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="seatNumber" className="block text-base font-semibold text-gray-700">
-                      Seat Number
-                    </label>
-                    <input
-                      type="number"
-                      id="seatNumber"
-                      name="seatNumber"
-                      value={formData.seatNumber}
-                      onChange={handleInputChange}
-                      min="1"
-                      max="38"
-                      className="block w-full px-4 py-3 text-base border-0 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg focus:ring-4 focus:ring-blue-500/20 focus:bg-white transition-all duration-300 placeholder:text-gray-400"
-                      placeholder="1-38"
-                    />
-                    <p className="text-sm text-gray-600 bg-amber-50/80 px-3 py-2 rounded-xl">
-                      Seat numbers range from 1 to 38
-                    </p>
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <SeatSelector
+                        selectedSeat={formData.seatNumber ? Number(formData.seatNumber) : null}
+                        selectedSlot={formData.slot}
+                        onSeatSelect={(seatNumber) => {
+                          setFormData(prev => ({ ...prev, seatNumber: seatNumber || '' }));
+                        }}
+                        onSlotSelect={(slot) => {
+                          setFormData(prev => ({ ...prev, slot: slot || '' }));
+                        }}
+                        excludeUserId={editingUser?._id}
+                        availableSlots={currentLibrary?.slotTimings || []}
+                      />
+                    </div>
                   </div>
                  </>
                )}
@@ -602,20 +685,24 @@ const ManageUsers = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={cancelForm}
-                  className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-all duration-300 border border-gray-200/50"
+                  disabled={loading}
+                  className="px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="group px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <span className="relative">{editingUser ? 'Update User' : 'Add User'}</span>
+                  {loading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  )}
+                  {loading ? 'Processing...' : (editingUser ? 'Update User' : 'Add User')}
                 </button>
               </div>
             </form>

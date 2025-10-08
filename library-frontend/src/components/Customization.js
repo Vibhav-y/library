@@ -63,13 +63,13 @@ const Customization = () => {
   const loadData = async () => {
     try {
       const [customizationData, themesData] = await Promise.all([
-        customizationAPI.get().catch(() => ({ systemName: 'Library System', showLogo: false })),
+        customizationAPI.get().catch(() => ({ systemName: 'LibraFlow', showLogo: false })),
         customizationAPI.getThemes()
       ]);
       
       setCustomization(customizationData);
       setThemes(themesData);
-      setSystemName(customizationData.systemName || 'Library System');
+      setSystemName(customizationData.systemName || 'LibraFlow');
     } catch (error) {
       console.error('Error loading customization data:', error);
       setError('Failed to load customization settings');
@@ -337,7 +337,7 @@ const Customization = () => {
                 System Customization
               </h3>
               <p className="mt-2 text-base sm:text-lg text-gray-600">
-                Customize your library system's appearance with logos, themes, and branding.
+                Customize your LibraFlow system's appearance with logos, themes, and branding.
               </p>
             </div>
           </div>

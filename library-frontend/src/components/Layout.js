@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const { user, logout, isAdmin, isGodMode } = useAuth();
+  const { user, currentLibrary, logout, isAdmin, isGodMode } = useAuth();
   const { getSystemName, getLogo, getThemeColors } = useCustomization();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,9 +36,30 @@ const Layout = ({ children }) => {
   const logo = getLogo();
   const themeColors = getThemeColors();
 
+  // Debug logging for component render
+  console.log('🎨 Layout: Component rendering');
+  console.log('👤 User:', user);
+  console.log('🏛️ CurrentLibrary:', currentLibrary);
+  console.log('🔑 IsGodMode:', isGodMode);
+
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  // Helper function to check if feature is enabled
+  const isFeatureEnabled = (featureName) => {
+    if (isGodMode) return true; // God mode has access to everything
+    if (!currentLibrary?.features) return true; // Default to true if no features config
+    
+    // Debug logging (temporary)
+    console.log('🔍 Layout: Checking feature:', featureName);
+    console.log('📊 currentLibrary:', currentLibrary);
+    console.log('⚙️ features:', currentLibrary?.features);
+    console.log('✅ feature value:', currentLibrary.features[featureName]);
+    
+    return currentLibrary.features[featureName] === true; // Only true if explicitly enabled
   };
 
   const navigation = [
@@ -47,10 +68,15 @@ const Layout = ({ children }) => {
     ] : []),
     ...(user?.role !== 'manager' ? [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
-      { name: 'Documents', href: '/documents', icon: FileText },
+      // Only show Documents if document uploads are enabled
+      ...(isFeatureEnabled('documentUploadsEnabled') ? [
+        { name: 'Documents', href: '/documents', icon: FileText },
+      ] : []),
     ] : []),
-    // Chat is available to all users
-    { name: 'Chat', href: '/chat', icon: MessageCircle },
+    // Chat is available to all users only if enabled
+    ...(isFeatureEnabled('chatEnabled') ? [
+      { name: 'Chat', href: '/chat', icon: MessageCircle },
+    ] : []),
     ...(user?.role === 'student' ? [
       { name: 'Favorites', href: '/favorites', icon: Star },
       { name: 'Notices', href: '/notices-tab', icon: Bell },
@@ -63,15 +89,16 @@ const Layout = ({ children }) => {
       { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
     ] : []),
     ...(isAdmin ? [
-      { name: 'Upload Document', href: '/upload', icon: Upload },
+      // Only show document-related features if enabled
+      ...(isFeatureEnabled('documentUploadsEnabled') ? [
+        { name: 'Upload Document', href: '/upload', icon: Upload },
+        { name: 'Categories', href: '/categories', icon: FolderOpen },
+      ] : []),
       { name: 'Manage Users', href: '/users', icon: Users },
-      { name: 'Categories', href: '/categories', icon: FolderOpen },
       { name: 'Fee Management', href: '/fees', icon: DollarSign },
       { name: 'Notices', href: '/notices', icon: Bell },
       { name: 'Thoughts', href: '/thoughts', icon: Lightbulb },
       { name: 'Announcements', href: '/announcements', icon: Volume2 },
-      { name: 'Gallery', href: '/gallery', icon: Camera },
-      { name: 'Customization', href: '/customization', icon: Settings },
       { name: 'Accessibility', href: '/accessibility', icon: Accessibility },
     ] : []),
     ...(isGodMode ? [
@@ -233,7 +260,7 @@ const Layout = ({ children }) => {
                 <Menu className="h-5 w-5" />
               </button>
               <span className="font-semibold text-gray-900 truncate px-4">
-                {systemName || 'Library System'}
+                {systemName || 'LibraFlow'}
               </span>
               <button
                 onClick={handleLogout}

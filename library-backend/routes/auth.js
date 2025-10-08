@@ -15,18 +15,28 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Support multi-tenant handle-based login: username@handle
-    let lookupEmail = email;
+    // Support multi-tenant handle-based login: username@handle or regular email
+    let user = null;
     let requestedHandle = null;
+    
     if (email.includes('@')) {
       const [usernamePart, handlePart] = email.split('@');
       if (usernamePart && handlePart) {
         requestedHandle = `@${handlePart.toLowerCase()}`;
-        lookupEmail = `${usernamePart}@${handlePart}`; // stored as-is among tenants
+        const potentialLoginId = `${usernamePart}@${handlePart.toLowerCase()}`;
+        
+        // First try to find by loginId (new system)
+        user = await User.findOne({ loginId: potentialLoginId }).populate('library');
+        
+        // If not found by loginId, try by email (backward compatibility)
+        if (!user) {
+          user = await User.findOne({ email: `${usernamePart}@${handlePart}` }).populate('library');
+        }
       }
+    } else {
+      // Direct email lookup (no handle)
+      user = await User.findOne({ email }).populate('library');
     }
-
-    const user = await User.findOne({ email: lookupEmail }).populate('library');
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -78,7 +88,13 @@ router.post('/login', async (req, res) => {
         role: user.role,
         libraryId: user.library ? user.library._id : null,
         terminationDate: user.terminationDate
-      }
+      },
+      library: user.library ? {
+        id: user.library._id,
+        name: user.library.name,
+        handle: user.library.handle,
+        features: user.library.features || { chatEnabled: true, documentUploadsEnabled: true }
+      } : null
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -131,7 +147,7 @@ router.post('/master/impersonate', async (req, res) => {
     const impersonationToken = jwt.sign({ id: decoded.id, role: decoded.role, actingLibraryId: library._id.toString() }, process.env.JWT_SECRET, { expiresIn: '2h' });
     res.json({ token: impersonationToken, library: { id: library._id, name: library.name, handle: library.handle } });
   } catch (err) {
-    console.error('God impersonate error:', err);
+    console.error('Master impersonate error:', err);
     res.status(500).json({ message: err.message });
   }
 });

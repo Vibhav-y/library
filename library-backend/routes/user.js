@@ -61,10 +61,94 @@ router.get('/dashboard', auth.verifyToken, async (req, res) => {
   }
 });
 
+// Get seat availability for visual selection
+router.get('/seats/availability', auth.verifyToken, auth.adminOrManagerOnly, async (req, res) => {
+  try {
+    // Get current library to determine total seats
+    const currentLibrary = await require('../models/Library').findById(req.user.libraryId);
+    if (!currentLibrary) {
+      return res.status(404).json({ message: 'Library not found' });
+    }
+
+    const totalSeats = currentLibrary.totalSeats || 50;
+    
+    // Get all occupied seats with their slot information (exclude soft-deleted users)
+    const occupiedSeats = await User.find({
+      library: req.user.libraryId,
+      role: 'student',
+      seatNumber: { $exists: true, $ne: null },
+      terminationDate: null,
+      deletedAt: null
+    }, 'seatNumber slot name');
+
+    // Create seat availability map
+    const seatMap = {};
+    for (let i = 1; i <= totalSeats; i++) {
+      seatMap[i] = {
+        seatNumber: i,
+        available: true,
+        occupiedBy: {},
+        conflicts: []
+      };
+    }
+
+    // Mark occupied seats
+    occupiedSeats.forEach(user => {
+      const seatNum = user.seatNumber;
+      if (seatMap[seatNum]) {
+        const slot = user.slot || 'full-day';
+        
+        if (slot === 'full-day') {
+          // Full day occupation blocks all slots
+          seatMap[seatNum].available = false;
+          seatMap[seatNum].occupiedBy = {
+            'full-day': {
+              name: user.name,
+              userId: user._id,
+              slot: 'full-day'
+            }
+          };
+        } else {
+          // Partial occupation
+          if (!seatMap[seatNum].occupiedBy[slot]) {
+            seatMap[seatNum].occupiedBy[slot] = {
+              name: user.name,
+              userId: user._id,
+              slot: slot
+            };
+          }
+
+          // Check if this creates a conflict with full-day
+          const hasFullDay = seatMap[seatNum].occupiedBy['full-day'];
+          const hasOtherSlot = Object.keys(seatMap[seatNum].occupiedBy).filter(s => s !== slot && s !== 'full-day').length > 0;
+          
+          if (hasFullDay || hasOtherSlot) {
+            seatMap[seatNum].available = false;
+          }
+        }
+      }
+    });
+
+    res.json({
+      totalSeats,
+      seatMap: Object.values(seatMap),
+      summary: {
+        available: Object.values(seatMap).filter(seat => seat.available).length,
+        occupied: Object.values(seatMap).filter(seat => !seat.available).length,
+        partiallyOccupied: Object.values(seatMap).filter(seat => 
+          Object.keys(seat.occupiedBy).length > 0 && seat.available
+        ).length
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Get all users (admin, superadmin, and manager)
 router.get('/', auth.verifyToken, auth.adminOrManagerOnly, async (req, res) => {
   try {
-    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const filter = req.user.libraryId ? { library: req.user.libraryId, deletedAt: null } : { deletedAt: null };
     const users = await User.find(filter).select('-password');
     res.json(users);
   } catch (err) {
@@ -76,6 +160,7 @@ router.get('/', auth.verifyToken, auth.adminOrManagerOnly, async (req, res) => {
 router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single('profilePicture'), async (req, res) => {
   const { 
     name, 
+    username,
     email, 
     password, 
     role, 
@@ -102,23 +187,60 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
       return res.status(400).json({ message: 'Name is required' });
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'User already exists' });
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+
+    // Check for existing email only if email is provided
+    if (email && email.trim()) {
+      const existing = await User.findOne({ email: email.trim() });
+      if (existing) return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    // Get current library to generate loginId
+    const Library = require('../models/Library');
+    const currentLibrary = await Library.findById(req.user.libraryId);
+    if (!currentLibrary) {
+      return res.status(400).json({ message: 'Library not found' });
+    }
+
+    // Generate loginId by combining username with library handle
+    const loginId = `${username.trim()}${currentLibrary.handle}`;
+    
+    // Check if loginId already exists
+    const existingLoginId = await User.findOne({ loginId });
+    if (existingLoginId) {
+      return res.status(400).json({ message: `Username ${username} is already taken in this library` });
+    }
 
     // Validate student-specific fields
     if (role === 'student' || !role) {
-      if (slot && !['morning', 'afternoon', 'full-day'].includes(slot)) {
-        return res.status(400).json({ message: 'Invalid slot. Must be morning, afternoon, or full-day' });
+      if (slot) {
+        const validSlots = ['full-day']; // Always allow full-day
+        
+        if (currentLibrary.slotTimings && currentLibrary.slotTimings.length > 0) {
+          // Add library's configured slots
+          validSlots.push(...currentLibrary.slotTimings.map(s => s.name));
+        } else {
+          // Add fallback slots if no custom slots configured
+          validSlots.push('morning', 'afternoon');
+        }
+        
+        if (!validSlots.includes(slot)) {
+          return res.status(400).json({ 
+            message: `Invalid slot. Must be one of: ${validSlots.join(', ')}` 
+          });
+        }
       }
       
       if (seatNumber) {
         const seatNum = Number(seatNumber);
-        if (isNaN(seatNum) || seatNum < 1 || seatNum > 38) {
-          return res.status(400).json({ message: 'Seat number must be between 1 and 38' });
+        if (isNaN(seatNum) || seatNum < 1 || seatNum > currentLibrary.totalSeats) {
+          return res.status(400).json({ message: `Seat number must be between 1 and ${currentLibrary.totalSeats}` });
         }
         
         // Check if seat number is already taken
-    const seatFilter = { seatNumber: seatNum, role: 'student', terminationDate: null };
+    const seatFilter = { seatNumber: seatNum, role: 'student', terminationDate: null, deletedAt: null };
     if (req.user.libraryId) seatFilter.library = req.user.libraryId;
     const existingSeat = await User.findOne(seatFilter);
         if (existingSeat) {
@@ -149,7 +271,9 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
 
     const userData = {
       name: name.trim(),
-      email,
+      username: username.trim(),
+      loginId,
+      email: email && email.trim() ? email.trim() : null,
       password: hashed,
       role: role || 'student',
       terminationDate,
@@ -179,7 +303,12 @@ router.post('/', auth.verifyToken, auth.adminOrManagerOnly, profileUpload.single
     // Generate fees for student if dateJoinedLibrary is provided
     if ((role === 'student' || !role) && dateJoinedLibrary) {
       try {
-        await Fee.generateFeesForStudent(user._id, new Date(dateJoinedLibrary));
+        await Fee.generateFeesForStudent(
+          user._id, 
+          new Date(dateJoinedLibrary),
+          currentLibrary._id,
+          slot || 'full-day'
+        );
       } catch (feeError) {
         console.error('Error generating fees:', feeError);
         // Don't fail user creation if fee generation fails
@@ -293,11 +422,16 @@ router.put('/:id', auth.verifyToken, auth.superAdminOnly, async (req, res) => {
   }
 });
 
-// Delete user
+// Soft delete user (preserves fee history and other records)
 router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Check if user is already deleted
+    if (user.deletedAt) {
+      return res.status(400).json({ message: 'User is already deleted' });
+    }
 
     // Only allow deleting students, unless superadmin
     if (user.role !== 'student' && req.user.role !== 'superadmin') {
@@ -314,8 +448,20 @@ router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
       return res.status(403).json({ message: 'Access denied: different library context' });
     }
 
-    await user.deleteOne();
-    res.json({ message: 'User deleted successfully' });
+    // Soft delete the user
+    user.deletedAt = new Date();
+    user.deletedBy = req.user.id;
+    await user.save();
+
+    res.json({ 
+      message: 'User deleted successfully (fee history preserved)',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        deletedAt: user.deletedAt
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -345,40 +491,86 @@ router.get('/profile/:id', auth.verifyToken, async (req, res) => {
   }
 });
 
-// Update student profile
+// Update user profile (comprehensive editing with proper permissions)
 router.put('/profile/:id', auth.verifyToken, profileUpload.single('profilePicture'), async (req, res) => {
   try {
-    // Only admins and superadmins can update profiles, students cannot edit their own profiles
-    if (req.user.role === 'student') {
-      return res.status(403).json({ message: 'Students cannot edit their profile. Contact an administrator.' });
-    }
-    
-    // Managers cannot update profiles
-    if (req.user.role === 'manager') {
-      return res.status(403).json({ message: 'Managers cannot edit user profiles.' });
-    }
-
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Enforce library scope for admins (manager already blocked above)
+    // Permission checks
+    // 1. Users cannot edit themselves
+    if (req.user.id === req.params.id) {
+      return res.status(403).json({ message: 'You cannot edit your own profile' });
+    }
+
+    // 2. Students cannot edit anyone
+    if (req.user.role === 'student') {
+      return res.status(403).json({ message: 'Students cannot edit user profiles' });
+    }
+    
+    // 3. Managers cannot edit anyone
+    if (req.user.role === 'manager') {
+      return res.status(403).json({ message: 'Managers cannot edit user profiles' });
+    }
+
+    // 4. Only superadmin can edit library admins
+    if ((user.role === 'admin' || user.role === 'superadmin') && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only superadmins can edit admin accounts' });
+    }
+
+    // 5. Enforce library scope for non-superadmins
     if (req.user.role !== 'superadmin' && req.user.libraryId && user.library && user.library.toString() !== req.user.libraryId) {
       return res.status(403).json({ message: 'Access denied: different library context' });
     }
 
-    const { name, dob, slot, seatNumber, phone } = req.body;
+    const { 
+      name, 
+      username, 
+      email, 
+      password, 
+      role, 
+      dob, 
+      dateJoinedLibrary, 
+      slot, 
+      seatNumber, 
+      phone, 
+      terminationDate 
+    } = req.body;
     
     // Validate student-specific updates
-    if (slot && !['morning', 'afternoon', 'full-day'].includes(slot)) {
-      return res.status(400).json({ message: 'Invalid slot. Must be morning, afternoon, or full-day' });
+    if (slot) {
+      const Library = require('../models/Library');
+      const userLibrary = await Library.findById(user.library);
+      
+      const validSlots = ['full-day']; // Always allow full-day
+      
+      if (userLibrary && userLibrary.slotTimings && userLibrary.slotTimings.length > 0) {
+        // Add library's configured slots
+        validSlots.push(...userLibrary.slotTimings.map(s => s.name));
+      } else {
+        // Add fallback slots if no custom slots configured
+        validSlots.push('morning', 'afternoon');
+      }
+      
+      if (!validSlots.includes(slot)) {
+        return res.status(400).json({ 
+          message: `Invalid slot. Must be one of: ${validSlots.join(', ')}` 
+        });
+      }
     }
     
     if (seatNumber) {
       const seatNum = Number(seatNumber);
-      if (isNaN(seatNum) || seatNum < 1 || seatNum > 38) {
-        return res.status(400).json({ message: 'Seat number must be between 1 and 38' });
+      
+      // Get library to check max seats
+      const Library = require('../models/Library');
+      const userLibrary = await Library.findById(user.library);
+      const maxSeats = userLibrary?.totalSeats || 50; // Default fallback
+      
+      if (isNaN(seatNum) || seatNum < 1 || seatNum > maxSeats) {
+        return res.status(400).json({ message: `Seat number must be between 1 and ${maxSeats}` });
       }
       
       // Check if seat number is already taken by another user
@@ -386,7 +578,8 @@ router.put('/profile/:id', auth.verifyToken, profileUpload.single('profilePictur
         seatNumber: seatNum, 
         role: 'student',
         _id: { $ne: req.params.id },
-        terminationDate: null
+        terminationDate: null,
+        deletedAt: null
       });
       if (existingSeat) {
         return res.status(400).json({ message: `Seat number ${seatNum} is already occupied` });
@@ -417,12 +610,56 @@ router.put('/profile/:id', auth.verifyToken, profileUpload.single('profilePictur
       }
     }
 
+    // Validate additional fields
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email: email.trim(), _id: { $ne: req.params.id } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+
+    if (username && username !== user.username) {
+      // Generate new loginId if username changes
+      const Library = require('../models/Library');
+      const userLibrary = await Library.findById(user.library);
+      if (userLibrary) {
+        const newLoginId = `${username.trim()}${userLibrary.handle}`;
+        const existingLoginId = await User.findOne({ loginId: newLoginId, _id: { $ne: req.params.id } });
+        if (existingLoginId) {
+          return res.status(400).json({ message: `Username ${username} is already taken in this library` });
+        }
+        user.loginId = newLoginId;
+      }
+    }
+
+    if (role && role !== user.role) {
+      // Role change validation - only superadmin can change roles
+      if (req.user.role !== 'superadmin') {
+        return res.status(403).json({ message: 'Only superadmins can change user roles' });
+      }
+      // Additional role-specific validations
+      if ((role === 'admin' || role === 'superadmin') && req.user.role !== 'superadmin') {
+        return res.status(403).json({ message: 'Only superadmins can create admin accounts' });
+      }
+    }
+
     // Update fields
     if (name) user.name = name.trim();
+    if (username) user.username = username.trim();
+    if (email) user.email = email.trim();
+    if (password && password.trim()) {
+      const bcrypt = require('bcryptjs');
+      user.password = await bcrypt.hash(password.trim(), 10);
+    }
+    if (role) user.role = role;
     if (phone !== undefined) user.phone = phone ? phone.trim() : null;
     if (dob) user.dob = new Date(dob);
+    if (dateJoinedLibrary) user.dateJoinedLibrary = new Date(dateJoinedLibrary);
     if (slot) user.slot = slot;
     if (seatNumber) user.seatNumber = Number(seatNumber);
+    if (terminationDate !== undefined) {
+      user.terminationDate = terminationDate ? new Date(terminationDate) : null;
+    }
 
     await user.save();
 
@@ -552,6 +789,8 @@ router.post('/fees/generate/:studentId', auth.verifyToken, auth.managerOnly, asy
     const generatedFees = await Fee.generateFeesForStudent(
       req.params.studentId, 
       student.dateJoinedLibrary, 
+      req.user.libraryId,
+      student.slot || 'full-day',
       feeAmount
     );
 

@@ -21,7 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { useCustomization } from '../contexts/CustomizationContext';
-import { announcementAPI, galleryAPI } from '../services/api';
+import { announcementAPI, galleryAPI, libraryAPI } from '../services/api';
 
 const LandingPage = () => {
   const { customization, loading: customizationLoading } = useCustomization();
@@ -30,50 +30,51 @@ const LandingPage = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState({});
+  const [libraryConfig, setLibraryConfig] = useState(null);
   const observerRef = useRef();
 
   // Default fallback images if no gallery images are uploaded
   const defaultGalleryImages = [
     {
+      imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=400&fit=crop',
+      title: 'Modern Libraries',
+      description: 'Empowering libraries with cutting-edge technology'
+    },
+    {
+      imageUrl: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&h=400&fit=crop',
+      title: 'Cloud Platform',
+      description: 'Scalable solutions for growing library networks'
+    },
+    {
       imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop',
-      title: 'Study Hall',
-      description: 'Modern facilities designed for academic excellence'
+      title: 'Digital Transformation',
+      description: 'Transforming traditional libraries into digital hubs'
     },
     {
-      imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop',
-      title: 'Reading Area',
-      description: 'Modern facilities designed for academic excellence'
+      imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop',
+      title: 'Smart Analytics',
+      description: 'Data-driven insights for better library management'
     },
     {
-      imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&h=400&fit=crop',
-      title: 'Book Collection',
-      description: 'Modern facilities designed for academic excellence'
-    },
-    {
-      imageUrl: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&h=400&fit=crop',
-      title: 'Computer Lab',
-      description: 'Modern facilities designed for academic excellence'
-    },
-    {
-      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=400&fit=crop',
-      title: 'Group Study Room',
-      description: 'Modern facilities designed for academic excellence'
+      imageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=400&fit=crop',
+      title: 'Team Collaboration',
+      description: 'Seamless communication and management tools'
     }
   ];
 
   const facilities = [
-    { icon: Users, title: 'Comfortable Seats', description: 'Ergonomic chairs for long study sessions', color: 'from-blue-500 to-blue-600' },
-    { icon: BookOpen, title: 'Separate Study Areas', description: 'Individual spaces for focused learning', color: 'from-green-500 to-green-600' },
-    { icon: Wifi, title: 'Air Conditioning', description: 'Climate-controlled environment year-round', color: 'from-cyan-500 to-cyan-600' },
-    { icon: Coffee, title: 'Hot & Cool Water', description: 'Free water dispensers throughout', color: 'from-orange-500 to-orange-600' },
-    { icon: Volume2, title: 'Quiet Environment', description: 'Well-furnished rooms with noise control', color: 'from-purple-500 to-purple-600' },
-    { icon: Shield, title: '24/7 Security', description: 'Complete CCTV surveillance system', color: 'from-red-500 to-red-600' },
-    { icon: Zap, title: 'Charging Points', description: 'Power outlets at each seat', color: 'from-yellow-500 to-yellow-600' },
-    { icon: Clock, title: 'Extended Hours', description: 'Open early morning to late evening', color: 'from-indigo-500 to-indigo-600' },
-    { icon: Car, title: 'Parking Available', description: 'Secure parking facility', color: 'from-gray-500 to-gray-600' },
-    { icon: Star, title: 'Premium Experience', description: 'Modern amenities and service', color: 'from-pink-500 to-pink-600' },
-    { icon: GraduationCap, title: 'Study Resources', description: 'Comprehensive academic materials', color: 'from-teal-500 to-teal-600' },
-    { icon: Award, title: 'Success Environment', description: 'Designed for academic excellence', color: 'from-rose-500 to-rose-600' }
+    { icon: Users, title: 'Multi-Tenant Support', description: 'Manage multiple libraries from one platform', color: 'from-blue-500 to-blue-600' },
+    { icon: BookOpen, title: 'Digital Documents', description: 'Cloud-based document management system', color: 'from-green-500 to-green-600' },
+    { icon: Wifi, title: 'Real-time Chat', description: 'Instant messaging for library communities', color: 'from-cyan-500 to-cyan-600' },
+    { icon: Coffee, title: 'Smart Analytics', description: 'Comprehensive insights and reporting', color: 'from-orange-500 to-orange-600' },
+    { icon: Volume2, title: 'Announcements', description: 'Broadcast important messages instantly', color: 'from-purple-500 to-purple-600' },
+    { icon: Shield, title: 'Secure & Reliable', description: 'Enterprise-grade security and uptime', color: 'from-red-500 to-red-600' },
+    { icon: Zap, title: 'Quick Setup', description: 'Get your library online in minutes', color: 'from-yellow-500 to-yellow-600' },
+    { icon: Clock, title: 'Seat Management', description: 'Automated seat booking and scheduling', color: 'from-indigo-500 to-indigo-600' },
+    { icon: Car, title: 'Mobile Ready', description: 'Access from any device, anywhere', color: 'from-gray-500 to-gray-600' },
+    { icon: Star, title: 'Custom Branding', description: 'Personalize with your library\'s identity', color: 'from-pink-500 to-pink-600' },
+    { icon: GraduationCap, title: 'User Management', description: 'Role-based access and permissions', color: 'from-teal-500 to-teal-600' },
+    { icon: Award, title: 'Scalable Solution', description: 'Grows with your library network', color: 'from-rose-500 to-rose-600' }
   ];
 
   // Rotate gallery images
@@ -128,6 +129,31 @@ const LandingPage = () => {
     };
 
     loadGalleryImages();
+  }, []);
+
+  // Load library configuration
+  useEffect(() => {
+    // Set default configuration - gallery visible by default
+    // This ensures the landing page works even without authentication
+    setLibraryConfig({
+      features: {
+        galleryVisibleOnHomepage: true
+      }
+    });
+
+    // Optionally try to load library-specific configuration
+    // This is a best-effort attempt and won't break the page if it fails
+    const loadLibraryConfig = async () => {
+      try {
+        const data = await libraryAPI.getCurrent();
+        setLibraryConfig(data);
+      } catch (error) {
+        // Silently fail - we already have defaults set
+        console.log('Library configuration not available (this is normal for public access)');
+      }
+    };
+
+    loadLibraryConfig();
   }, []);
 
   // Optional: Advanced scroll animations can be added later
@@ -190,7 +216,7 @@ const LandingPage = () => {
                     }}
                   />
                   <span className="ml-3 text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    {customization?.systemName || 'Library System'}
+                    {customization?.systemName || 'LibraFlow'}
                   </span>
                 </div>
               ) : (
@@ -199,7 +225,7 @@ const LandingPage = () => {
                     <span className="text-white font-bold text-xl">L</span>
                   </div>
                   <span className="ml-3 text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    {customization?.systemName || 'Library System'}
+                    {customization?.systemName || 'LibraFlow'}
                   </span>
                 </div>
               )}
@@ -266,17 +292,17 @@ const LandingPage = () => {
                 Welcome to
               </span>
               <span className="block bg-gradient-to-r from-yellow-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
-                {customization?.systemName || 'Shree Sundaram Library'}
+                {customization?.systemName || 'LibraFlow'}
               </span>
             </h1>
             
             <p className="text-xl sm:text-2xl md:text-3xl mb-8 text-blue-100 font-light max-w-4xl mx-auto leading-relaxed">
-              Your gateway to knowledge, learning, and academic excellence
+              The Ultimate SaaS Platform for Modern Library Management
             </p>
             
             <p className="text-base sm:text-lg md:text-xl text-blue-200 max-w-3xl mx-auto mb-12 leading-relaxed">
-              Experience a modern learning environment with state-of-the-art facilities, 
-              comprehensive resources, and a peaceful atmosphere designed for serious study and research.
+              Empower multiple libraries with one powerful platform. Streamline operations, enhance user experience, 
+              and scale your library management with our cloud-based solution designed for the digital age.
             </p>
 
             {/* CTA Buttons */}
@@ -286,12 +312,12 @@ const LandingPage = () => {
                 className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold rounded-2xl hover:from-yellow-300 hover:to-orange-400 transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-yellow-500/25"
               >
                 <LogIn className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-                Get Started Now
+                Access Your Library
               </Link>
               
               <button className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-2xl border border-white/20 hover:bg-white/20 transform hover:scale-105 transition-all duration-300">
                 <BookOpen className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-                Learn More
+                Platform Features
               </button>
             </div>
           </div>
@@ -322,11 +348,11 @@ const LandingPage = () => {
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                World-Class Facilities
+                Powerful Platform Features
               </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Experience premium amenities designed to enhance your learning journey and productivity
+              Everything you need to manage multiple libraries efficiently with our comprehensive SaaS solution
             </p>
           </div>
 
@@ -371,10 +397,10 @@ const LandingPage = () => {
             className="mt-24 grid grid-cols-2 lg:grid-cols-4 gap-8 transform transition-all duration-1000 translate-y-0 opacity-100"
           >
             {[
-              { number: '500+', label: 'Happy Students', icon: Users },
-              { number: '15+', label: 'Study Hours Daily', icon: Clock },
-              { number: '10K+', label: 'Books & Resources', icon: BookOpen },
-              { number: '99%', label: 'Satisfaction Rate', icon: Star }
+              { number: '50+', label: 'Libraries Served', icon: Users },
+              { number: '24/7', label: 'Platform Uptime', icon: Clock },
+              { number: '100K+', label: 'Documents Managed', icon: BookOpen },
+              { number: '99.9%', label: 'Customer Satisfaction', icon: Star }
             ].map((stat, index) => (
               <div key={index} className="text-center group">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -402,67 +428,65 @@ const LandingPage = () => {
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-gray-800 via-green-600 to-blue-600 bg-clip-text text-transparent">
-                Visit Us Today
+                Ready to Get Started?
               </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-              Find us easily and stay updated with our latest news and announcements
+              Join thousands of libraries already using LibraFlow. Contact us to learn more or access your library portal
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Enhanced Google Map */}
+            {/* Contact & Support */}
             <div 
-              id="map-section"
+              id="contact-section"
               data-animate
               className="group bg-white rounded-3xl shadow-2xl p-8 hover:shadow-3xl transition-all duration-500 transform translate-x-0 opacity-100"
             >
               <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl mr-3">
-                  <MapPin className="h-6 w-6 text-white" />
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl mr-3">
+                  <Users className="h-6 w-6 text-white" />
                 </div>
-                Our Location
+                Get in Touch
               </h3>
               
-              <div className="relative rounded-2xl overflow-hidden shadow-lg mb-6 group-hover:shadow-xl transition-shadow duration-300">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3586.030390374811!2d82.24246407475427!3d25.999818398726084!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399a9e0b2ca9f227%3A0xf96db54cf37afd2c!2sPatti%20-%20Chanda%20Rd%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1753917297012!5m2!1sen!2sin"
-                  width="100%"
-                  height="300"
-                  style={{ border: 0 }}
-                  allowFullScreen=""
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Library Location"
-                ></iframe>
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-sm font-medium text-gray-700">
-                  📍 Click to navigate
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">Ready to Transform Your Library?</h4>
+                  <p className="text-gray-600 mb-4">Join the growing network of modern libraries using LibraFlow.</p>
+                  <Link 
+                    to="/login"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Access Your Library
+                  </Link>
                 </div>
-              </div>
-              
-              <div className="space-y-3 text-gray-600">
-                <div className="flex items-start space-x-3">
-                  <MapPin className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-gray-800">Address</p>
-                    <p>Gulalpur bazar, patti-chanda road</p>
-                    <p>Chanda, Sultanpur, Uttar Pradesh</p>
+                
+                <div className="space-y-4 text-gray-600">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-5 w-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs">💬</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-800">Live Chat:</span> Available 24/7
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="h-5 w-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs">📞</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs">✉️</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-800">Email:</span> support@libraflow.com
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-semibold text-gray-800">Phone:</span> +918896963484
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs">✉️</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-gray-800">Email:</span> info@shreesundaram.org
+                  <div className="flex items-center space-x-3">
+                    <div className="h-5 w-5 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs">🌐</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-800">Demo:</span> Schedule a free demo
+                    </div>
                   </div>
                 </div>
               </div>
@@ -478,7 +502,7 @@ const LandingPage = () => {
                 <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mr-3">
                   <Volume2 className="h-6 w-6 text-white" />
                 </div>
-                Latest Announcements
+                Platform Updates
               </h3>
               
               <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
@@ -523,6 +547,7 @@ const LandingPage = () => {
       </section>
 
       {/* Modern Image Gallery */}
+      {libraryConfig?.features?.galleryVisibleOnHomepage !== false && (
       <section className="py-24 bg-white relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -643,6 +668,7 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* Modern Footer */}
       <footer className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white overflow-hidden">
@@ -777,7 +803,7 @@ const LandingPage = () => {
                 Stay Connected
               </h3>
               <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-                Get the latest updates about library events, new resources, and announcements.
+                Get the latest updates about platform features, new releases, and system announcements.
               </p>
               <Link
                 to="/login"
@@ -798,13 +824,13 @@ const LandingPage = () => {
           >
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <p className="text-gray-400 text-sm">
-                © {new Date().getFullYear()} {customization?.systemName || 'Shree Sundaram Library'}. All rights reserved.
+                © {new Date().getFullYear()} {customization?.systemName || 'LibraFlow'}. All rights reserved.
               </p>
               <div className="flex items-center space-x-6">
                 <span className="text-gray-400 text-sm">Made with</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-400 text-sm">for learning</span>
+                  <span className="text-gray-400 text-sm">for libraries</span>
                 </div>
               </div>
             </div>

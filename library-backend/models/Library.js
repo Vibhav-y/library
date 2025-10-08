@@ -17,14 +17,19 @@ const librarySchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   handle: { type: String, required: true, unique: true, lowercase: true, trim: true }, // like @sunview.com
   totalSeats: { type: Number, required: true, min: 1 },
-  slots: { type: [slotSchema], default: [] },
+  numberOfSlots: { type: Number, default: 2, min: 1 },
+  slotTimings: { type: [slotSchema], default: [] },
+  slots: { type: [slotSchema], default: [] }, // Keep for backward compatibility
   allDayAvailable: { type: Boolean, default: true },
   contact: { type: contactSchema, default: {} },
   features: {
     chatEnabled: { type: Boolean, default: true },
-    documentUploadsEnabled: { type: Boolean, default: true }
+    documentUploadsEnabled: { type: Boolean, default: true },
+    galleryEnabled: { type: Boolean, default: true },
+    galleryVisibleOnHomepage: { type: Boolean, default: true }
   },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 // Normalize handle to start with '@'

@@ -75,37 +75,30 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       return res.status(400).json({ message: 'Logo file is required' });
     }
 
-    // Check if Supabase is configured
-    const useSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
-    
+    // Check file size - use base64 for small logos (<= 100KB), Supabase for larger
+    const maxBase64Size = 100 * 1024; // 100KB
     let logoUrl, logoKey;
-
-    if (useSupabase) {
-      try {
-        // Generate unique filename for logo
-        const uniqueFilename = `logos/${generateUniqueFilename(req.file.originalname)}`;
-        
-        // Upload to Supabase
-        const uploadResult = await uploadToSupabase(req.file, uniqueFilename);
-        
-        // Get public URL
-        logoUrl = getPublicUrl(uniqueFilename);
-        logoKey = uniqueFilename;
-        
-
-      } catch (supabaseError) {
-
-        useSupabase = false;
-      }
-    }
     
-    if (!useSupabase) {
-      // Fallback: Convert to base64 data URL for local storage
+    if (req.file.size <= maxBase64Size) {
+      // Small logo: use base64 for instant access
       const base64 = req.file.buffer.toString('base64');
       logoUrl = `data:${req.file.mimetype};base64,${base64}`;
-      logoKey = `local_${Date.now()}_${req.file.originalname}`;
-      
-      
+      logoKey = `base64_logo_${Date.now()}_${generateUniqueFilename(req.file.originalname)}`;
+      console.log('📷 Small logo stored as base64, size:', req.file.size, 'bytes');
+    } else {
+      // Large logo: use Supabase with signed URL
+      try {
+        const uniqueFilename = `logos/${generateUniqueFilename(req.file.originalname)}`;
+        await uploadToSupabase(req.file, uniqueFilename);
+        
+        const { getSignedUrl } = require('../config/supabaseConfig');
+        logoUrl = await getSignedUrl(uniqueFilename, 60 * 60 * 24 * 365); // 1 year for logos
+        logoKey = uniqueFilename;
+        console.log('📷 Large logo stored in Supabase with signed URL, size:', req.file.size, 'bytes');
+      } catch (supabaseError) {
+        console.error('Supabase upload failed for logo:', supabaseError);
+        return res.status(500).json({ message: 'Failed to upload logo to storage' });
+      }
     }
 
     // Update customization settings
@@ -114,12 +107,14 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       customization = new Customization();
     }
 
-    // Delete old logo if exists and using Supabase
-    if (customization.logoKey && useSupabase && customization.logoKey.startsWith('logos/')) {
+    // For base64 logos, no file deletion needed - they're stored in the database
+    if (customization.logoKey && customization.logoKey.startsWith('logos/')) {
+      // Only delete from Supabase if it's an old Supabase-stored logo
       try {
         await deleteFromSupabase(customization.logoKey);
+        console.log('🗑️ Deleted old Supabase logo:', customization.logoKey);
       } catch (deleteError) {
-        console.error('Error deleting old logo:', deleteError);
+        console.error('Error deleting old Supabase logo:', deleteError);
         // Continue with upload even if old logo deletion fails
       }
     }
@@ -136,7 +131,8 @@ router.post('/logo', auth.verifyToken, auth.adminOnly, logoUpload.single('logo')
       message: 'Logo uploaded successfully', 
       logoUrl: logoUrl,
       logoName: req.file.originalname,
-      storage: useSupabase ? 'supabase' : 'local'
+      storage: req.file.size <= maxBase64Size ? 'base64' : 'supabase_signed',
+      fileSize: req.file.size
     });
   } catch (error) {
     console.error('Logo upload error:', error);

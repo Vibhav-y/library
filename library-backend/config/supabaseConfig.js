@@ -124,7 +124,14 @@ const generateUniqueFilename = (originalName) => {
   const randomNum = Math.floor(Math.random() * 1000);
   const extension = originalName.split('.').pop();
   const nameWithoutExt = originalName.split('.').slice(0, -1).join('.');
-  return `${timestamp}-${randomNum}-${nameWithoutExt}.${extension}`;
+  
+  // Create web-safe filename by removing/replacing problematic characters
+  const safeName = nameWithoutExt
+    .replace(/[^a-zA-Z0-9\-_]/g, '_') // Replace special chars with underscore
+    .replace(/_+/g, '_') // Replace multiple underscores with single
+    .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+  
+  return `${timestamp}-${randomNum}-${safeName}.${extension}`;
 };
 
 module.exports = {

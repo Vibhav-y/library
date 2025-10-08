@@ -65,37 +65,25 @@ router.post('/', auth.verifyToken, auth.adminOnly, galleryUpload.single('image')
       return res.status(400).json({ message: 'Title is required' });
     }
 
-    // Check if Supabase is configured
-    const useSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
-    
+    // Upload to Supabase and use signed URLs for private bucket access
     let imageUrl, imageKey;
-
-    if (useSupabase) {
-      try {
-        // Generate unique filename for gallery image
-        const uniqueFilename = `gallery/${generateUniqueFilename(req.file.originalname)}`;
-        
-        // Upload to Supabase
-        await uploadToSupabase(req.file, uniqueFilename);
-        
-        // Get public URL
-        imageUrl = getPublicUrl(uniqueFilename);
-        imageKey = uniqueFilename;
-        
-  
-      } catch (supabaseError) {
-
-        useSupabase = false;
-      }
-    }
     
-    if (!useSupabase) {
-      // Fallback: Convert to base64 data URL for local storage
-      const base64 = req.file.buffer.toString('base64');
-      imageUrl = `data:${req.file.mimetype};base64,${base64}`;
-      imageKey = `local_gallery_${Date.now()}_${req.file.originalname}`;
+    try {
+      // Generate unique filename for gallery image
+      const uniqueFilename = `gallery/${generateUniqueFilename(req.file.originalname)}`;
       
-
+      // Upload to Supabase
+      await uploadToSupabase(req.file, uniqueFilename);
+      
+      // Use signed URL for private bucket (24 hour expiry)
+      const { getSignedUrl } = require('../config/supabaseConfig');
+      imageUrl = await getSignedUrl(uniqueFilename, 60 * 60 * 24); // 24 hours
+      imageKey = uniqueFilename;
+      
+      console.log('🖼️ Gallery image uploaded to Supabase with signed URL');
+    } catch (supabaseError) {
+      console.error('Supabase upload failed:', supabaseError);
+      return res.status(500).json({ message: 'Failed to upload image to storage' });
     }
 
     // Create gallery image record
@@ -115,7 +103,7 @@ router.post('/', auth.verifyToken, auth.adminOnly, galleryUpload.single('image')
     res.status(201).json({ 
       message: 'Gallery image uploaded successfully',
       image: galleryImage,
-      storage: useSupabase ? 'supabase' : 'local'
+      storage: 'supabase_signed'
     });
   } catch (error) {
     console.error('Gallery image upload error:', error);
@@ -196,6 +184,40 @@ router.delete('/:id', auth.verifyToken, auth.adminOnly, async (req, res) => {
     res.json({ message: 'Gallery image deleted successfully' });
   } catch (error) {
     console.error('Gallery image deletion error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Refresh signed URLs for gallery images (when they expire)
+router.post('/refresh-urls', auth.verifyToken, auth.adminOnly, async (req, res) => {
+  try {
+    const filter = req.user.libraryId ? { library: req.user.libraryId } : {};
+    const images = await GalleryImage.find(filter);
+    
+    let refreshCount = 0;
+    const { getSignedUrl } = require('../config/supabaseConfig');
+    
+    for (const image of images) {
+      // Only refresh Supabase-stored images (not base64)
+      if (image.imageKey && image.imageKey.startsWith('gallery/')) {
+        try {
+          const newSignedUrl = await getSignedUrl(image.imageKey, 60 * 60 * 24); // 24 hours
+          image.imageUrl = newSignedUrl;
+          await image.save();
+          refreshCount++;
+        } catch (error) {
+          console.error(`Failed to refresh URL for image ${image.imageKey}:`, error);
+        }
+      }
+    }
+    
+    res.json({ 
+      message: `Refreshed ${refreshCount} gallery image URLs`,
+      refreshedCount: refreshCount,
+      totalImages: images.length
+    });
+  } catch (error) {
+    console.error('Gallery URL refresh error:', error);
     res.status(500).json({ message: error.message });
   }
 });

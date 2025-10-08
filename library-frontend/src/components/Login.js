@@ -107,7 +107,7 @@ const Login = () => {
                       }}
                     />
                     <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                      {customization?.systemName || 'Library System'}
+                      {customization?.systemName || 'LibraFlow'}
                     </span>
                   </div>
                 ) : (
@@ -116,7 +116,7 @@ const Login = () => {
                       <span className="text-white font-bold text-3xl">L</span>
                     </div>
                     <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                      {customization?.systemName || 'Library System'}
+                      {customization?.systemName || 'LibraFlow'}
                     </span>
                   </div>
                 )}

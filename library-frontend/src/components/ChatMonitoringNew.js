@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { decryptMessagesWithKeyB64 } from '../utils/e2ee';
 
-const ChatMonitoring = ({ onBack }) => {
+const ChatMonitoring = () => {
   // State management
   const [libraries, setLibraries] = useState([]);
   const [selectedLibrary, setSelectedLibrary] = useState(null);
@@ -84,10 +84,9 @@ const ChatMonitoring = ({ onBack }) => {
     try {
       setMessagesLoading(true);
       const data = await chatAPI.admin.getConversationMessages(conversationId, page, 50, true);
-      setMessages(data.messages || []);
+      setMessages(data);
     } catch (error) {
       console.error('Error loading messages:', error);
-      setMessages([]);
     } finally {
       setMessagesLoading(false);
     }
@@ -137,34 +136,22 @@ const ChatMonitoring = ({ onBack }) => {
 
   // Library Selection View
   if (!selectedLibrary) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="relative bg-white/70 backdrop-blur-md shadow-xl rounded-2xl border border-white/30 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-purple-600/90"></div>
-            <div className="relative px-6 py-8">
-                 <div className="flex items-center">
-                   {onBack && (
-                     <button
-                       onClick={onBack}
-                       className="mr-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
-                     >
-                       <ArrowLeft className="h-6 w-6 text-white" />
-                     </button>
-                   )}
-                   <div>
-              <h1 className="text-3xl font-bold text-white flex items-center">
-                <Eye className="h-8 w-8 mr-3" />
-                Chat Monitoring
-              </h1>
-              <p className="text-blue-100 mt-2">
-                       Select a library to monitor chat conversations and manage flagged content
-                     </p>
-                   </div>
-                 </div>
-               </div>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="relative bg-white/70 backdrop-blur-md shadow-xl rounded-2xl border border-white/30 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-purple-600/90"></div>
+              <div className="relative px-6 py-8">
+                <h1 className="text-3xl font-bold text-white flex items-center">
+                  <Eye className="h-8 w-8 mr-3" />
+                  Chat Monitoring
+                </h1>
+                <p className="text-blue-100 mt-2">
+                  Select a library to monitor chat conversations and manage flagged content
+                </p>
+              </div>
             </div>
           </div>
 
@@ -246,37 +233,37 @@ const ChatMonitoring = ({ onBack }) => {
                     </p>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="mb-6">
-          <div className="bg-white/80 backdrop-blur-md shadow-lg rounded-xl p-1 inline-flex space-x-1">
-            <button
-              onClick={() => setActiveTab('conversations')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'conversations'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
-              }`}
-            >
-              <MessageCircle className="h-4 w-4 inline mr-2" />
+          {/* Tabs */}
+          <div className="mb-6">
+            <div className="bg-white/80 backdrop-blur-md shadow-lg rounded-xl p-1 inline-flex space-x-1">
+              <button
+                onClick={() => setActiveTab('conversations')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'conversations'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                }`}
+              >
+                <MessageCircle className="h-4 w-4 inline mr-2" />
                 Conversations ({conversations.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('flagged')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === 'flagged'
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
-              }`}
-            >
-              <Flag className="h-4 w-4 inline mr-2" />
+              </button>
+              <button
+                onClick={() => setActiveTab('flagged')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'flagged'
+                    ? 'bg-red-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                }`}
+              >
+                <Flag className="h-4 w-4 inline mr-2" />
                 Flagged ({flaggedMessages.length})
-            </button>
+              </button>
+            </div>
           </div>
-        </div>
 
           {activeTab === 'conversations' && (
             <div>
@@ -293,24 +280,24 @@ const ChatMonitoring = ({ onBack }) => {
                       className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
-                    <select
-                      value={filterType}
-                      onChange={(e) => setFilterType(e.target.value)}
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
                     className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Types</option>
-                      <option value="group">Group Chats</option>
-                      <option value="private">Private Chats</option>
-                    </select>
-                    <button
-                      onClick={loadConversations}
+                  >
+                    <option value="all">All Types</option>
+                    <option value="group">Group Chats</option>
+                    <option value="private">Private Chats</option>
+                  </select>
+                  <button
+                    onClick={loadConversations}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                    >
+                  >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
-                    </button>
-                  </div>
+                  </button>
                 </div>
+              </div>
 
               {/* Conversations List */}
               {conversationsLoading ? (
@@ -328,10 +315,10 @@ const ChatMonitoring = ({ onBack }) => {
                       }}
                       className="bg-white/80 backdrop-blur-md rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 border border-white/30"
                     >
-                          <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                              conversation.type === 'group' 
+                            conversation.type === 'group' 
                               ? 'bg-purple-100 text-purple-600' 
                               : 'bg-blue-100 text-blue-600'
                           }`}>
@@ -367,9 +354,9 @@ const ChatMonitoring = ({ onBack }) => {
                       </div>
                     </div>
                   ))}
-                        </div>
-                      )}
-                      
+                </div>
+              )}
+
               {filteredConversations.length === 0 && !conversationsLoading && (
                 <div className="text-center py-12">
                   <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -380,8 +367,8 @@ const ChatMonitoring = ({ onBack }) => {
                       : 'No conversations match your search criteria.'
                     }
                   </p>
-                  </div>
-                )}
+                </div>
+              )}
             </div>
           )}
 
@@ -408,16 +395,16 @@ const ChatMonitoring = ({ onBack }) => {
                         <div className="text-right">
                           <p className="text-red-600 text-sm">
                             {new Date(message.createdAt).toLocaleString()}
-                        </p>
+                          </p>
                         </div>
                       </div>
                     </div>
                   ))}
-                  </div>
+                </div>
               )}
             </div>
           )}
-          </div>
+        </div>
       </div>
     );
   }
@@ -461,13 +448,13 @@ const ChatMonitoring = ({ onBack }) => {
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : !messages || messages.length === 0 ? (
+            ) : messages.length === 0 ? (
               <div className="text-center py-8">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">No messages in this conversation.</p>
               </div>
-             ) : (
-               (messages || []).map((message) => (
+            ) : (
+              messages.map((message) => (
                 <div key={message._id} className="flex items-start space-x-3">
                   <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs font-bold">
