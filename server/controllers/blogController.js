@@ -86,7 +86,10 @@ export const addBlog = async (req, res) => {
             // If ImageKit isn't configured or upload failed, use the local file as fallback.
             // The file is available at /uploads/<filename> and we DO NOT delete it.
             console.warn('ImageKit upload failed, using local file fallback:', err.message)
-            const host = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`
+            // Use BASE_URL from env, or construct from request if available, or fallback to localhost
+            const host = process.env.BASE_URL || process.env.SERVER_URL || 
+                (req.protocol + '://' + req.get('host')) || 
+                `http://localhost:${process.env.PORT || 3000}`
             image = `${host}/uploads/${imageFile.filename}`
         }
 

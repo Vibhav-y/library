@@ -8,7 +8,8 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import toast from "react-hot-toast"
 
-axios.defaults.baseURL=import.meta.env.VITE_BASE_URL
+// Set base URL for API calls - use environment variable or fallback to empty string (relative URLs)
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || ''
 
 const AppContext = createContext()
 

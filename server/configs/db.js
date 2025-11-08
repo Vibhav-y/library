@@ -40,7 +40,13 @@ if (queryIndex !== -1) {
 const connectDB = async () => {
     try {
         mongoose.connection.on('connected', () => console.log("Database Connected"))
-        await mongoose.connect(MODIFIED_URI)
+        mongoose.connection.on('error', (err) => console.error('MongoDB connection error:', err))
+        mongoose.connection.on('disconnected', () => console.warn('MongoDB disconnected'))
+        
+        await mongoose.connect(MODIFIED_URI, {
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+        })
+        console.log('MongoDB connected successfully')
     } catch(error) {
         console.error('Failed to connect to database:', error.message)
         process.exit(1)
