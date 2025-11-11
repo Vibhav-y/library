@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { useAnalytics } from '../hooks/useAnalytics'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 const ChatWidget = ({ blogId, blogTitle }) => {
   const { axios } = useAppContext()
@@ -10,6 +14,9 @@ const ChatWidget = ({ blogId, blogTitle }) => {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef()
+
+  // We'll use react-markdown + remark-gfm for rich markdown rendering.
+  // react-markdown is safe by default (it doesn't render raw HTML unless allowed).
 
   useEffect(() => {
     if (open) {
@@ -67,26 +74,26 @@ const ChatWidget = ({ blogId, blogTitle }) => {
 
       {/* Chat modal with smooth transition */}
       {open && (
-        <div className='fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-4'>
+        <div className='fixed right-6 bottom-20 z-40 sm:right-8 sm:bottom-24 flex items-end'>
           <div 
-            className='absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300' 
+            className='fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300' 
             onClick={() => setOpen(false)}
           ></div>
-          <div className='relative w-full max-w-md bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl shadow-2xl mx-auto mb-0 sm:mb-0 overflow-hidden transform transition-all duration-300 ease-out'>
+          <div className='relative w-[520px] max-w-full sm:w-[480px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-350 ease-out animate-chat-pop'>
             {/* Header */}
-            <div className='px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600'>
+            <div className='px-6 py-4 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
-                    Assistant — {blogTitle || 'Blog'}
+                  <h3 className='text-lg font-semibold text-white'>
+                    Blog Assistant
                   </h3>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
-                    Ask questions about this article
+                  <p className='text-sm text-indigo-100'>
+                    Ask questions about "{blogTitle || 'this article'}"
                   </p>
                 </div>
                 <button 
                   onClick={() => setOpen(false)} 
-                  className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors'
+                  className='text-white hover:text-indigo-100 transition-colors'
                 >
                   <span className='sr-only'>Close</span>
                   <svg className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
@@ -99,7 +106,7 @@ const ChatWidget = ({ blogId, blogTitle }) => {
             {/* Messages area with subtle scrollbar */}
             <div 
               ref={scrollRef} 
-              className='h-[400px] overflow-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600'
+              className='h-[480px] overflow-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600'
             >
               {messages.length === 0 && (
                 <div className='flex items-center space-x-3 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg'>
@@ -111,16 +118,53 @@ const ChatWidget = ({ blogId, blogTitle }) => {
               )}
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.from === 'assistant' ? 'justify-start' : 'justify-end'} animate-fade-in`}>
-                  <div 
-                    className={`
-                      ${m.from === 'assistant' 
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-br-lg' 
-                        : 'bg-primary text-white rounded-bl-lg'
-                      } 
-                      max-w-[80%] p-4 rounded-t-lg shadow-sm
-                    `}
-                  >
-                    {m.text}
+                  <div className={`flex ${m.from === 'assistant' ? 'justify-start' : 'justify-end'} animate-fade-in`}>
+                    <div
+                      className={`
+                        ${m.from === 'assistant'
+                          ? 'bg-white text-gray-900 rounded-br-2xl border border-gray-100 shadow-sm'
+                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-bl-2xl shadow-lg'
+                        }
+                        max-w-[85%] p-4 rounded-t-lg font-medium overflow-hidden
+                      `}
+                    >
+                      {m.from === 'assistant' ? (
+                        <div className='prose max-w-none text-sm'>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="underline text-indigo-600 hover:text-indigo-800" />,
+                              code: ({node, inline, className, children, ...props}) => {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return !inline && match ? (
+                                  <SyntaxHighlighter
+                                    style={vscDarkPlus}
+                                    language={match[1]}
+                                    PreTag="div"
+                                    className="rounded-lg text-xs my-2"
+                                    {...props}
+                                  >
+                                    {String(children).replace(/\n$/, '')}
+                                  </SyntaxHighlighter>
+                                ) : (
+                                  <code className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
+                                    {children}
+                                  </code>
+                                )
+                              },
+                              p: ({node, ...props}) => <p className="mb-2 leading-relaxed" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
+                              li: ({node, ...props}) => <li className="text-sm" {...props} />
+                            }}
+                          >
+                            {m.text}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div>{m.text}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -138,20 +182,20 @@ const ChatWidget = ({ blogId, blogTitle }) => {
             </div>
 
             {/* Input area with modern styling */}
-            <div className='p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700'>
+            <div className='p-4 bg-white dark:bg-gray-900 border-t border-gray-100'>
               <div className='flex items-center gap-3'>
                 <input 
                   id='chat-input'
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
-                  className='flex-1 p-3 border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow'
+                  className='flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-shadow'
                   placeholder='Type your question...'
                 />
                 <button 
                   onClick={send}
                   disabled={loading}
-                  className='bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2'
+                  className='bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md transform hover:-translate-y-0.5'
                 >
                   {loading ? (
                     <span>Sending...</span>
@@ -175,9 +219,19 @@ const ChatWidget = ({ blogId, blogTitle }) => {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes chat-pop {
+          0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+          60% { opacity: 1; transform: translateY(-6px) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-chat-pop {
+          animation: chat-pop 260ms cubic-bezier(.2,.9,.3,1) both;
+        }
         .animate-fade-in {
           animation: fade-in 0.3s ease-out forwards;
         }
+        .prose a { text-decoration: underline; }
+        .prose pre { background: #0f172a; }
         .scrollbar-thin::-webkit-scrollbar {
           width: 6px;
         }

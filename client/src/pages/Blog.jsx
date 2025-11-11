@@ -76,7 +76,8 @@ const Blog = () => {
     e.preventDefault()
     if (!user) return setShowLoginPrompt(true)
     try {
-      const payload = { blog: id, content, isAnonymous }
+      // If not anonymous, send displayName as username
+  const payload = { blog: id, content, isAnonymous, displayName: isAnonymous ? 'Anonymous' : (user?.name || user?.username || user?.email) }
       const { data } = await axios.post('/api/blog/add-comment', payload)
       if (data.success) {
         toast.success(data.message)
@@ -89,17 +90,25 @@ const Blog = () => {
     }
   }
 
-  // Recursive comment node
+  // Recursive comment node with collapsible child threads
   const CommentNode = ({ node, depth = 0 }) => {
     const [showReply, setShowReply] = useState(false)
     const [replyText, setReplyText] = useState('')
     const [replyAnon, setReplyAnon] = useState(false)
+    const [collapsed, setCollapsed] = useState(true)
+    const [expanded, setExpanded] = useState(false)
+
+    const CHILD_COLLAPSE_THRESHOLD = 3
+    const MAX_CHARS = 220
+    const fullText = node.content || ''
+    const isLong = fullText.length > MAX_CHARS
+    const displayText = expanded || !isLong ? fullText : (fullText.slice(0, MAX_CHARS).trimEnd() + '…')
 
     const handleReply = async () => {
       if (!user) return setShowLoginPrompt(true)
       if (!replyText.trim()) return toast.error('Reply cannot be empty')
       try {
-        const payload = { blog: id, content: replyText, isAnonymous: replyAnon, parentId: node._id }
+        const payload = { blog: id, content: replyText, isAnonymous: replyAnon, parentId: node._id, displayName: replyAnon ? 'Anonymous' : (user?.username || user?.name) }
         const { data } = await axios.post('/api/blog/add-comment', payload)
         if (data.success) {
           toast.success(data.message)
@@ -127,48 +136,74 @@ const Blog = () => {
     }
 
     return (
-      <div className='flex flex-col' style={{ marginLeft: depth * 18 }}>
-        <div className='flex gap-4 items-start'>
-          <div className='w-12 flex-shrink-0 text-center'>
-            <img src={assets.user_icon} className='w-10 h-10 rounded-full border' alt='avatar' />
+      <div className='flex flex-col relative' style={{ marginLeft: depth > 0 ? 14 : 0 }}>
+        {/* Thread connector arrow for replies */}
+        {depth > 0 && (
+          <div className='absolute -left-[22px] top-5 w-5 h-5 pointer-events-none'>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className='text-gray-300'>
+              <path d="M2 2 L2 10 L12 10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9 7 L12 10 L9 13" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        )}
+        
+        <div className='flex gap-3 items-start'>
+          <div className='w-10 flex-shrink-0 text-center'>
+            <img src={assets.user_icon} className='w-8 h-8 rounded-full border object-cover' alt='avatar' />
           </div>
 
           <div className='flex-1'>
-            <div className='bg-white border rounded p-3 shadow-sm'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-3'>
-                  <p className='font-medium'>{node.displayName || node.name || 'Anonymous'}</p>
-                  <span className='text-xs text-gray-400'>{Moment(node.createdAt).fromNow()}</span>
+            <div className='bg-white border rounded-lg p-2 shadow-sm'>
+              <div className='flex items-start justify-between gap-2'>
+                <div className='min-w-0'>
+                  <p className='font-medium text-sm leading-tight truncate max-w-[220px]' title={node.displayName || node.name}>{node.displayName || node.name || 'Anonymous'}</p>
+                  <span className='text-[10px] text-gray-400'>{Moment(node.createdAt).fromNow()}</span>
                 </div>
-                <div className='text-sm text-gray-400 flex items-center gap-3'>
+                <div className='text-[11px] text-gray-400 flex items-center gap-3 flex-shrink-0'>
                   <button onClick={() => setShowReply(s => !s)} className='hover:text-primary'>{showReply ? 'Cancel' : 'Reply'}</button>
                   <button onClick={() => { setReportComment(node); setShowReportModal(true); }} className='hover:text-red-500'>Report</button>
                 </div>
               </div>
-
-              <p className='text-sm text-gray-700 mt-2 whitespace-pre-wrap'>{node.content}</p>
+              <p className='text-[13px] text-gray-700 mt-1 whitespace-pre-wrap leading-snug break-words'>{displayText}</p>
+              {isLong && (
+                <button onClick={() => setExpanded(e => !e)} className='mt-1 text-[11px] text-primary hover:underline'>
+                  {expanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
             </div>
 
-            
-
-            
-
             {showReply && (
-              <div className='mt-3 ml-2 max-w-lg'>
-                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className='w-full p-2 border rounded mb-2' rows={3} />
-                <div className='flex items-center gap-3'>
-                  <label className='text-sm flex items-center gap-2'><input type='checkbox' checked={replyAnon} onChange={e => setReplyAnon(e.target.checked)} /> Post anonymously</label>
-                  <div className='ml-auto'>
-                    <button onClick={() => setShowReply(false)} className='px-3 py-1 border rounded mr-2'>Cancel</button>
-                    <button onClick={handleReply} className='px-3 py-1 bg-primary text-white rounded'>Reply</button>
+              <div className='mt-3 ml-2 max-w-lg space-y-2'>
+                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className='w-full p-2 border rounded mb-1 text-sm' rows={3} placeholder='Write a reply...' />
+                <div className='flex items-center gap-4'>
+                  <span className={`text-xs font-medium ${!replyAnon ? 'text-primary' : 'text-gray-500'}`}>{user ? (user.name || user.username || user.email) : 'You'}</span>
+                  <label className='relative inline-flex items-center cursor-pointer ml-1'>
+                    <input type='checkbox' checked={replyAnon} onChange={e => setReplyAnon(e.target.checked)} className='sr-only peer' />
+                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:bg-primary transition-all"></div>
+                    <div className="absolute left-1 top-1 bg-white w-3.5 h-3.5 rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
+                  </label>
+                  <span className={`text-xs font-medium ${replyAnon ? 'text-primary' : 'text-gray-500'}`}>Anonymous</span>
+                  <div className='ml-auto flex gap-2'>
+                    <button onClick={() => setShowReply(false)} className='px-2 py-1 border rounded text-xs'>Cancel</button>
+                    <button onClick={handleReply} className='px-2 py-1 bg-primary text-white rounded text-xs'>Reply</button>
                   </div>
                 </div>
               </div>
             )}
-
             {node.children && node.children.length > 0 && (
-              <div className='mt-4 border-l-2 border-gray-100 pl-4'>
-                {node.children.map(child => <CommentNode key={child._id} node={child} depth={depth + 1} />)}
+              <div className='mt-2 pl-8 relative'>
+                {/* Vertical thread line for child comments */}
+                <div className='absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-gray-200 via-gray-100 to-transparent'></div>
+                
+                {(collapsed ? node.children.slice(0, CHILD_COLLAPSE_THRESHOLD) : node.children).map(child => (
+                  <CommentNode key={child._id} node={child} depth={depth + 1} />
+                ))}
+                {node.children.length > CHILD_COLLAPSE_THRESHOLD && (
+                  <button onClick={() => setCollapsed(c => !c)} className='mt-1 ml-2 text-[11px] text-primary hover:underline inline-flex items-center gap-1.5'>
+                    <img src={assets.arrow} alt='' className={`w-3 transition-transform ${collapsed ? 'rotate-0' : 'rotate-90'}`} />
+                    {collapsed ? `Show ${node.children.length - CHILD_COLLAPSE_THRESHOLD} more repl${node.children.length - CHILD_COLLAPSE_THRESHOLD === 1 ? 'y' : 'ies'}` : 'Hide replies'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -194,7 +229,7 @@ const Blog = () => {
         <div className='rich-text max-w-3xl mx-auto' dangerouslySetInnerHTML={{ __html: data.description }}></div>
 
           {/* Comments */}
-        <div className='mt-14 mb-10 max-w-3xl mx-auto'>
+  <div className='mt-12 mb-10 max-w-2xl mx-auto'>
           <div className='flex items-center justify-between mb-4'>
             <p className='font-semibold'>Comments <span className='text-sm text-gray-500'>({comments.reduce((acc, c) => acc + 1 + (c.children ? flattenCount(c.children) : 0), 0)})</span></p>
           </div>
@@ -228,19 +263,28 @@ const Blog = () => {
           )}
         </div>
 
-        {/* Add top-level comment */}        {/* Add top-level comment */}
-        <div className='max-w-3xl mx-auto'>
-          <p className='font-semibold mb-4'>Add your comment</p>
-          <form className='flex flex-col items-start gap-4 max-w-lg' onSubmit={submitTopLevel}>
-            <textarea onFocus={() => { if (!user) setShowLoginPrompt(true) }} value={content} onChange={e => setContent(e.target.value)} className='w-full p-2 border border-gray-300 rounded outline-none h-48' required placeholder='Comment' />
+        {/* Add top-level comment */}
+        <div className='max-w-3xl mx-auto mt-12'>
+          <div className='bg-white/60 backdrop-blur border rounded-xl p-6 shadow-sm max-w-2xl mx-auto'>
+          <p className='font-semibold mb-3 text-lg'>Add your comment</p>
+          <form className='flex flex-col items-start gap-3' onSubmit={submitTopLevel}>
+            <textarea maxLength={800} onFocus={() => { if (!user) setShowLoginPrompt(true) }} value={content} onChange={e => setContent(e.target.value)} className='w-full p-2 border border-gray-300 rounded outline-none h-36 text-sm' required placeholder='Share your thoughts...' />
+            <div className='w-full flex justify-end text-[11px] text-gray-400 -mt-2'>{content.length}/800</div>
 
-            <div className='flex items-center gap-2'>
-              <input id='anonymous' type='checkbox' checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} />
-              <label htmlFor='anonymous' className='text-sm'>Post anonymously</label>
+            {/* Modern switch for anonymous/user */}
+            <div className='flex items-center gap-4 w-full'>
+              <span className={`text-sm font-medium ${!isAnonymous ? 'text-primary' : 'text-gray-500'}`}>{user ? (user.name || user.username || user.email) : 'You'}</span>
+              <label className='relative inline-flex items-center cursor-pointer ml-2'>
+                <input type='checkbox' checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} className='sr-only peer' />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:bg-primary transition-all"></div>
+                <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
+              </label>
+              <span className={`text-sm font-medium ${isAnonymous ? 'text-primary' : 'text-gray-500'}`}>Anonymous</span>
             </div>
 
-            <button className='bg-primary text-white rounded p-2 px-8 hover:scale-102 transition-all cursor-pointer' type='submit'>Submit</button>
+            <button disabled={!content.trim()} className='bg-primary disabled:opacity-50 text-white rounded-md py-2 px-5 hover:shadow-md active:scale-[.98] transition text-sm' type='submit'>Submit</button>
           </form>
+          </div>
 
           {/* Login prompt modal */}
           {showLoginPrompt && (

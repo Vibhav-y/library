@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Yash Kushwaha
- * Licensed under the MIT License. See LICENSE file for details.
-*/
-
 import React, { useRef } from 'react'
 import { assets } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
@@ -23,27 +18,31 @@ const Header = () => {
   }
 
   return (
-    <div className='mx-8 sm:mx-16 xl:mx-24 relative'>
-      <div className='text-center mt-20 mb-8'>
+    <div className='app-container relative py-12'>
+      <div className='text-center mt-12 mb-12 fade-up'>
         
-        <div className='inline-flex items-center justify-center gap-4 px-6 py-1.5 mb-4 border border-primary/40 bg-primary/10 rounded-full text-sm text-primary'>
-            <p>New: AI feature integrated</p>
-            <img className='w-2.5' src={assets.star_icon} alt="" />
+        <div className='inline-flex items-center justify-center gap-3 px-5 py-2 mb-6 border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-full text-sm text-indigo-700 font-medium shadow-sm'>
+            <p>New: AI-powered blog assistant</p>
+            <img className='w-3' src={assets.star_icon} alt="" />
         </div>
         
-        <h1 className='text-3xl sm:text-6xl font-semibold sm:leading-16 text-gray-700'>Your own <span className='text-primary'>blogging</span> <br/> platform.</h1>
+        <h1 className='text-4xl sm:text-6xl lg:text-7xl font-bold sm:leading-tight bg-gradient-to-r from-gray-900 via-indigo-900 to-violet-900 bg-clip-text text-transparent mb-6'>
+          Your own <span className='gradient-text'>blogging</span> <br/> platform.
+        </h1>
 
-        <p className='my-6 sm:my-8 max-w-2xl m-auto max-sm:text-xs text-gray-500'>This is your space to think out loud, to share what matters, and to write without filters. Weather it's one word or a thousand, your story starts right here.</p>
+        <p className='my-6 sm:my-8 max-w-2xl mx-auto text-base sm:text-lg text-gray-600 leading-relaxed'>
+          This is your space to think out loud, to share what matters, and to write without filters. Whether it's one word or a thousand, your story starts right here.
+        </p>
 
-        <form onSubmit={onSubmitHandler} className='flex justify-between max-w-lg max-sm:scale-75 mx-auto border border-gray-300 bg-white rounded overflow-hidden'>
-            <input ref={inputRef} className='w-full pl-4 outline-none' type="text" placeholder='Search for blogs' required />
-            <button className='bg-primary text-white px-8 py-2 m-1.5 rounded hover:scale-105 transition-all cursor-pointer' type='submit'>Search</button>
+        <form onSubmit={onSubmitHandler} className='flex justify-between max-w-xl mx-auto border-2 border-gray-200 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow pop-in' style={{animationDelay: '200ms'}}>
+            <input ref={inputRef} className='w-full pl-6 outline-none text-gray-700' type="text" placeholder='Search for blogs...' required />
+            <button className='btn-modern btn-gradient m-2' type='submit'>Search</button>
         </form>
       </div>
       <div className='text-center'>
-        {input && <button onClick={onClear} className='border font-light text-xs py-1 px-3 rounded-sm shadow-custom-sm cursor-pointer'>Clear Search</button>}
+        {input && <button onClick={onClear} className='btn-modern btn-outline text-sm'>Clear Search</button>}
       </div>
-      <img className='absolute -top-50 -z-1 opacity-50' src={assets.gradientBackground} alt="" />
+      <img className='absolute -top-50 -z-10 opacity-30' src={assets.gradientBackground} alt="" />
     </div>
   )
 }

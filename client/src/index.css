@@ -15,7 +15,242 @@
 }
 
 @theme {
-  --color-primary: #5044E5;
+  --color-primary: #4f46e5;
+}
+
+/* Modern Color Palette & Fluid Design System */
+:root {
+  /* Color tokens */
+  --color-bg: #ffffff;
+  --color-surface: #f9fafb;
+  --color-muted: #6b7280;
+  --color-text: #111827;
+  --color-accent-1: #4f46e5; /* indigo */
+  --color-accent-2: #7c3aed; /* violet */
+  --color-accent-3: #06b6d4; /* teal */
+  --color-card-bg: #ffffff;
+  --color-glass: rgba(255,255,255,0.04);
+  --color-border: #e5e7eb;
+  
+  /* Fluid spacing scale */
+  --space-xs: clamp(4px, 0.6vw, 8px);
+  --space-sm: clamp(8px, 1.2vw, 16px);
+  --space-md: clamp(16px, 2.2vw, 24px);
+  --space-lg: clamp(24px, 3.2vw, 40px);
+  --space-xl: clamp(40px, 5vw, 64px);
+  
+  /* Design tokens */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+  
+  /* Transitions */
+  --transition-fast: 180ms cubic-bezier(.2,.9,.3,1);
+  --transition: 280ms cubic-bezier(.2,.9,.3,1);
+  --transition-slow: 420ms cubic-bezier(.2,.9,.3,1);
+}
+
+/* Layout utilities */
+.app-container {
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+/* Modern card system */
+.modern-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Button system */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, var(--color-accent-1), var(--color-accent-2));
+  color: white;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.25);
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79,70,229,0.3);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-accent-1);
+  background: rgba(79,70,229,0.04);
+}
+
+/* Animation keyframes */
+@keyframes fadeUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(16px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes popIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.96); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0; 
+    transform: translateX(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes shimmer {
+  from { 
+    background-position: 200% 0; 
+  }
+  to { 
+    background-position: -200% 0; 
+  }
+}
+
+/* Animation utility classes */
+.fade-up {
+  animation: fadeUp var(--transition-slow) var(--transition-fast) both;
+}
+
+.pop-in {
+  animation: popIn var(--transition) var(--transition) both;
+}
+
+.slide-in-right {
+  animation: slideInRight var(--transition-slow) var(--transition-fast) both;
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.04) 0%,
+    rgba(0,0,0,0.08) 50%,
+    rgba(0,0,0,0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: var(--radius);
+}
+
+/* Lazy loading states */
+.lazy-hidden {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.lazy-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 400ms, transform 400ms;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent-1), var(--color-accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .pop-in,
+  .slide-in-right,
+  .skeleton,
+  .lazy-hidden,
+  .page-transition-enter,
+  .page-transition-enter-active,
+  .page-transition-exit,
+  .page-transition-exit-active {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-container {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+  
+  .modern-card {
+    border-radius: var(--radius);
+  }
 }
 
 .rich-text { font-size: 15px;  }

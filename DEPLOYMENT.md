@@ -24,7 +24,7 @@ This guide covers deploying the blog application to Vercel (frontend) and Render
 Create the following environment variables in your Render service:
 
 #### Required:
-- `MONGODB_URI` - MongoDB connection string (e.g., `mongodb+srv://user:pass@cluster.mongodb.net/quickblog`)
+- `MONGODB_URI` - MongoDB connection string (e.g., `mongodb+srv://user:pass@cluster.mongodb.net/libraflow`)
 - `JWT_SECRET` - Secret key for JWT token signing (use a strong random string)
 - `ADMIN_EMAIL` - Admin login email
 - `ADMIN_PASSWORD` - Admin login password

@@ -26,9 +26,17 @@ export const adminLogin = async (req, res) => {
 
 export const getAllBlogsAdmin = async (req, res) => {
     try {
-        // sort by createdAt (typo fixed)
-        const blogs = await Blog.find({}).sort({createdAt: -1})
-        res.json({success: true, blogs})
+        // sort by createdAt and populate author
+        const blogs = await Blog.find({}).populate('author', 'username fullName').sort({createdAt: -1})
+        
+        // Add username field for frontend compatibility
+        const blogsWithUsername = blogs.map(blog => {
+            const blogObj = blog.toObject()
+            blogObj.username = blog.author?.username || blog.authorName || 'Unknown'
+            return blogObj
+        })
+        
+        res.json({success: true, blogs: blogsWithUsername})
     } catch (error) {
         res.json({success: false, message: error.message})
     }
@@ -66,12 +74,20 @@ export const getAllComments = async (req, res) => {
 
 export const getDashboard = async (req, res) => {
     try {
-        const recentBlogs = await Blog.find({}).sort({createdAt: -1}).limit(5)
+        const recentBlogs = await Blog.find({}).populate('author', 'username fullName').sort({createdAt: -1}).limit(5)
         const blogs = await Blog.countDocuments()
         const comments = await Comment.countDocuments()
         const drafts = await Blog.countDocuments({isPublished: false})
+        
+        // Add username field for frontend compatibility
+        const blogsWithUsername = recentBlogs.map(blog => {
+            const blogObj = blog.toObject()
+            blogObj.username = blog.author?.username || blog.authorName || 'Unknown'
+            return blogObj
+        })
+        
         const dashboardData = {
-            blogs, comments, drafts, recentBlogs
+            blogs, comments, drafts, recentBlogs: blogsWithUsername
         }
         res.json({success: true, dashboardData})
     } catch (error) {

@@ -8,6 +8,8 @@ import imagekit from '../configs/imageKit.js'
 import Blog from '../models/Blog.js'
 import Comment from '../models/Comment.js'
 import Chat from '../models/Chat.js'
+import User from '../models/User.js'
+import jwt from 'jsonwebtoken'
 
 export const addBlog = async (req, res) => {
     try {
@@ -37,19 +39,47 @@ export const addBlog = async (req, res) => {
         if (!imageFile && req.files && req.files.length > 0) imageFile = req.files[0]
 
         // Try to detect an author from an optional token provided by the client.
+        let authorId = undefined
         let authorName = undefined
         let authorEmail = undefined
         const rawAuth = req.headers.authorization || req.headers.Authorization
+        
+        console.log('Auth header:', rawAuth ? 'Present' : 'Missing')
+        
         if (rawAuth) {
             try {
+                console.log('Processing auth header:', rawAuth.substring(0, 50) + '...')
+                console.log('Processing auth header:', rawAuth.substring(0, 50) + '...')
                 const token = rawAuth.startsWith('Bearer ') ? rawAuth.split(' ')[1] : rawAuth
-                const jwt = await import('jsonwebtoken')
+                console.log('Extracted token:', token.substring(0, 30) + '...')
+                
+                console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
+                
                 const decoded = jwt.verify(token, process.env.JWT_SECRET)
+                console.log('Decoded token:', { email: decoded.email, name: decoded.name })
+                
                 authorName = decoded.name
                 authorEmail = decoded.email
+                
+                // Find user by email to get the ID
+                console.log('Looking for user with email:', decoded.email)
+                const user = await User.findOne({ email: decoded.email })
+                console.log('Found user:', user ? { id: user._id, username: user.username, email: user.email } : 'Not found')
+                
+                if (user) {
+                    authorId = user._id
+                    authorName = user.username
+                    authorEmail = user.email
+                    console.log('Set author info:', { authorId, authorName, authorEmail })
+                } else {
+                    console.log('User not found in DB - using token data only')
+                }
             } catch (e) {
+                console.error('Error in author detection:', e.message)
                 // ignore decode errors — posting as anonymous
             }
+        } else {
+            console.log('No authorization header found')
         }
 
         // Check if all credits are present
@@ -94,8 +124,19 @@ export const addBlog = async (req, res) => {
         }
 
     const blogDoc = { title, subTitle, description, category, image, isPublished }
+    if (authorId) blogDoc.author = authorId
     if (authorName) blogDoc.authorName = authorName
     if (authorEmail) blogDoc.authorEmail = authorEmail
+    
+    console.log('Creating blog with:', {
+        title,
+        category, 
+        isPublished,
+        authorId: authorId || 'undefined',
+        authorName: authorName || 'undefined', 
+        authorEmail: authorEmail || 'undefined'
+    })
+    
     await Blog.create(blogDoc)
 
         res.json({success: true, message: "Blog added successfully"})
@@ -107,8 +148,16 @@ export const addBlog = async (req, res) => {
 
 export const getAllBlogs = async (req, res) => {
     try {
-        const blogs = await Blog.find({isPublished: true})
-        res.json({success: true, blogs})
+        const blogs = await Blog.find({isPublished: true}).populate('author', 'username fullName')
+        
+        // Add username field for frontend compatibility
+        const blogsWithUsername = blogs.map(blog => {
+            const blogObj = blog.toObject()
+            blogObj.username = blog.author?.username || blog.authorName || 'Unknown'
+            return blogObj
+        })
+        
+        res.json({success: true, blogs: blogsWithUsername})
     } catch(error) {
         res.json({success: false, message: error.message})
     }
@@ -117,11 +166,16 @@ export const getAllBlogs = async (req, res) => {
 export const getBlogById = async (req, res) => {
     try {
         const { blogId } = req.params
-        const blog = await Blog.findById(blogId)
+        const blog = await Blog.findById(blogId).populate('author', 'username fullName')
         if(!blog) {
             return res.json({success: false, message: "Blog not found"})
         }
-        res.json({success: true, blog})
+        
+        // Add username field for frontend compatibility
+        const blogObj = blog.toObject()
+        blogObj.username = blog.author?.username || blog.authorName || 'Unknown'
+        
+        res.json({success: true, blog: blogObj})
     } catch (error) {
         res.json({success: false, message: error.message})
     }
@@ -155,7 +209,7 @@ export const togglePublish = async (req, res) => {
 
 export const addComment = async (req, res) => {
     try {
-        const { blog, content, isAnonymous, parentId } = req.body
+        const { blog, content, isAnonymous, parentId, displayName } = req.body
 
         // Determine commenter identity: prefer token payload if available
         let realName = undefined
@@ -171,9 +225,11 @@ export const addComment = async (req, res) => {
             // ignore - allow anonymous posting if client supplies a name in future
         }
 
-        const displayName = isAnonymous ? 'Anonymous' : (realName || 'Anonymous')
+        // Prefer explicit displayName from client when not anonymous;
+        // fall back to name decoded from token; otherwise 'Anonymous'
+        const finalDisplayName = isAnonymous ? 'Anonymous' : (displayName || realName || 'Anonymous')
 
-    const commentDoc = { blog, realName, displayName, content, isApproved: true }
+    const commentDoc = { blog, realName, displayName: finalDisplayName, content, isApproved: true }
     if (parentId) commentDoc.parent = parentId
 
     await Comment.create(commentDoc)
@@ -223,38 +279,46 @@ export const getBlogComments = async (req, res) => {
 
 export const chatWithGemini = async (req, res) => {
     try {
-        const { blogId, message } = req.body
-        if (!message) return res.json({ success: false, message: 'No message provided' })
+        const { blogId, message } = req.body;
+        if (!message) {
+            return res.json({ success: false, message: 'No message provided' });
+        }
 
         // Try to fetch blog content to provide context
-        let context = ''
+        let context = '';
         if (blogId) {
             try {
-                const blog = await Blog.findById(blogId)
-                if (blog) context = `${blog.title}\n\n${blog.description}`
+                const blog = await Blog.findById(blogId);
+                if (blog) context = `${blog.title}\n\n${blog.description}`;
             } catch (e) {
-                // ignore
+                console.error('Error fetching blog:', e);
             }
         }
+
         // Save initial user message to DB (transcript)
-        const chatDoc = await Chat.create({ blog: blogId || undefined, messages: [{ role: 'user', text: message }], startedBy: undefined })
+        const chatDoc = await Chat.create({
+            blog: blogId || undefined,
+            messages: [{ role: 'user', text: message }],
+            startedBy: undefined
+        });
 
-        // Build a prompt that instructs the assistant to use the blog content as context
-        const promptText = `You are an assistant that answers questions about a blog article. Use the article content when relevant. If the answer is not in the article, say you don't know and provide helpful guidance.\n\nArticle content:\n${context}\n\nUser question:\n${message}`
-
-        // If GEMINI_API_KEY not configured, return fallback and save assistant reply
+        // Check for API key
         if (!process.env.GEMINI_API_KEY) {
-            const fallback = `(GEMINI API not configured) I can still help by summarizing the blog title: ${context ? context.split('\n')[0] : 'unknown'}. Ask concrete questions and I'll answer using local data when available.`
-            // append assistant message to chatDoc
-            chatDoc.messages.push({ role: 'assistant', text: fallback })
-            await chatDoc.save()
-            return res.json({ success: true, reply: fallback })
+            console.error('GEMINI_API_KEY not configured in server environment');
+            return res.status(500).json({
+                success: false,
+                message: 'Chat service is not properly configured. Please contact the administrator.'
+            });
         }
 
-        // Call Gemini via API key query param (Google API key style)
-        const apiUrlBase = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
-        const apiUrl = `${apiUrlBase}?key=${process.env.GEMINI_API_KEY}`
+    // Build prompt — ask the model to return Markdown so the client can style it
+    const promptText = `You are an assistant that answers questions about a blog article. Use the article content when relevant. If the answer is not in the article, say you don't know and provide helpful guidance. Format your response using Markdown where appropriate (use **bold**, *italic*, lists with '-' or '1.', and \`inline code\`). Return only the markdown-formatted content (no JSON wrapper or extra commentary).\n\nArticle content:\n${context}\n\nUser question:\n${message}`;
 
+        // Call Gemini API
+        const apiUrlBase = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+        const apiUrl = `${apiUrlBase}?key=${process.env.GEMINI_API_KEY}`;
+
+        console.log('Making request to Gemini API...');
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -267,40 +331,59 @@ export const chatWithGemini = async (req, res) => {
                     }]
                 }],
                 generationConfig: {
-                    temperature: 0.2,
-                    maxOutputTokens: 512
+                    temperature: 0.7,
+                    maxOutputTokens: 800
                 }
             })
-        })
+        });
 
-        // If the upstream API returns an error (e.g. 404 model not found), capture and forward a clearer message
-        const textBody = await response.text()
-        let json
-        try {
-            json = JSON.parse(textBody)
-        } catch (e) {
-            json = { raw: textBody }
-        }
+        console.log('Gemini API Response Status:', response.status);
+        
+        // Handle API response
         if (!response.ok) {
-            console.warn('Generative API call failed', { status: response.status, body: json })
-            return res.status(502).json({ success: false, message: `Generative API error: ${response.status} - ${(json && (json.error?.message || json.message)) || JSON.stringify(json)}` })
+            const errorText = await response.text();
+            console.error('Gemini API Error:', errorText);
+            return res.status(502).json({
+                success: false,
+                message: `Gemini API Error: ${response.status} - ${errorText}`
+            });
         }
 
-    // Parse Gemini API response format
-        let reply = ''
+        // Parse successful response
+        const textBody = await response.text();
+        let json;
+        try {
+            json = JSON.parse(textBody);
+        } catch (e) {
+            console.error('Error parsing Gemini API response:', e);
+            return res.status(502).json({
+                success: false,
+                message: 'Invalid response from Gemini API'
+            });
+        }
+
+        // Extract the response text
+        let reply = '';
         if (json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts) {
-            reply = json.candidates[0].content.parts[0].text
+            reply = json.candidates[0].content.parts[0].text;
         } else {
-            console.warn('Unexpected Gemini API response format:', json)
-            reply = 'Sorry, I received an unexpected response format from the API.'
+            console.warn('Unexpected Gemini API response format:', json);
+            return res.status(502).json({
+                success: false,
+                message: 'Unexpected response format from Gemini API'
+            });
         }
 
-        // append assistant message to chatDoc
-        chatDoc.messages.push({ role: 'assistant', text: reply })
-        await chatDoc.save()
+        // Save the assistant's response to the chat document
+        chatDoc.messages.push({ role: 'assistant', text: reply });
+        await chatDoc.save();
 
-        res.json({ success: true, reply })
+        res.json({ success: true, reply });
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        console.error('Chat error:', error);
+        res.status(502).json({
+            success: false,
+            message: `Chat error: ${error.message}`
+        });
     }
-}
+};

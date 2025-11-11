@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Yash Kushwaha
- * Licensed under the MIT License. See LICENSE file for details.
-*/
-
 import React from 'react'
 import {assets} from '../assets/assets'
 import {useNavigate, useLocation} from 'react-router-dom'
@@ -13,18 +8,19 @@ const Navbar = () => {
   const location = useLocation()
 
   return (
-    <div className='flex justify-between items-center py-5 px-8 sm:mx-20 xl:mx-32 cursor-pointer'>
-        <img onClick={()=>navigate('/')} src={assets.logo} alt="logo" className='w32 sm:w-44 '/>
-        <div className='flex items-center gap-3'>
+    <div className='flex justify-between items-center py-6 px-8 sm:px-12 xl:px-20 app-container slide-in-right'>
+        <img onClick={()=>navigate('/')} src={assets.logo} alt="logo" className='w-32 sm:w-44 cursor-pointer transition-transform hover:scale-105'/>
+        <div className='flex items-center gap-4'>
+          {/* Terms link removed as requested */}
           {!token && (
-            <button onClick={()=>navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`)} className='flex items-center gap-2 rounded-full text-sm cursor-pointer bg-primary text-white px-10 py-2.5'>
+            <button onClick={()=>navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`)} className='btn-modern btn-gradient'>
               Login
               <img src={assets.arrow} className='w-3' alt="arrow" />
             </button>
           )}
 
           {token && user && user.role === 'admin' && (
-            <button onClick={()=>navigate('/admin')} className='flex items-center gap-2 rounded-full text-sm cursor-pointer bg-primary text-white px-10 py-2.5'>
+            <button onClick={()=>navigate('/admin')} className='btn-modern btn-gradient'>
               Dashboard
               <img src={assets.arrow} className='w-3' alt="arrow" />
             </button>
@@ -32,8 +28,9 @@ const Navbar = () => {
 
           {token && user && user.role !== 'admin' && (
             <>
-              <button onClick={()=>navigate('/add')} className='px-4 py-2 rounded-full text-sm border'>Write a blog</button>
-              <button onClick={()=>{logout(); navigate('/')}} className='px-4 py-2 rounded-full text-sm border'>Logout</button>
+              <button onClick={()=>navigate('/profile')} className='btn-modern btn-outline'>Profile</button>
+              <button onClick={()=>navigate('/add')} className='btn-modern btn-outline'>Write a blog</button>
+              <button onClick={()=>{logout(); navigate('/')}} className='btn-modern btn-outline'>Logout</button>
             </>
           )}
         </div>
