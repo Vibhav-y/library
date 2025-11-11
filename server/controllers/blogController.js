@@ -49,7 +49,6 @@ export const addBlog = async (req, res) => {
         if (rawAuth) {
             try {
                 console.log('Processing auth header:', rawAuth.substring(0, 50) + '...')
-                console.log('Processing auth header:', rawAuth.substring(0, 50) + '...')
                 const token = rawAuth.startsWith('Bearer ') ? rawAuth.split(' ')[1] : rawAuth
                 console.log('Extracted token:', token.substring(0, 30) + '...')
                 

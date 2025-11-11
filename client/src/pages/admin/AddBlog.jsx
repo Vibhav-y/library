@@ -13,7 +13,7 @@ import Footer from '../../components/Footer'
 
 const AddBlog = () => {
 
-  const {axios} = useAppContext()
+  const {axios, token} = useAppContext()
   const [isAdding, setIsAdding] = useState(false)
 
   const editorRef = useRef(null)
@@ -44,13 +44,22 @@ const AddBlog = () => {
       formData.append('blog', JSON.stringify(blog))
       formData.append('image', image)
 
-      const {data} = await axios.post('/api/blog/add', formData)
+      // Ensure authorization header is included
+      const config = token ? {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      } : {}
+
+      const {data} = await axios.post('/api/blog/add', formData, config)
       if(data.success) {
         toast.success(data.message)
         setImage(false)
         setTitle('')
+        setSubTitle('')
         quillRef.current.root.innerHTML = ''
         setCategory('Startup')
+        setIsPublished(false)
       } else {
         toast.error(data.message)
       }
@@ -69,7 +78,7 @@ const AddBlog = () => {
   }, []);
   
   return (
-    <div className='min-h-screen flex flex-col bg-blue-50/50 text-gray-600'>
+    <div className='min-h-screen flex flex-col bg-blue-50/50 text-gray-600 pt-20'>
       <Navbar />
       <div className='flex-1 flex justify-center items-start'>
         <form onSubmit={onSubmitHandler} className='bg-white w-full max-w-3xl p-4 md:p-10 sm:m-10 shadow rounded my-10'>

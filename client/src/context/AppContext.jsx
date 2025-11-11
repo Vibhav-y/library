@@ -35,7 +35,7 @@ export const AppProvider = ({children}) => {
         const token = localStorage.getItem('token')
         if(token) {
             setToken(token)
-            axios.defaults.headers.common['Authorization'] = `${token}`
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
             // try decode token payload to set user
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]))
@@ -55,7 +55,7 @@ export const AppProvider = ({children}) => {
             return
         }
         localStorage.setItem('token', t)
-        axios.defaults.headers.common['Authorization'] = t
+        axios.defaults.headers.common['Authorization'] = `Bearer ${t}`
         setToken(t)
         try {
             const payload = JSON.parse(atob(t.split('.')[1]))

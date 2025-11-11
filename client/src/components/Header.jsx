@@ -18,7 +18,7 @@ const Header = () => {
   }
 
   return (
-    <div className='app-container relative py-12'>
+    <div className='app-container relative py-12 pt-24'>
       <div className='text-center mt-12 mb-12 fade-up'>
         
         <div className='inline-flex items-center justify-center gap-3 px-5 py-2 mb-6 border border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-full text-sm text-indigo-700 font-medium shadow-sm'>

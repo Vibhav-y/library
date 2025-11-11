@@ -76,12 +76,12 @@ const ChatWidget = ({ blogId, blogTitle }) => {
       {open && (
         <div className='fixed right-6 bottom-20 z-40 sm:right-8 sm:bottom-24 flex items-end'>
           <div 
-            className='fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300' 
+            className='fixed inset-0 bg-gray-900/20 transition-opacity duration-300' 
             onClick={() => setOpen(false)}
           ></div>
-          <div className='relative w-[520px] max-w-full sm:w-[480px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-350 ease-out animate-chat-pop'>
+          <div className='relative w-[520px] max-w-full sm:w-[480px] bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-350 ease-out animate-chat-pop border border-gray-100'>
             {/* Header */}
-            <div className='px-6 py-4 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white'>
+            <div className='px-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white'>
               <div className='flex items-center justify-between'>
                 <div>
                   <h3 className='text-lg font-semibold text-white'>
@@ -106,10 +106,10 @@ const ChatWidget = ({ blogId, blogTitle }) => {
             {/* Messages area with subtle scrollbar */}
             <div 
               ref={scrollRef} 
-              className='h-[480px] overflow-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600'
+              className='h-[480px] overflow-auto p-6 space-y-4 bg-gradient-to-br from-gray-50 to-indigo-50/30 scrollbar-thin scrollbar-thumb-gray-300'
             >
               {messages.length === 0 && (
-                <div className='flex items-center space-x-3 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg'>
+                <div className='flex items-center space-x-3 text-gray-600 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm'>
                   <span className='text-xl'>👋</span>
                   <p className='text-sm'>
                     Hi — ask me about this blog and I'll answer using the article content.
@@ -122,8 +122,8 @@ const ChatWidget = ({ blogId, blogTitle }) => {
                     <div
                       className={`
                         ${m.from === 'assistant'
-                          ? 'bg-white text-gray-900 rounded-br-2xl border border-gray-100 shadow-sm'
-                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-bl-2xl shadow-lg'
+                          ? 'bg-white text-gray-900 rounded-br-2xl border border-indigo-100 shadow-sm'
+                          : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-bl-2xl shadow-lg'
                         }
                         max-w-[85%] p-4 rounded-t-lg font-medium overflow-hidden
                       `}
@@ -170,11 +170,11 @@ const ChatWidget = ({ blogId, blogTitle }) => {
               ))}
               {loading && (
                 <div className="flex justify-start animate-fade-in">
-                  <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                  <div className="bg-white border border-indigo-100 p-4 rounded-xl shadow-sm">
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -182,20 +182,20 @@ const ChatWidget = ({ blogId, blogTitle }) => {
             </div>
 
             {/* Input area with modern styling */}
-            <div className='p-4 bg-white dark:bg-gray-900 border-t border-gray-100'>
+            <div className='p-4 bg-white border-t border-indigo-100'>
               <div className='flex items-center gap-3'>
                 <input 
                   id='chat-input'
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
-                  className='flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-shadow'
+                  className='flex-1 p-3 border border-indigo-200 rounded-lg bg-indigo-50/30 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-shadow'
                   placeholder='Type your question...'
                 />
                 <button 
                   onClick={send}
                   disabled={loading}
-                  className='bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md transform hover:-translate-y-0.5'
+                  className='bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-5 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md transform hover:-translate-y-0.5'
                 >
                   {loading ? (
                     <span>Sending...</span>
@@ -242,8 +242,8 @@ const ChatWidget = ({ blogId, blogTitle }) => {
           background: #CBD5E0;
           border-radius: 3px;
         }
-        .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #4B5563;
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #A0AEC0;
         }
       `}</style>
     </>

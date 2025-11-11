@@ -213,11 +213,11 @@ const Blog = () => {
   }
 
   return data ? (
-    <div className='relative'>
+    <div className='relative pt-20'>
       <img className='absolute -top-50 -z-1 opacity-50' src={assets.gradientBackground} alt='' />
       <Navbar />
 
-      <div className='text-center mt-20 text-gray-600'>
+      <div className='text-center mt-8 text-gray-600'>
         <p className='text-primary py-4 font-medium'>Published on {Moment(data.createdAt).format('MMMM Do YYYY')}</p>
         <h1 className='text-2xl sm:text-5xl font-semibold max-w-2xl mx-auto text-gray-800'>{data.title}</h1>
         <h2 className='my-5 max-w-lg truncate mx-auto'>{data.subTitle}</h2>

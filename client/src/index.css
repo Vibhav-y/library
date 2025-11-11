@@ -158,6 +158,39 @@
   }
 }
 
+@keyframes menuDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Animation utility classes */
 .fade-up {
   animation: fadeUp var(--transition-slow) var(--transition-fast) both;
@@ -169,6 +202,18 @@
 
 .slide-in-right {
   animation: slideInRight var(--transition-slow) var(--transition-fast) both;
+}
+
+.animate-menu-drop {
+  animation: menuDrop 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.animate-slide-up {
+  animation: slideUp 400ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 300ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
 /* Skeleton loader */
