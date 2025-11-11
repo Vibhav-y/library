@@ -21,6 +21,7 @@ const Footer = () => {
                 'Home': '/',
                 'Contact Us': '/contact',
                 'FAQs': '/faqs',
+                'Privacy Policy': '/privacy',
                 'Terms of Service': '/terms',
                 'Return & Refund Policy': '/returns',
                 'Payment Methods': '/payment-methods'

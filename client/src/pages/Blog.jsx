@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useLocation } from 'react-router-dom'
 import { assets } from '../assets/assets';
 import Navbar from '../components/Navbar'
+import DonationBanner from '../components/DonationBanner'
 import Moment from 'moment'
 import Footer from '../components/Footer'
 import Loader from '../components/Loader'
@@ -216,6 +217,7 @@ const Blog = () => {
     <div className='relative pt-20'>
       <img className='absolute -top-50 -z-1 opacity-50' src={assets.gradientBackground} alt='' />
       <Navbar />
+      <DonationBanner />
 
       <div className='text-center mt-8 text-gray-600'>
         <p className='text-primary py-4 font-medium'>Published on {Moment(data.createdAt).format('MMMM Do YYYY')}</p>

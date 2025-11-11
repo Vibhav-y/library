@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import Navbar from '../components/Navbar'
+import DonationBanner from '../components/DonationBanner'
 import Footer from '../components/Footer'
 import toast from 'react-hot-toast'
 import Moment from 'moment'
@@ -230,6 +231,7 @@ const Profile = () => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50'>
       <Navbar />
+      <DonationBanner />
       
       <div className='max-w-6xl mx-auto px-4 py-12 pt-24'>
         {/* Profile Header */}

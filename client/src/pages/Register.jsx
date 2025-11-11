@@ -16,6 +16,7 @@ const Register = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState({ checking: false, available: null, message: '' })
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', color: '' })
   const location = useLocation()
@@ -82,6 +83,11 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (!acceptedTerms) {
+      toast.error('Please accept the Terms & Conditions and Privacy Policy')
+      return
+    }
     
     if (!usernameStatus.available) {
       toast.error('Please choose an available username')
@@ -316,17 +322,73 @@ const Register = () => {
               </p>
             </motion.div>
 
+            {/* Terms & Conditions Checkbox */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className='pt-2'
+            >
+              <label className='flex items-start gap-3 cursor-pointer group'>
+                <div className='relative flex items-center justify-center mt-0.5'>
+                  <input
+                    type='checkbox'
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className='sr-only peer'
+                  />
+                  <div className='w-5 h-5 border-2 border-gray-300 rounded-md bg-white peer-checked:bg-gradient-to-br peer-checked:from-indigo-600 peer-checked:to-violet-600 peer-checked:border-indigo-600 transition-all duration-200 flex items-center justify-center group-hover:border-indigo-400'>
+                    <svg
+                      className={`w-3.5 h-3.5 text-white transition-all duration-200 ${
+                        acceptedTerms ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
+                      }`}
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                      strokeWidth={3}
+                    >
+                      <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
+                    </svg>
+                  </div>
+                </div>
+                <span className='text-sm text-gray-700 leading-relaxed select-none'>
+                  I agree to the{' '}
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault()
+                      window.open('/terms', '_blank')
+                    }}
+                    className='text-indigo-600 hover:text-indigo-700 underline font-medium transition-colors'
+                  >
+                    Terms & Conditions
+                  </button>
+                  {' '}and{' '}
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.preventDefault()
+                      window.open('/privacy', '_blank')
+                    }}
+                    className='text-indigo-600 hover:text-indigo-700 underline font-medium transition-colors'
+                  >
+                    Privacy Policy
+                  </button>
+                </span>
+              </label>
+            </motion.div>
+
             {/* Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.55 }}
               className='pt-2'
             >
               <button 
-                className='btn-modern btn-gradient w-full py-3 text-base flex items-center justify-center' 
+                className='btn-modern btn-gradient w-full py-3 text-base flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed' 
                 type='submit'
-                disabled={loading || !usernameStatus.available}
+                disabled={loading || !usernameStatus.available || !acceptedTerms}
               >
                 {loading ? (
                   <span className='flex items-center justify-center gap-2'>
@@ -345,16 +407,8 @@ const Register = () => {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className='text-center text-sm text-gray-500 mt-6'
-          >
-            By creating an account, you agree to our <button type='button' onClick={()=>navigate('/terms')} className='text-indigo-600 hover:text-indigo-700 underline font-medium'>Terms of Service</button>
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
             transition={{ delay: 0.65 }}
-            className='text-center text-sm text-gray-600 mt-2'
+            className='text-center text-sm text-gray-600 mt-6'
           >
             Already have an account? <button type='button' onClick={()=>navigate(`/login?next=${encodeURIComponent(next)}`)} className='text-violet-600 hover:text-violet-700 font-semibold underline'>Sign in here</button>
           </motion.p>

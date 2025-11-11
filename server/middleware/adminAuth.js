@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken'
+import User from '../models/User.js'
 
-// Admin-only middleware: verifies token and ensures the token belongs to admin
-const adminAuth = (req, res, next) => {
+// Admin-only middleware: verifies token and ensures the user has admin role
+const adminAuth = async (req, res, next) => {
     const raw = req.headers.authorization || req.headers.Authorization
     if (!raw) return res.status(401).json({ success: false, message: 'No token provided' })
 
@@ -9,12 +10,20 @@ const adminAuth = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
-        // Admin identification: either explicit role or matching admin email
-        if (decoded.role === 'admin' || decoded.email === process.env.ADMIN_EMAIL) {
-            req.user = decoded
-            return next()
+        
+        // Fetch user from database to verify current role
+        const user = await User.findOne({ email: decoded.email }).select('-password')
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'User not found' })
         }
-        return res.status(403).json({ success: false, message: 'Admin access required' })
+        
+        // Check if user has admin role
+        if (user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' })
+        }
+        
+        req.user = { ...decoded, userId: user._id }
+        next()
     } catch (error) {
         return res.status(401).json({ success: false, message: 'Invalid Token' })
     }

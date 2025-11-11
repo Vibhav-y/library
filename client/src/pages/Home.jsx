@@ -5,6 +5,7 @@
 
 import React from 'react'
 import Navbar from '../components/Navbar'
+import DonationBanner from '../components/DonationBanner'
 import Header from '../components/Header'
 import BlogList from '../components/BlogList'
 import Newsletter from '../components/Newsletter'
@@ -14,6 +15,7 @@ const Home = () => {
   return (
     <>
       <Navbar/>
+      <DonationBanner />
       <Header/>
       <BlogList/>
       <Newsletter/>

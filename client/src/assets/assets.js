@@ -251,7 +251,7 @@ export const dashboard_data = {
 export const footer_data = [
       {
           title: "Quick Links",
-          links: ["Home", "Terms of Service", "Contact Us", "FAQs"]
+          links: ["Home", "Privacy Policy", "Terms of Service", "Contact Us", "FAQs"]
       },
       {
           title: "Need Help?",
