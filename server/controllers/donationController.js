@@ -147,3 +147,37 @@ export const updateSettings = async (req, res) => {
         res.status(500).json({ success: false, message: error.message })
     }
 }
+
+// Delete donation (admin only)
+export const deleteDonation = async (req, res) => {
+    try {
+        const { id } = req.body
+
+        if (!id) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Donation ID is required' 
+            })
+        }
+
+        const donation = await Donation.findByIdAndDelete(id)
+
+        if (!donation) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Donation not found' 
+            })
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Donation deleted successfully' 
+        })
+    } catch (error) {
+        console.error('Delete donation error:', error)
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to delete donation' 
+        })
+    }
+}

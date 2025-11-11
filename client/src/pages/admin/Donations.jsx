@@ -7,6 +7,8 @@ const Donations = () => {
   const [donations, setDonations] = useState([])
   const [loading, setLoading] = useState(true)
   const [bannerEnabled, setBannerEnabled] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedDonation, setSelectedDonation] = useState(null)
   const [stats, setStats] = useState({
     totalINR: 0,
     totalUSD: 0,
@@ -88,6 +90,34 @@ const Donations = () => {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const deleteDonation = async (id) => {
+    if (!confirm('Are you sure you want to delete this donation?')) return
+
+    try {
+      const { data } = await axios.post('/api/donation/delete', { id })
+      
+      if (data.success) {
+        toast.success('Donation deleted successfully')
+        fetchDonations()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error('Failed to delete donation')
+      console.error(error)
+    }
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard!')
+  }
+
+  const showPaymentDetails = (donation) => {
+    setSelectedDonation(donation)
+    setShowPaymentModal(true)
   }
 
   if (loading) {
@@ -181,12 +211,15 @@ const Donations = () => {
                 <th className='px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider'>
                   Date
                 </th>
+                <th className='px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider'>
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className='divide-y divide-gray-200'>
               {donations.length === 0 ? (
                 <tr>
-                  <td colSpan='6' className='px-6 py-12 text-center text-gray-500'>
+                  <td colSpan='7' className='px-6 py-12 text-center text-gray-500'>
                     No donations yet
                   </td>
                 </tr>
@@ -234,6 +267,32 @@ const Donations = () => {
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-600'>
                       {formatDate(donation.createdAt)}
                     </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='flex items-center gap-2'>
+                        {donation.status === 'completed' && (
+                          <button
+                            onClick={() => showPaymentDetails(donation)}
+                            className='p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
+                            title='View payment details'
+                          >
+                            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+                            </svg>
+                          </button>
+                        )}
+                        {donation.status === 'pending' && (
+                          <button
+                            onClick={() => deleteDonation(donation._id)}
+                            className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                            title='Delete donation'
+                          >
+                            <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -241,6 +300,131 @@ const Donations = () => {
           </table>
         </div>
       </div>
+
+      {/* Payment Details Modal */}
+      {showPaymentModal && selectedDonation && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white rounded-2xl shadow-2xl max-w-lg w-full'>
+            <div className='p-4 border-b border-gray-200 flex items-center justify-between'>
+              <h2 className='text-xl font-bold text-gray-900'>Payment Details</h2>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className='text-gray-400 hover:text-gray-600 transition-colors'
+              >
+                <svg className='w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
+
+            <div className='p-4 space-y-3'>
+              {/* Donor Info */}
+              <div className='bg-gradient-to-r from-indigo-50 to-violet-50 rounded-lg p-3 border border-indigo-100'>
+                <h3 className='font-semibold text-gray-900 mb-1.5 text-sm'>Donor Information</h3>
+                <div className='space-y-0.5 text-sm'>
+                  <p><span className='text-gray-600'>Name:</span> <span className='font-medium text-gray-900'>{selectedDonation.name}</span></p>
+                  <p><span className='text-gray-600'>Email:</span> <span className='font-medium text-gray-900'>{selectedDonation.email}</span></p>
+                  <p><span className='text-gray-600'>Amount:</span> <span className='font-bold text-lg text-indigo-600'>{selectedDonation.currency === 'INR' ? '₹' : '$'} {selectedDonation.amount}</span></p>
+                </div>
+              </div>
+
+              {/* Payment Gateway Info */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Payment Gateway</label>
+                <div className='flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200'>
+                  <svg className='w-5 h-5 text-indigo-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' />
+                  </svg>
+                  <span className='font-medium text-gray-900'>Razorpay (PG)</span>
+                </div>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Payment Method</label>
+                <div className='p-2.5 bg-gray-50 rounded-lg border border-gray-200'>
+                  <span className='font-medium text-gray-900 text-sm'>Online Payment (Razorpay)</span>
+                </div>
+              </div>
+
+              {/* Transaction ID */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Razorpay Transaction ID</label>
+                <div className='flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200'>
+                  <span className='font-mono text-sm text-gray-900 flex-1 truncate'>
+                    {selectedDonation.razorpayPaymentId || 'N/A'}
+                  </span>
+                  {selectedDonation.razorpayPaymentId && (
+                    <button
+                      onClick={() => copyToClipboard(selectedDonation.razorpayPaymentId)}
+                      className='p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors flex-shrink-0'
+                      title='Copy to clipboard'
+                    >
+                      <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Order ID */}
+              <div>
+                <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Razorpay Order ID</label>
+                <div className='flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200'>
+                  <span className='font-mono text-sm text-gray-900 flex-1 truncate'>
+                    {selectedDonation.razorpayOrderId || 'N/A'}
+                  </span>
+                  {selectedDonation.razorpayOrderId && (
+                    <button
+                      onClick={() => copyToClipboard(selectedDonation.razorpayOrderId)}
+                      className='p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors flex-shrink-0'
+                      title='Copy to clipboard'
+                    >
+                      <svg className='w-4 h-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Status and Date */}
+              <div className='grid grid-cols-2 gap-3'>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Status</label>
+                  <span className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-800'>
+                    {selectedDonation.status}
+                  </span>
+                </div>
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Date</label>
+                  <p className='text-sm text-gray-900'>{formatDate(selectedDonation.createdAt)}</p>
+                </div>
+              </div>
+
+              {/* Message */}
+              {selectedDonation.message && (
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1.5'>Message</label>
+                  <div className='p-2.5 bg-gray-50 rounded-lg border border-gray-200'>
+                    <p className='text-sm text-gray-900'>{selectedDonation.message}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className='p-4 border-t border-gray-200'>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className='w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-2.5 rounded-lg hover:from-indigo-700 hover:to-violet-700 transition-all font-medium'
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

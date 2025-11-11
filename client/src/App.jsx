@@ -11,6 +11,7 @@ import Dashboard from './pages/admin/Dashboard'
 import Chats from './pages/admin/Chats'
 import Donations from './pages/admin/Donations'
 import Users from './pages/admin/Users'
+import Contacts from './pages/admin/Contacts'
 import Login from './components/admin/Login'
 import UserLogin from './pages/Login'
 import Register from './pages/Register'
@@ -68,6 +69,7 @@ const App = () => {
             <Route path='chats' element={<Chats/>}/>
             <Route path='donations' element={<Donations/>}/>
             <Route path='users' element={<Users/>}/>
+            <Route path='contacts' element={<Contacts/>}/>
           </Route>
         </Routes>
       </AnimatePresence>

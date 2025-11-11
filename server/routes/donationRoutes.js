@@ -5,7 +5,8 @@ import {
     getAllDonations,
     getRecentDonations,
     getSettings,
-    updateSettings
+    updateSettings,
+    deleteDonation
 } from '../controllers/donationController.js'
 import adminAuth from '../middleware/adminAuth.js'
 
@@ -20,5 +21,6 @@ donationRouter.get('/settings', getSettings)
 // Admin routes
 donationRouter.get('/all', adminAuth, getAllDonations)
 donationRouter.post('/settings', adminAuth, updateSettings)
+donationRouter.post('/delete', adminAuth, deleteDonation)
 
 export default donationRouter

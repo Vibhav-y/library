@@ -8,9 +8,9 @@ const Returns = () => {
         <div className='modern-card p-8 sm:p-10'>
           <h1 className='text-3xl font-bold gradient-text mb-4'>Return & Refund Policy</h1>
           <section className='space-y-4 text-gray-700'>
-            <p>Our policy lasts 30 days. If 30 days have gone by since your purchase, unfortunately we can’t offer you a refund or exchange.</p>
+            <p>Our policy lasts 30 days. If 30 days have gone by since your purchase, unfortunately we can't offer you a refund or exchange.</p>
             <p>To be eligible for a return, your item must be unused and in the same condition that you received it.</p>
-            <p>For questions regarding returns, contact <a href='mailto:support@libraflow.local' className='text-indigo-600 underline'>support@libraflow.local</a>.</p>
+            <p>For questions regarding returns, contact <a href='mailto:info@libraflow.cc' className='text-indigo-600 underline'>info@libraflow.cc</a>.</p>
           </section>
         </div>
       </motion.div>

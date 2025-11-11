@@ -12,6 +12,7 @@ import adminRouter from './routes/adminRoutes.js'
 import blogRouter from './routes/blogRoutes.js'
 import userRouter from './routes/userRoutes.js'
 import donationRouter from './routes/donationRoutes.js'
+import contactRouter from './routes/contactRoutes.js'
 
 const app = express()
 
@@ -42,6 +43,7 @@ app.use('/api/admin', adminRouter)
 app.use('/api/blog', blogRouter)
 app.use('/api/user', userRouter)
 app.use('/api/donation', donationRouter)
+app.use('/api/contact', contactRouter)
 
 // 404 handler
 app.use((req, res) => {
